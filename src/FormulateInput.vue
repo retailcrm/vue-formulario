@@ -6,75 +6,7 @@
     :data-is-showing-errors="hasVisibleErrors"
     :data-type="type"
   >
-    <div class="formulate-input-wrapper">
-      <slot
-        v-if="context.labelPosition === 'before'"
-        name="label"
-        v-bind="context"
-      >
-        <component
-          :is="context.slotComponents.label"
-          v-if="context.hasLabel"
-          :context="context"
-        />
-      </slot>
-      <slot
-        v-if="context.helpPosition === 'before'"
-        name="help"
-        v-bind="context"
-      >
-        <component
-          :is="context.slotComponents.help"
-          v-if="context.help"
-          :context="context"
-        />
-      </slot>
-      <slot
-        name="element"
-        v-bind="context"
-      >
-        <component
-          :is="context.component"
-          :context="context"
-          @click="$emit('click', $event)"
-        >
-          <slot v-bind="context" />
-        </component>
-      </slot>
-      <slot
-        v-if="context.labelPosition === 'after'"
-        name="label"
-        v-bind="context"
-      >
-        <component
-          :is="context.slotComponents.label"
-          v-if="context.hasLabel"
-          :context="context"
-        />
-      </slot>
-    </div>
-    <slot
-      v-if="context.helpPosition === 'after'"
-      name="help"
-      v-bind="context"
-    >
-      <component
-        :is="context.slotComponents.help"
-        v-if="context.help"
-        :context="context"
-      />
-    </slot>
-    <slot
-      name="errors"
-      v-bind="context"
-    >
-      <component
-        :is="context.slotComponents.errors"
-        v-if="!context.disableErrors"
-        :type="context.slotComponents.errors === 'FormulateErrors' ? 'input' : false"
-        :context="context"
-      />
-    </slot>
+    <slot :id="id" :context="context" :errors="errors" :validationErrors="validationErrors" />
   </div>
 </template>
 

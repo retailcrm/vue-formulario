@@ -14,15 +14,8 @@ import FormulateHelp from './slots/FormulateHelp.vue'
 import FormulateGrouping from './FormulateGrouping.vue'
 import FormulateLabel from './slots/FormulateLabel.vue'
 import FormulateAddMore from './slots/FormulateAddMore.vue'
-import FormulateInputBox from './inputs/FormulateInputBox.vue'
-import FormulateInputText from './inputs/FormulateInputText.vue'
-import FormulateInputFile from './inputs/FormulateInputFile.vue'
 import FormulateRepeatable from './slots/FormulateRepeatable.vue'
 import FormulateInputGroup from './inputs/FormulateInputGroup.vue'
-import FormulateInputButton from './inputs/FormulateInputButton.vue'
-import FormulateInputSelect from './inputs/FormulateInputSelect.vue'
-import FormulateInputSlider from './inputs/FormulateInputSlider.vue'
-import FormulateInputTextArea from './inputs/FormulateInputTextArea.vue'
 import FormulateRepeatableProvider from './FormulateRepeatableProvider.vue'
 import FormulateRepeatableRemove from './slots/FormulateRepeatableRemove.vue'
 
@@ -45,15 +38,8 @@ class Formulate {
         FormulateErrors,
         FormulateAddMore,
         FormulateGrouping,
-        FormulateInputBox,
-        FormulateInputText,
-        FormulateInputFile,
         FormulateRepeatable,
         FormulateInputGroup,
-        FormulateInputButton,
-        FormulateInputSelect,
-        FormulateInputSlider,
-        FormulateInputTextArea,
         FormulateRepeatableRemove,
         FormulateRepeatableProvider
       },

@@ -15,6 +15,7 @@ export default {
       component: this.component,
       disableErrors: this.disableErrors,
       errors: this.explicitErrors,
+      allErrors: this.allErrors,
       formShouldShowErrors: this.formShouldShowErrors,
       getValidationErrors: this.getValidationErrors.bind(this),
       hasGivenName: this.hasGivenName,
