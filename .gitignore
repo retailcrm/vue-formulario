@@ -1,5 +1,8 @@
 node_modules
 coverage
+dist
 .cache
 .DS_Store
 .vscode
+*.sublime-project
+*.sublime-workspace
