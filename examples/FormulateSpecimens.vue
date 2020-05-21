@@ -44,7 +44,6 @@ export default {
 </script>
 
 <style lang="scss">
-@import '../themes/snow/snow.scss';
 body {
   margin: 0;
   padding: 0;
