@@ -1,12 +1,12 @@
 ## What is Vue Formulario?
 
-Vue Formulario is a library, based on <a href="https://vueformulate.com">Vue Formulate</a>, that handling the core logic for working with forms and gives full control of form presentation.
+Vue Formulario is a library, based on <a href="https://vueformulate.com">Vue Formulate</a>, that handles the core logic for working with forms and gives full control on the form presentation.
 
 ## Examples
 
-Every form control must be rendered inside FormularioInput component. This component provides `id` and `context` in v-slot props. Control should use `context.model` as v-model and `context.blurHandler` as handler for `blur` event (it is necessary for validation when property `errorBehavior` is `blur`). Errors list for field can be accessed through `context.allErrors`.
+Every form control have to rendered inside FormularioInput component. This component provides `id` and `context` in v-slot props. Control should use `context.model` as v-model and `context.blurHandler` as handler for `blur` event (it is necessary for validation when property `errorBehavior` is `blur`). Errors list for field can be accessed through `context.allErrors`.
 
-Next example creates form for data
+The example below creates the authorization form from data:
 ```json
     {
         "username": "",
