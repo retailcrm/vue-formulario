@@ -10,5 +10,5 @@ assignees: ''
 **Describe the new feature you'd like**
 A clear and concise description of what you want to happen.
 
-**What percentage of vue-formulate users would benefit?**
+**What percentage of vue-formulario users would benefit?**
 80%

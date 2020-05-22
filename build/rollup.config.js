@@ -5,16 +5,15 @@ import vue from 'rollup-plugin-vue' // Handle .vue SFC files
 import { terser } from 'rollup-plugin-terser'
 
 export default {
-  input: 'src/Formulate.js', // Path relative to package.json
+  input: 'src/Formulario.js', // Path relative to package.json
   output: [
     {
-      name: 'Formulate',
+      name: 'Formulario',
       exports: 'default',
       globals: {
         'is-plain-object': 'isPlainObject',
         'nanoid/non-secure': 'nanoid',
         'is-url': 'isUrl',
-        '@braid/vue-formulate-i18n': 'VueFormulateI18n'
       },
       sourcemap: false
     }
