@@ -87,5 +87,5 @@ The example below creates the authorization form from data:
 
 [MIT](https://opensource.org/licenses/MIT)
 
-Copyright (c) 2020-present, [RetailDriver LLC] <br>
+Copyright (c) 2020-present, [RetailDriver LLC](https://www.retailcrm.pro) <br>
 Copyright (c) 2020-present, [Braid LLC](https://www.wearebraid.com/)
