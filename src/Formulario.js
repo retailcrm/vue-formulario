@@ -2,6 +2,7 @@ import library from './libs/library'
 import rules from './libs/rules'
 import mimes from './libs/mimes'
 import FileUpload from './FileUpload'
+import RuleValidationMessages from './RuleValidationMessages'
 import { arrayify, parseLocale, has } from './libs/utils'
 import isPlainObject from 'is-plain-object'
 import fauxUploader from './libs/faux-uploader'
@@ -33,7 +34,8 @@ class Formulario {
             fileUrlKey: 'url',
             uploadJustCompleteDuration: 1000,
             errorHandler: (err) => err,
-            plugins: [],
+            plugins: [ RuleValidationMessages ],
+            validationMessages: {},
             idPrefix: 'formulario-'
         }
         this.registry = new Map()
@@ -146,25 +148,14 @@ class Formulario {
     }
 
     /**
-     * Attempt to get the vue-i18n configured locale.
-     */
-    i18n (vm) {
-        if (vm.$i18n) {
-            switch (typeof vm.$i18n.locale) {
-                case 'string':
-                    return vm.$i18n.locale
-                case 'function':
-                    return vm.$i18n.locale()
-            }
-        }
-        return false
-    }
-
-    /**
      * Get the validation message for a particular error.
      */
     validationMessage (rule, validationContext, vm) {
-        return rule
+        if (this.options.validationMessages.hasOwnProperty(rule)) {
+            return this.options.validationMessages[rule](vm, validationContext)
+        } else {
+            return this.options.validationMessages['default'](vm, validationContext)
+        }
     }
 
     /**

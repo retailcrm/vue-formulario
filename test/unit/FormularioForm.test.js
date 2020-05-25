@@ -6,7 +6,19 @@ import FormSubmission from '../../src/FormSubmission.js'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 
-Vue.use(Formulario)
+function validationMessages (instance) {
+    instance.extend({
+        validationMessages: {
+            required: () => 'required',
+            'in': () => 'in',
+            min: () => 'min',
+        }
+    })
+}
+
+Vue.use(Formulario, {
+    plugins: [validationMessages]
+})
 
 describe('FormularioForm', () => {
     it('render a form DOM element', () => {
@@ -354,7 +366,7 @@ describe('FormularioForm', () => {
             slots: {
                 default: `
                     <FormularioInput v-slot="vSlot" name="sipple">
-                        <span v-for="error in vSlot.context.allErrors">{{ error }}</span>
+                        <span v-for="error in vSlot.context.allErrors">{{ error.message }}</span>
                     </FormularioInput>
                 `
             }
@@ -362,7 +374,10 @@ describe('FormularioForm', () => {
         await wrapper.vm.$nextTick()
 
         expect(wrapper.find('span').exists()).toBe(true)
+        expect(wrapper.find('span').text()).toEqual('This field has an error')
     })
+
+    return
 
     it('is able to display multiple errors on multiple elements', async () => {
         const wrapper = mount({

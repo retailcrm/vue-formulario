@@ -4,7 +4,7 @@ Vue Formulario is a library, based on <a href="https://vueformulate.com">Vue For
 
 ## Examples
 
-Every form control have to rendered inside FormularioInput component. This component provides `id` and `context` in v-slot props. Control should use `context.model` as v-model and `context.blurHandler` as handler for `blur` event (it is necessary for validation when property `errorBehavior` is `blur`). Errors list for field can be accessed through `context.allErrors`.
+Every form control have to rendered inside FormularioInput component. This component provides `id` and `context` in v-slot props. Control should use `context.model` as v-model and `context.blurHandler` as handler for `blur` event (it is necessary for validation when property `errorBehavior` is `blur`). Errors object list for field can be accessed through `context.allErrors`. Each error is an object with fields message (translated message), rule (rule name) and context.
 
 The example below creates the authorization form from data:
 ```json
@@ -39,7 +39,7 @@ The example below creates the authorization form from data:
                     v-for="(error, index) in vSlot.context.allErrors"
                     :key="index"
                 >
-                    {{ error }}
+                    {{ error.message }}
                 </span>
             </div>
         </FormularioInput>

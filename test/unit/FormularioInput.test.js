@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import VueI18n from 'vue-i18n'
 import flushPromises from 'flush-promises'
 import { mount, createLocalVue } from '@vue/test-utils'
 import Formulario from '@/Formulario.js'
@@ -7,7 +8,19 @@ import FormularioInput from '@/FormularioInput.vue'
 
 const globalRule = jest.fn((context) => { return false })
 
+function validationMessages (instance) {
+    instance.extend({
+        validationMessages: {
+            required: () => 'required',
+            'in': () => 'in',
+            min: () => 'min',
+            globalRule: () => 'globalRule',
+        }
+    })
+}
+
 Vue.use(Formulario, {
+    plugins: [validationMessages],
     rules: {
         globalRule
     }
@@ -24,7 +37,7 @@ describe('FormularioInput', () => {
                 value: 'other value'
             },
             scopedSlots: {
-                default: `<div><span v-for="error in props.context.allErrors">{{ error }}</span></div>`
+                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
             }
         })
         await flushPromises()
@@ -41,7 +54,7 @@ describe('FormularioInput', () => {
                 value: 'other value'
             },
             scopedSlots: {
-                default: `<div><span v-for="error in props.context.allErrors">{{ error }}</span></div>`
+                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
             }
         })
         await flushPromises()
@@ -63,7 +76,7 @@ describe('FormularioInput', () => {
                 value: 'bar'
             },
             scopedSlots: {
-                default: `<div><span v-for="error in props.context.allErrors">{{ error }}</span></div>`
+                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
             }
         })
         await flushPromises()
@@ -85,7 +98,7 @@ describe('FormularioInput', () => {
                 value: 'bar'
             },
             scopedSlots: {
-                default: `<div><span v-for="error in props.context.allErrors">{{ error }}</span></div>`
+                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
             }
         })
         await flushPromises()
@@ -118,7 +131,11 @@ describe('FormularioInput', () => {
         expect(errorObject).toEqual({
             name: 'testinput',
             errors: [
-                expect.any(String)
+                {
+                    message: expect.any(String),
+                    rule: expect.stringContaining('required'),
+                    context: expect.any(Object)
+                }
             ],
             hasErrors: true
         })
@@ -227,7 +244,7 @@ describe('FormularioInput', () => {
                 default: `
                     <div>
                         <input v-model="props.context.model" @blur="props.context.blurHandler">
-                        <span v-if="props.context.formShouldShowErrors" v-for="error in props.context.allErrors">{{ error }}</span>
+                        <span v-if="props.context.formShouldShowErrors" v-for="error in props.context.allErrors">{{ error.message }}</span>
                     </div>
                 `
             }
@@ -246,7 +263,7 @@ describe('FormularioInput', () => {
             slots: {
                 default: `
                     <FormularioInput v-slot="inputProps" validation="required" name="testinput" error-behavior="submit">
-                        <span v-for="error in inputProps.context.allErrors">{{ error }}</span>
+                        <span v-for="error in inputProps.context.allErrors">{{ error.message }}</span>
                     </FormularioInput>
                 `
             }

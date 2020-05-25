@@ -231,7 +231,7 @@ export default {
                     name: this.context.name
                 }, ...args)
                 res = (res instanceof Promise) ? res : Promise.resolve(res)
-                return res.then(result => result ? false : this.getMessage(ruleName, args))
+                return res.then(result => result ? false : this.getMessageObject(ruleName, args))
             }
 
             return new Promise(resolve => {
@@ -266,14 +266,21 @@ export default {
                 }
             }
         },
-        getMessage (ruleName, args) {
-            return this.getMessageFunc(ruleName)({
+        getMessageObject (ruleName, args) {
+            let context = {
                 args,
                 name: this.mergedValidationName,
                 value: this.context.model,
                 vm: this,
                 formValues: this.getFormValues()
-            })
+            };
+            let message = this.getMessageFunc(ruleName)(context);
+
+            return {
+                message: message,
+                rule: ruleName,
+                context: context
+            }
         },
         getMessageFunc (ruleName) {
             ruleName = snakeToCamel(ruleName)
@@ -303,7 +310,7 @@ export default {
         getErrorObject () {
             return {
                 name: this.context.nameOrFallback || this.context.name,
-                errors: this.validationErrors.filter(s => typeof s === 'string'),
+                errors: this.validationErrors.filter(s => typeof s === 'object'),
                 hasErrors: !!this.validationErrors.length
             }
         },

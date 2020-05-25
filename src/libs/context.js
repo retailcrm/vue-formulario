@@ -166,13 +166,17 @@ function createOptionList (options) {
  * These are errors we that have been explicity passed to us.
  */
 function explicitErrors () {
-    return arrayify(this.errors)
+    let result = arrayify(this.errors)
         .concat(this.localErrors)
         .concat(arrayify(this.error))
+    result = result.map(message => ({'message': message, 'rule': null, 'context': null}))
+
+    return result;
 }
 
 /**
  * The merged errors computed property.
+ * Each error is an object with fields message (translated message), rule (rule name) and context
  */
 function allErrors () {
     return this.explicitErrors
