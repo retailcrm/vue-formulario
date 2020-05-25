@@ -109,6 +109,10 @@ export default {
      * Rule: tests
      */
     email: function ({ value }) {
+        if (!value) {
+            return Promise.resolve(() => { return true })
+        }
+
         // eslint-disable-next-line
         const isEmail = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
         return Promise.resolve(isEmail.test(value))
@@ -118,6 +122,10 @@ export default {
      * Rule: Value ends with one of the given Strings
      */
     endsWith: function ({ value }, ...stack) {
+        if (!value) {
+            return Promise.resolve(() => { return true })
+        }
+
         return Promise.resolve((() => {
             if (typeof value === 'string' && stack.length) {
                 return stack.find(item => {
@@ -264,6 +272,10 @@ export default {
      * Rule: Value starts with one of the given Strings
      */
     startsWith: function ({ value }, ...stack) {
+        if (!value) {
+            return Promise.resolve(() => { return true })
+        }
+
         return Promise.resolve((() => {
             if (typeof value === 'string' && stack.length) {
                 return stack.find(item => {
