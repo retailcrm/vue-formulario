@@ -139,13 +139,13 @@ const validationMessages = {
         context['maximum'] = context.args[0]
 
         if (Array.isArray(context.value)) {
-            return vm.$t(`validation.max.array`, context)
+            return vm.$tc(`validation.max.array`, context['maximum'], context)
         }
         const force = Array.isArray(context.args) && context.args[1] ? context.args[1] : false
         if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
-            return vm.$t(`validation.max.force`, context)
+            return vm.$tc(`validation.max.force`, context['maximum'], context)
         }
-        return vm.$t(`validation.max.default`, context)
+        return vm.$tc(`validation.max.default`, context['maximum'], context)
     },
 
     /**
@@ -167,13 +167,13 @@ const validationMessages = {
         context['minimum'] = context.args[0]
 
         if (Array.isArray(context.value)) {
-            return vm.$t(`validation.min.array`, context)
+            return vm.$tc(`validation.min.array`, context['minimum'], context)
         }
         const force = Array.isArray(context.args) && context.args[1] ? context.args[1] : false
         if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
-            return vm.$t(`validation.min.force`, context)
+            return vm.$tc(`validation.min.force`, context['minimum'], context)
         }
-        return vm.$t(`validation.min.default`, context)
+        return vm.$tc(`validation.min.default`, context['minimum'], context)
     },
 
     /**
