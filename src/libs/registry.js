@@ -229,6 +229,7 @@ export function useRegistryMethods (without = []) {
                     this.registry.get(field).context.model = getNested(values, field)
                 }
             })
+            this.applyInitialValues()
         }
     }
     return Object.keys(methods).reduce((withMethods, key) => {
