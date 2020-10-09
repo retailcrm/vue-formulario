@@ -10,33 +10,38 @@
 <script>
 export default {
     name: 'FormularioGrouping',
-    props: {
-        name: {
-                type: String,
-                required: true
-        },
-        isArrayItem: {
-                type: Boolean,
-                default: false
-        },
-    },
+
     provide () {
         return {
             path: this.groupPath
         }
     },
+
     inject: ['path'],
+
+    props: {
+        name: {
+            type: String,
+            required: true
+        },
+
+        isArrayItem: {
+            type: Boolean,
+            default: false
+        }
+    },
+
     computed: {
         groupPath () {
             if (this.isArrayItem) {
-                return this.path + '[' + this.name + ']';
-            } else {
-                if (this.path === '') {
-                    return this.name;
-                }
-
-                return this.path + '.' + this.name;
+                return `${this.path}[${this.name}]`
             }
+
+            if (this.path === '') {
+                return this.name
+            }
+
+            return `${this.path}.${this.name}`
         }
     }
 }

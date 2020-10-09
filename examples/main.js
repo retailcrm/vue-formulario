@@ -1,11 +1,10 @@
 import Vue from 'vue'
-import VueFormulate from '../src/Formulate'
+import VueFormulario from '../src/Formulario'
 import FormulateSpecimens from './FormulateSpecimens.vue'
 
 Vue.config.productionTip = false
-
-Vue.use(VueFormulate)
+Vue.use(VueFormulario)
 
 new Vue({
-  render: h => h(FormulateSpecimens)
+    render: h => h(FormulateSpecimens)
 }).$mount('#app')

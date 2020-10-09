@@ -5,7 +5,12 @@
         :data-is-showing-errors="hasVisibleErrors"
         :data-type="type"
     >
-        <slot :id="id" :context="context" :errors="errors" :validationErrors="validationErrors" />
+        <slot
+            :id="id"
+            :context="context"
+            :errors="errors"
+            :validationErrors="validationErrors"
+        />
     </div>
 </template>
 
@@ -15,7 +20,9 @@ import { shallowEqualObjects, parseRules, snakeToCamel, has, arrayify, groupBail
 
 export default {
     name: 'FormularioInput',
+
     inheritAttrs: false,
+
     provide () {
         return {
             // Allows sub-components of this input to register arbitrary rules.
@@ -23,6 +30,7 @@ export default {
             formularioRemoveRule: this.removeRule
         }
     },
+
     inject: {
         formularioSetter: { default: undefined },
         formularioFieldValidation: { default: () => () => ({}) },
@@ -33,87 +41,107 @@ export default {
         removeErrorObserver: { default: undefined },
         path: { default: '' }
     },
+
     model: {
         prop: 'formularioValue',
         event: 'input'
     },
+
     props: {
         type: {
             type: String,
             default: 'text'
         },
+
         name: {
             type: String,
             required: true
         },
+
         /* eslint-disable */
         formularioValue: {
             default: ''
         },
+
         value: {
             default: false
         },
         /* eslint-enable */
+
         id: {
             type: [String, Boolean, Number],
             default: false
         },
+
         errors: {
             type: [String, Array, Boolean],
             default: false
         },
+
         validation: {
             type: [String, Boolean, Array],
             default: false
         },
+
         validationName: {
             type: [String, Boolean],
             default: false
         },
+
         errorBehavior: {
             type: String,
             default: 'blur',
-            validator: function (value) {
+            validator (value) {
                 return ['blur', 'live', 'submit'].includes(value)
             }
         },
+
         showErrors: {
             type: Boolean,
             default: false
         },
+
         imageBehavior: {
             type: String,
             default: 'preview'
         },
+
         uploadUrl: {
             type: [String, Boolean],
             default: false
         },
+
         uploader: {
             type: [Function, Object, Boolean],
             default: false
         },
+
         uploadBehavior: {
             type: String,
             default: 'live'
         },
+
         preventWindowDrops: {
             type: Boolean,
             default: true
         },
+
         validationMessages: {
             type: Object,
             default: () => ({})
         },
+
         validationRules: {
             type: Object,
             default: () => ({})
         },
+
         disableErrors: {
             type: Boolean,
             default: false
         }
     },
+
     data () {
         return {
             defaultId: this.$formulario.nextId(this),
@@ -129,8 +157,10 @@ export default {
             messageRegistry: {}
         }
     },
+
     computed: {
         ...context,
+
         parsedValidationRules () {
             const parsedValidationRules = {}
             Object.keys(this.validationRules).forEach(key => {
@@ -138,6 +168,7 @@ export default {
             })
             return parsedValidationRules
         },
+
         messages () {
             const messages = {}
             Object.keys(this.validationMessages).forEach((key) => {
@@ -149,24 +180,28 @@ export default {
             return messages
         }
     },
+
     watch: {
-        '$attrs': {
+        $attrs: {
             handler (value) {
                 this.updateLocalAttributes(value)
             },
             deep: true
         },
+
         proxy (newValue, oldValue) {
             this.performValidation()
             if (!this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
                 this.context.model = newValue
             }
         },
+
         formularioValue (newValue, oldValue) {
             if (this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
                 this.context.model = newValue
             }
         },
+
         showValidationErrors: {
             handler (val) {
                 this.$emit('error-visibility', val)
@@ -174,6 +209,7 @@ export default {
             immediate: true
         }
     },
+
     created () {
         this.applyInitialValue()
         if (this.formularioRegister && typeof this.formularioRegister === 'function') {
@@ -187,6 +223,7 @@ export default {
             this.performValidation()
         }
     },
+
     beforeDestroy () {
         if (!this.disableErrors && typeof this.removeErrorObserver === 'function') {
             this.removeErrorObserver(this.setErrors)
@@ -195,6 +232,7 @@ export default {
             this.formularioDeregister(this.nameOrFallback)
         }
     },
+
     methods: {
         getInitialValue () {
             if (has(this.$options.propsData, 'value')) {
@@ -204,6 +242,7 @@ export default {
             }
             return ''
         },
+
         applyInitialValue () {
             // This should only be run immediately on created and ensures that the
             // proxy and the model are both the same before any additional registration.
@@ -211,11 +250,13 @@ export default {
                 this.context.model = this.proxy
             }
         },
+
         updateLocalAttributes (value) {
             if (!shallowEqualObjects(value, this.localAttributes)) {
                 this.localAttributes = value
             }
         },
+
         performValidation () {
             let rules = parseRules(this.validation, this.$formulario.rules(this.parsedValidationRules))
             // Add in ruleRegistry rules. These are added directly via injection from
@@ -225,6 +266,7 @@ export default {
                 .then(messages => this.didValidate(messages))
             return this.pendingValidation
         },
+
         runRules (rules) {
             const run = ([rule, args, ruleName, modifier]) => {
                 var res = rule({
@@ -257,6 +299,7 @@ export default {
                 resolveGroups(groupBails(rules))
             })
         },
+
         didValidate (messages) {
             const validationChanged = !shallowEqualObjects(messages, this.validationErrors)
             this.validationErrors = messages
@@ -268,15 +311,16 @@ export default {
                 }
             }
         },
+
         getMessageObject (ruleName, args) {
-            let context = {
+            const context = {
                 args,
                 name: this.mergedValidationName,
                 value: this.context.model,
                 vm: this,
                 formValues: this.getFormValues()
-            };
-            let message = this.getMessageFunc(ruleName)(context);
+            }
+            const message = this.getMessageFunc(ruleName)(context)
 
             return {
                 message: message,
@@ -284,19 +328,21 @@ export default {
                 context: context
             }
         },
+
         getMessageFunc (ruleName) {
             ruleName = snakeToCamel(ruleName)
             if (this.messages && typeof this.messages[ruleName] !== 'undefined') {
                 switch (typeof this.messages[ruleName]) {
-                    case 'function':
-                        return this.messages[ruleName]
-                    case 'string':
-                    case 'boolean':
-                        return () => this.messages[ruleName]
+                case 'function':
+                    return this.messages[ruleName]
+                case 'string':
+                case 'boolean':
+                    return () => this.messages[ruleName]
                 }
             }
             return (context) => this.$formulario.validationMessage(ruleName, context, this)
         },
+
         hasValidationErrors () {
             return new Promise(resolve => {
                 this.$nextTick(() => {
@@ -304,11 +350,13 @@ export default {
                 })
             })
         },
+
         getValidationErrors () {
             return new Promise(resolve => {
                 this.$nextTick(() => this.pendingValidation.then(() => resolve(this.getErrorObject())))
             })
         },
+
         getErrorObject () {
             return {
                 name: this.context.nameOrFallback || this.context.name,
@@ -316,9 +364,11 @@ export default {
                 hasErrors: !!this.validationErrors.length
             }
         },
+
         setErrors (errors) {
             this.localErrors = arrayify(errors)
         },
+
         registerRule (rule, args, ruleName, message = null) {
             if (!this.ruleRegistry.some(r => r[2] === ruleName)) {
                 // These are the raw rule format since they will be used directly.
@@ -328,6 +378,7 @@ export default {
                 }
             }
         },
+
         removeRule (key) {
             const ruleIndex = this.ruleRegistry.findIndex(r => r[2] === key)
             if (ruleIndex >= 0) {

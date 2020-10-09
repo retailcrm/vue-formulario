@@ -13,6 +13,8 @@ import useRegistry, { useRegistryComputed, useRegistryMethods, useRegistryProvid
 import FormSubmission from './FormSubmission'
 
 export default {
+    name: 'FormularioForm',
+
     provide () {
         return {
             ...useRegistryProviders(this),
@@ -22,33 +24,39 @@ export default {
             path: ''
         }
     },
-    name: 'FormularioForm',
+
     model: {
         prop: 'formularioValue',
         event: 'input'
     },
+
     props: {
         name: {
             type: [String, Boolean],
             default: false
         },
+
         formularioValue: {
             type: Object,
             default: () => ({})
         },
+
         values: {
             type: [Object, Boolean],
             default: false
         },
+
         errors: {
             type: [Object, Boolean],
             default: false
         },
+
         formErrors: {
             type: Array,
             default: () => ([])
         }
     },
+
     data () {
         return {
             ...useRegistry(this),
@@ -58,51 +66,58 @@ export default {
             namedFieldErrors: {}
         }
     },
+
     computed: {
         ...useRegistryComputed(),
+
         classes () {
-            const classes = { 'formulario-form': true }
-            if (this.name) {
-                classes[`formulario-form--${this.name}`] = true
+            return {
+                'formulario-form': true,
+                [`formulario-form--${this.name}`]: !!this.name
             }
-            return classes
         },
+
         mergedFormErrors () {
             return this.formErrors.concat(this.namedErrors)
         },
+
         mergedFieldErrors () {
             const errors = {}
+
             if (this.errors) {
                 for (const fieldName in this.errors) {
                     errors[fieldName] = arrayify(this.errors[fieldName])
                 }
             }
+
             for (const fieldName in this.namedFieldErrors) {
                 errors[fieldName] = arrayify(this.namedFieldErrors[fieldName])
             }
+
             return errors
         },
+
         hasFormErrorObservers () {
             return !!this.errorObservers.filter(o => o.type === 'form').length
         }
     },
+
     watch: {
         formularioValue: {
             handler (values) {
-                if (this.isVmodeled &&
-                    values &&
-                    typeof values === 'object'
-                ) {
+                if (this.isVmodeled && values && typeof values === 'object') {
                     this.setValues(values)
                 }
             },
             deep: true
         },
+
         mergedFormErrors (errors) {
             this.errorObservers
                 .filter(o => o.type === 'form')
                 .forEach(o => o.callback(errors))
         },
+
         mergedFieldErrors: {
             handler (errors) {
                 this.errorObservers
@@ -112,20 +127,25 @@ export default {
             immediate: true
         }
     },
+
     created () {
         this.$formulario.register(this)
         this.applyInitialValues()
     },
+
     destroyed () {
         this.$formulario.deregister(this)
     },
+
     methods: {
         ...useRegistryMethods(),
+
         applyErrors ({ formErrors, inputErrors }) {
             // given an object of errors, apply them to this form
             this.namedErrors = formErrors
             this.namedFieldErrors = inputErrors
         },
+
         addErrorObserver (observer) {
             if (!this.errorObservers.find(obs => observer.callback === obs.callback)) {
                 this.errorObservers.push(observer)
@@ -136,14 +156,17 @@ export default {
                 }
             }
         },
+
         removeErrorObserver (observer) {
             this.errorObservers = this.errorObservers.filter(obs => obs.callback !== observer)
         },
+
         registerErrorComponent (component) {
             if (!this.errorComponents.includes(component)) {
                 this.errorComponents.push(component)
             }
         },
+
         formSubmitted () {
             // perform validation here
             this.showErrors()
@@ -159,6 +182,7 @@ export default {
                     return undefined
                 })
         },
+
         formularioFieldValidation (errorObject) {
             this.$emit('validation', errorObject)
         }

@@ -6,31 +6,31 @@ import internal from 'rollup-plugin-internal'
 import { terser } from 'rollup-plugin-terser'
 
 export default {
-  input: 'src/Formulario.js', // Path relative to package.json
-  output: {
-    name: 'VueFormulario',
-    exports: 'default',
-    format: 'iife',
-    globals: {
-      'is-plain-object': 'isPlainObject',
-      'nanoid/non-secure': 'nanoid',
-      'is-url': 'isUrl',
-    }
-  },
-  plugins: [
-    resolve({
-      browser: true,
-      preferBuiltins: false
-    }),
-    commonjs(),
-    internal(['is-plain-object', 'nanoid/non-secure', 'is-url']),
-    vue({
-      css: true, // Dynamically inject css as a <style> tag
-      compileTemplate: true // Explicitly convert template to render function
-    }),
-    buble({
-      objectAssign: 'Object.assign'
-    }), // Transpile to ES5,
-    terser()
-  ]
+    input: 'src/Formulario.js', // Path relative to package.json
+    output: {
+        name: 'VueFormulario',
+        exports: 'default',
+        format: 'iife',
+        globals: {
+            'is-plain-object': 'isPlainObject',
+            'nanoid/non-secure': 'nanoid',
+            'is-url': 'isUrl',
+        }
+    },
+    plugins: [
+        resolve({
+            browser: true,
+            preferBuiltins: false
+        }),
+        commonjs(),
+        internal(['is-plain-object', 'nanoid/non-secure', 'is-url']),
+        vue({
+            css: true, // Dynamically inject css as a <style> tag
+            compileTemplate: true // Explicitly convert template to render function
+        }),
+        buble({
+            objectAssign: 'Object.assign'
+        }), // Transpile to ES5,
+        terser()
+    ]
 }

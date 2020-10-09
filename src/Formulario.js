@@ -3,13 +3,15 @@ import rules from './libs/rules'
 import mimes from './libs/mimes'
 import FileUpload from './FileUpload'
 import RuleValidationMessages from './RuleValidationMessages'
-import { arrayify, parseLocale, has } from './libs/utils'
+import { arrayify } from './libs/utils'
 import isPlainObject from 'is-plain-object'
 import fauxUploader from './libs/faux-uploader'
+
 import FormularioForm from './FormularioForm.vue'
 import FormularioInput from './FormularioInput.vue'
 import FormularioGrouping from './FormularioGrouping.vue'
 
+// noinspection JSUnusedGlobalSymbols
 /**
  * The base formulario library.
  */
@@ -23,7 +25,7 @@ class Formulario {
             components: {
                 FormularioForm,
                 FormularioInput,
-                FormularioGrouping,
+                FormularioGrouping
             },
             library,
             rules,
@@ -34,7 +36,7 @@ class Formulario {
             fileUrlKey: 'url',
             uploadJustCompleteDuration: 1000,
             errorHandler: (err) => err,
-            plugins: [ RuleValidationMessages ],
+            plugins: [RuleValidationMessages],
             validationMessages: {},
             idPrefix: 'formulario-'
         }
@@ -48,14 +50,16 @@ class Formulario {
     install (Vue, options) {
         Vue.prototype.$formulario = this
         this.options = this.defaults
-        var plugins = this.defaults.plugins
+        let plugins = this.defaults.plugins
         if (options && Array.isArray(options.plugins) && options.plugins.length) {
-          plugins = plugins.concat(options.plugins)
+            plugins = plugins.concat(options.plugins)
         }
         plugins.forEach(plugin => (typeof plugin === 'function') ? plugin(this) : null)
         this.extend(options || {})
-        for (var componentName in this.options.components) {
-            Vue.component(componentName, this.options.components[componentName])
+        for (const componentName in this.options.components) {
+            if (Object.prototype.hasOwnProperty.call(this.options.components, componentName)) {
+                Vue.component(componentName, this.options.components[componentName])
+            }
         }
     }
 
@@ -95,9 +99,10 @@ class Formulario {
      * @param {boolean} concatArrays
      */
     merge (base, mergeWith, concatArrays = true) {
-        var merged = {}
-        for (var key in base) {
-            if (mergeWith.hasOwnProperty(key)) {
+        const merged = {}
+
+        for (const key in base) {
+            if (Object.prototype.hasOwnProperty.call(mergeWith, key)) {
                 if (isPlainObject(mergeWith[key]) && isPlainObject(base[key])) {
                     merged[key] = this.merge(base[key], mergeWith[key], concatArrays)
                 } else if (concatArrays && Array.isArray(base[key]) && Array.isArray(mergeWith[key])) {
@@ -109,11 +114,13 @@ class Formulario {
                 merged[key] = base[key]
             }
         }
-        for (var prop in mergeWith) {
-            if (!merged.hasOwnProperty(prop)) {
+
+        for (const prop in mergeWith) {
+            if (!Object.prototype.hasOwnProperty.call(merged, prop)) {
                 merged[prop] = mergeWith[prop]
             }
         }
+
         return merged
     }
 
@@ -122,9 +129,10 @@ class Formulario {
      * @param {string} type
      */
     classify (type) {
-        if (this.options.library.hasOwnProperty(type)) {
+        if (Object.prototype.hasOwnProperty.call(this.options.library, type)) {
             return this.options.library[type].classification
         }
+
         return 'unknown'
     }
 
@@ -133,9 +141,10 @@ class Formulario {
      * @param {string} type
      */
     component (type) {
-        if (this.options.library.hasOwnProperty(type)) {
+        if (Object.prototype.hasOwnProperty.call(this.options.library, type)) {
             return this.options.library[type].component
         }
+
         return false
     }
 
@@ -151,16 +160,16 @@ class Formulario {
      * Get the validation message for a particular error.
      */
     validationMessage (rule, validationContext, vm) {
-        if (this.options.validationMessages.hasOwnProperty(rule)) {
+        if (Object.prototype.hasOwnProperty.call(this.options.validationMessages, rule)) {
             return this.options.validationMessages[rule](vm, validationContext)
         } else {
-            return this.options.validationMessages['default'](vm, validationContext)
+            return this.options.validationMessages.default(vm, validationContext)
         }
     }
 
     /**
      * Given an instance of a FormularioForm register it.
-     * @param {vm} form
+     * @param {Vue} form
      */
     register (form) {
         if (form.$options.name === 'FormularioForm' && form.name) {
@@ -170,7 +179,7 @@ class Formulario {
 
     /**
      * Given an instance of a form, remove it from the registry.
-     * @param {vm} form
+     * @param {Vue} form
      */
     deregister (form) {
         if (
@@ -188,7 +197,7 @@ class Formulario {
      *
      * @param {error} err
      * @param {string} formName
-     * @param {error}
+     * @param {boolean} skip
      */
     handle (err, formName, skip = false) {
         const e = skip ? err : this.options.errorHandler(err, formName)

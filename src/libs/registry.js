@@ -16,7 +16,7 @@ class Registry {
 
     /**
      * Add an item to the registry.
-     * @param {string|array} key
+     * @param {string|array} name
      * @param {vue} component
      */
     add (name, component) {
@@ -104,6 +104,7 @@ class Registry {
     /**
      * Reduce the registry.
      * @param {function} callback
+     * @param accumulator
      */
     reduce (callback, accumulator) {
         this.registry.forEach((component, field) => {
@@ -148,7 +149,7 @@ export function useRegistryComputed () {
             )
         },
         isVmodeled () {
-            return !!(this.$options.propsData.hasOwnProperty('formularioValue') &&
+            return !!(Object.prototype.hasOwnProperty.call(this.$options.propsData, 'formularioValue') &&
                 this._events &&
                 Array.isArray(this._events.input) &&
                 this._events.input.length)
@@ -191,7 +192,7 @@ export function useRegistryMethods (without = []) {
                 const { [field]: value, ...proxy } = this.proxy
                 this.proxy = proxy
             } else {
-                setNested(this.proxy, field, value);
+                setNested(this.proxy, field, value)
             }
             this.$emit('input', Object.assign({}, this.proxy))
         },

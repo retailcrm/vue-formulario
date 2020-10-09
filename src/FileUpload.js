@@ -1,5 +1,6 @@
 import nanoid from 'nanoid/non-secure'
 
+// noinspection JSUnusedGlobalSymbols
 /**
  * The file upload class holds and represents a file’s upload state durring
  * the upload flow.
@@ -7,8 +8,9 @@ import nanoid from 'nanoid/non-secure'
 class FileUpload {
     /**
      * Create a file upload object.
-     * @param {FileList} fileList
+     * @param {FileList} input
      * @param {object} context
+     * @param {object} options
      */
     constructor (input, context, options = {}) {
         this.input = input
@@ -27,7 +29,6 @@ class FileUpload {
     /**
      * Given a pre-existing array of files, create a faux FileList.
      * @param {array} items expects an array of objects [{ url: '/uploads/file.pdf' }]
-     * @param {string} pathKey the object-key to access the url (defaults to "url")
      */
     rehydrateFileList (items) {
         const fauxFileList = items.reduce((fileList, item) => {
@@ -48,15 +49,12 @@ class FileUpload {
 
     /**
      * Produce an array of files and alert the callback.
-     * @param {FileList}
+     * @param {FileList} fileList
      */
     addFileList (fileList) {
         for (let i = 0; i < fileList.length; i++) {
             const file = fileList[i]
             const uuid = nanoid()
-            const removeFile = function () {
-                this.removeFile(uuid)
-            }
             this.files.push({
                 progress: false,
                 error: false,
@@ -66,7 +64,7 @@ class FileUpload {
                 file,
                 uuid,
                 path: false,
-                removeFile: removeFile.bind(this),
+                removeFile: () => this.removeFile(uuid),
                 previewData: file.previewData || false
             })
         }
@@ -86,16 +84,11 @@ class FileUpload {
      * https://github.com/axios/axios/issues/737
      */
     uploaderIsAxios () {
-        if (
-            this.hasUploader &&
+        return this.hasUploader &&
             typeof this.context.uploader.request === 'function' &&
             typeof this.context.uploader.get === 'function' &&
             typeof this.context.uploader.delete === 'function' &&
             typeof this.context.uploader.post === 'function'
-        ) {
-            return true
-        }
-        return false
     }
 
     /**
