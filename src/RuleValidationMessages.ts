@@ -1,6 +1,6 @@
 import { Formulario } from '@/Formulario'
 import FormularioInput from '@/FormularioInput.vue'
-import { ValidationContext } from '@/validation.types'
+import { ValidationContext } from '@/validation/types'
 
 /**
  * This is an object of functions that each produce valid responses. There's no
@@ -216,6 +216,6 @@ const validationMessages = {
  * This creates a vue-formulario plugin that can be imported and used on each
  * project.
  */
-export default function (instance: Formulario) {
+export default function (instance: Formulario): void {
     instance.extend({ validationMessages })
 }

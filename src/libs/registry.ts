@@ -8,8 +8,8 @@ import FormularioInput from '@/FormularioInput.vue'
  * important for features such as grouped fields.
  */
 export default class Registry {
-    public ctx: FormularioForm
-    private registry: Map<string, FormularioForm>
+    private ctx: FormularioForm
+    private registry: Map<string, FormularioInput>
 
     /**
      * Create a new registry of components.
@@ -23,7 +23,7 @@ export default class Registry {
     /**
      * Add an item to the registry.
      */
-    add (name: string, component: FormularioForm) {
+    add (name: string, component: FormularioInput) {
         this.registry.set(name, component)
         return this
     }
@@ -52,7 +52,7 @@ export default class Registry {
     /**
      * Get a particular registry value.
      */
-    get (key: string): FormularioForm | undefined {
+    get (key: string): FormularioInput | undefined {
         return this.registry.get(key)
     }
 

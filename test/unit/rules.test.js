@@ -1,4 +1,4 @@
-import rules from '@/libs/rules'
+import rules from '@/validation/rules.ts'
 import FileUpload from '../../src/FileUpload'
 
 

@@ -14,8 +14,8 @@ describe('FormularioGrouping', () => {
             slots: {
                 default: `
                     <FormularioGrouping name="sub">
-                        <FormularioInput name="text" v-slot="vSlot">
-                            <input type="text" v-model="vSlot.context.model">
+                        <FormularioInput name="text" v-slot="{ context }">
+                            <input type="text" v-model="context.model">
                         </FormularioInput>
                     </FormularioGrouping>
                 `

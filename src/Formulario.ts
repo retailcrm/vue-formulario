@@ -1,7 +1,7 @@
 import { VueConstructor } from 'vue'
 
 import library from './libs/library'
-import rules from './libs/rules'
+import rules from './validation/rules'
 import mimes from './libs/mimes'
 import FileUpload from './FileUpload'
 import RuleValidationMessages from './RuleValidationMessages'
@@ -13,7 +13,7 @@ import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 import FormularioGrouping from './FormularioGrouping.vue'
 import { ObjectType } from '@/common.types'
-import { ValidationContext } from '@/validation.types'
+import { ValidationContext } from '@/validation/types'
 
 interface ErrorHandler {
     (error: any, formName?: string): any

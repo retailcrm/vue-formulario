@@ -1,6 +1,6 @@
 import { parseRules, parseLocale, regexForFormat, cloneDeep, isScalar, snakeToCamel, groupBails } from '@/libs/utils'
-import rules from '@/libs/rules'
-import FileUpload from '@/FileUpload';
+import rules from '@/validation/rules.ts'
+import FileUpload from '@/FileUpload'
 
 describe('parseRules', () => {
   it('parses single string rules, returning empty arguments array', () => {

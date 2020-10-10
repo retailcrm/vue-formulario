@@ -36,11 +36,11 @@ class FileUpload {
     public context: ObjectType
     public results: any[] | boolean
 
-    constructor (input: DataTransfer, context: ObjectType, options: ObjectType = {}) {
+    constructor (input: DataTransfer, context: ObjectType = {}, options: ObjectType = {}) {
         this.input = input
         this.fileList = input.files
         this.files = []
-        this.options = { ...{ mimes: {} }, ...options }
+        this.options = { mimes: {}, ...options }
         this.results = false
         this.context = context
         if (Array.isArray(this.fileList)) {

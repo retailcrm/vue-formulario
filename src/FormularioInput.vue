@@ -25,7 +25,8 @@ import {
     Watch,
 } from 'vue-property-decorator'
 import { shallowEqualObjects, parseRules, snakeToCamel, has, arrayify, groupBails } from './libs/utils'
-import { ValidationError } from '@/validation.types'
+import { ValidationError } from '@/validation/types'
+import { ObjectType } from '@/common.types'
 
 const ERROR_BEHAVIOR = {
     BLUR: 'blur',
@@ -87,12 +88,12 @@ export default class FormularioInput extends Vue {
     @Prop({
         type: Object,
         default: () => ({}),
-    }) validationRules!: Object
+    }) validationRules!: ObjectType
 
     @Prop({
         type: Object,
         default: () => ({}),
-    }) validationMessages!: Object
+    }) validationMessages!: ObjectType
 
     @Prop({
         type: [Array, String, Boolean],
@@ -112,16 +113,16 @@ export default class FormularioInput extends Vue {
     @Prop({ default: true }) preventWindowDrops!: boolean
 
     defaultId: string = this.$formulario.nextId(this)
-    localAttributes: Object = {}
+    localAttributes: ObjectType = {}
     localErrors: ValidationError[] = []
-    proxy: Object = this.getInitialValue()
+    proxy: ObjectType = this.getInitialValue()
     behavioralErrorVisibility: boolean = this.errorBehavior === 'live'
     formShouldShowErrors: boolean = false
     validationErrors: [] = []
     pendingValidation: Promise = Promise.resolve()
     // These registries are used for injected messages registrants only (mostly internal).
     ruleRegistry: [] = []
-    messageRegistry: Object = {}
+    messageRegistry: ObjectType = {}
 
     get context () {
         return this.defineModel({
@@ -322,6 +323,7 @@ export default class FormularioInput extends Vue {
         this.performValidation()
     }
 
+    // noinspection JSUnusedGlobalSymbols
     beforeDestroy () {
         if (!this.disableErrors && typeof this.removeErrorObserver === 'function') {
             this.removeErrorObserver(this.setErrors)
