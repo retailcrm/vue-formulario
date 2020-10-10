@@ -1,48 +1,42 @@
 import FileUpload from '../FileUpload'
 
+type ArrayType = [any]
+type ObjectType = { [key: string]: any }
+
 /**
  * Function to map over an object.
- * @param {Object} obj An object to map over
+ * @param {Object} original An object to map over
  * @param {Function} callback
  */
-export function map (original, callback) {
-    const obj = {}
-    for (let key in original) {
-        obj[key] = callback(key, original[key])
+export function map (original: ObjectType, callback: Function) {
+    const obj: ObjectType = {}
+    for (const key in original) {
+        if (Object.prototype.hasOwnProperty.call(original, key)) {
+            obj[key] = callback(key, original[key])
+        }
     }
     return obj
 }
 
-/**
- * Shallow equal.
- * @param {} objA
- * @param {*} objB
- */
-export function shallowEqualObjects (objA, objB) {
+export function shallowEqualObjects (objA: any, objB: any) {
     if (objA === objB) {
         return true
     }
+
     if (!objA || !objB) {
         return false
     }
-    var aKeys = Object.keys(objA)
-    var bKeys = Object.keys(objB)
-    var len = aKeys.length
+
+    const aKeys = Object.keys(objA)
+    const bKeys = Object.keys(objB)
+    const len = aKeys.length
 
     if (bKeys.length !== len) {
         return false
     }
 
-    if (objA instanceof Date && objB instanceof Date) {
-        return objA.getTime() === objB.getTime();
-    }
-
-    if (len === 0) {
-        return objA === objB;
-    }
-
-    for (var i = 0; i < len; i++) {
-        var key = aKeys[i]
+    for (let i = 0; i < len; i++) {
+        const key = aKeys[i]
 
         if (objA[key] !== objB[key]) {
             return false
@@ -55,7 +49,7 @@ export function shallowEqualObjects (objA, objB) {
  * Given a string, convert snake_case to camelCase
  * @param {String} string
  */
-export function snakeToCamel (string) {
+export function snakeToCamel (string: string | any) {
     if (typeof string === 'string') {
         return string.replace(/([_][a-z0-9])/ig, ($1) => {
             if (string.indexOf($1) !== 0 && string[string.indexOf($1) - 1] !== '_') {
@@ -68,10 +62,11 @@ export function snakeToCamel (string) {
 }
 
 /**
- * Given a string, object, falsey, or array - return an array.
- * @param {mixed} item
+ * Converts to array.
+ * If given parameter is not string, object ot array, result will be an empty array.
+ * @param {*} item
  */
-export function arrayify (item) {
+export function arrayify (item: any) {
     if (!item) {
         return []
     }
@@ -93,7 +88,7 @@ export function arrayify (item) {
  * @param {array} rules and array of functions
  * @return {array} an array of functions
  */
-export function parseRules (validation, rules) {
+export function parseRules (validation: any, rules: any): any[] {
     if (typeof validation === 'string') {
         return parseRules(validation.split('|'), rules)
     }
@@ -106,41 +101,42 @@ export function parseRules (validation, rules) {
 /**
  * Given a string or function, parse it and return an array in the format
  * [fn, [...arguments]]
- * @param {string|function} rule
  */
-function parseRule (rule, rules) {
+function parseRule (rule: any, rules: ObjectType) {
     if (typeof rule === 'function') {
         return [rule, []]
     }
+
     if (Array.isArray(rule) && rule.length) {
-        rule = rule.map(r => r) // light clone
+        rule = rule.slice() // light clone
         const [ruleName, modifier] = parseModifier(rule.shift())
-        if (typeof ruleName === 'string' && rules.hasOwnProperty(ruleName)) {
+        if (typeof ruleName === 'string' && Object.prototype.hasOwnProperty.call(rules, ruleName)) {
             return [rules[ruleName], rule, ruleName, modifier]
         }
         if (typeof ruleName === 'function') {
             return [ruleName, rule, ruleName, modifier]
         }
     }
+
     if (typeof rule === 'string') {
         const segments = rule.split(':')
         const [ruleName, modifier] = parseModifier(segments.shift())
-        if (rules.hasOwnProperty(ruleName)) {
+
+        if (Object.prototype.hasOwnProperty.call(rules, ruleName)) {
             return [rules[ruleName], segments.length ? segments.join(':').split(',') : [], ruleName, modifier]
         } else {
             throw new Error(`Unknown validation rule ${rule}`)
         }
     }
+
     return false
 }
 
 /**
  * Return the rule name with the applicable modifier as an array.
- * @param {string} ruleName
- * @return {array} [ruleName, modifier]
  */
-function parseModifier (ruleName) {
-    if (/^[\^]/.test(ruleName.charAt(0))) {
+function parseModifier (ruleName: any): [string|any, string|null] {
+    if (typeof ruleName === 'string' && /^[\^]/.test(ruleName.charAt(0))) {
         return [snakeToCamel(ruleName.substr(1)), ruleName.charAt(0)]
     }
     return [snakeToCamel(ruleName), null]
@@ -159,7 +155,7 @@ function parseModifier (ruleName) {
  * [[required, min, max]]
  * @param {array} rules
  */
-export function groupBails (rules) {
+export function groupBails (rules: any[]) {
     const groups = []
     const bailIndex = rules.findIndex(([,, rule]) => rule.toLowerCase() === 'bail')
     if (bailIndex >= 0) {
@@ -174,11 +170,13 @@ export function groupBails (rules) {
     }
 
     return groups.reduce((groups, group) => {
+        // @ts-ignore
         const splitByMod = (group, bailGroup = false) => {
             if (group.length < 2) {
                 return Object.defineProperty([group], 'bail', { value: bailGroup })
             }
             const splits = []
+            // @ts-ignore
             const modIndex = group.findIndex(([,,, modifier]) => modifier === '^')
             if (modIndex >= 0) {
                 const preMod = group.splice(0, modIndex)
@@ -200,7 +198,7 @@ export function groupBails (rules) {
  * Escape a string for use in regular expressions.
  * @param {string} string
  */
-export function escapeRegExp (string) {
+export function escapeRegExp (string: string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // $& means the whole matched string
 }
 
@@ -208,8 +206,8 @@ export function escapeRegExp (string) {
  * Given a string format (date) return a regex to match against.
  * @param {string} format
  */
-export function regexForFormat (format) {
-    let escaped = `^${escapeRegExp(format)}$`
+export function regexForFormat (format: string) {
+    const escaped = `^${escapeRegExp(format)}$`
     const formats = {
         MM: '(0[1-9]|1[012])',
         M: '([1-9]|1[012])',
@@ -219,15 +217,16 @@ export function regexForFormat (format) {
         YY: '\\d{2}'
     }
     return new RegExp(Object.keys(formats).reduce((regex, format) => {
+        // @ts-ignore
         return regex.replace(format, formats[format])
     }, escaped))
 }
 
 /**
  * Check if
- * @param {mixed} data
+ * @param {*} data
  */
-export function isValueType (data) {
+export function isScalar (data: any) {
     switch (typeof data) {
         case 'symbol':
         case 'number':
@@ -236,10 +235,7 @@ export function isValueType (data) {
         case 'undefined':
             return true
         default:
-            if (data === null) {
-                return true
-            }
-            return false
+            return data === null
     }
 }
 
@@ -247,29 +243,33 @@ export function isValueType (data) {
  * A simple (somewhat non-comprehensive) cloneDeep function, valid for our use
  * case of needing to unbind reactive watchers.
  */
-export function cloneDeep (obj) {
-    if (typeof obj !== 'object') {
-        return obj
+export function cloneDeep (value: any) {
+    if (typeof value !== 'object') {
+        return value
     }
-    const isArr = Array.isArray(obj)
-    const newObj = isArr ? [] : {}
-    for (const key in obj) {
-        if (obj[key] instanceof FileUpload || isValueType(obj[key])) {
-            newObj[key] = obj[key]
-        } else {
-            newObj[key] = cloneDeep(obj[key])
+
+    const copy: ArrayType | ObjectType = Array.isArray(value) ? [] : {}
+
+    for (const key in value) {
+        if (Object.prototype.hasOwnProperty.call(value, key)) {
+            if (isScalar(value[key]) || value[key] instanceof FileUpload) {
+                copy[key] = value[key]
+            } else {
+                copy[key] = cloneDeep(value[key])
+            }
         }
     }
-    return newObj
+
+    return copy
 }
 
 /**
  * Given a locale string, parse the options.
  * @param {string} locale
  */
-export function parseLocale (locale) {
+export function parseLocale (locale: string) {
     const segments = locale.split('-')
-    return segments.reduce((options, segment) => {
+    return segments.reduce((options: string[], segment: string) => {
         if (options.length) {
             options.unshift(`${options[0]}-${segment}`)
         }
@@ -280,75 +280,74 @@ export function parseLocale (locale) {
 /**
  * Shorthand for Object.prototype.hasOwnProperty.call (space saving)
  */
-export function has (ctx, prop) {
+export function has (ctx: ObjectType, prop: string): boolean {
     return Object.prototype.hasOwnProperty.call(ctx, prop)
 }
 
 /**
  * Set a unique Symbol identifier on an object.
- * @param {object} o
- * @param {Symbol} id
  */
-export function setId (o, id) {
+export function setId (o: object, id: Symbol) {
     return Object.defineProperty(o, '__id', Object.assign(Object.create(null), { value: id || Symbol('uuid') }))
 }
 
-export function getNested(obj, field) {
-    let fieldParts = field.split('.');
+export function getNested (obj: ObjectType, field: string) {
+    const fieldParts = field.split('.')
 
-    let result = obj;
+    let result: ObjectType = obj
+
     for (const key in fieldParts) {
-        let matches = fieldParts[key].match(/(.+)\[(\d+)\]$/);
+        const matches = fieldParts[key].match(/(.+)\[(\d+)\]$/)
         if (result === undefined) {
             return null
         }
         if (matches) {
-            result = result[matches[1]];
+            result = result[matches[1]]
 
             if (result === undefined) {
                 return null
             }
-            result = result[matches[2]];
+            result = result[matches[2]]
         } else {
-            result = result[fieldParts[key]];
+            result = result[fieldParts[key]]
         }
     }
-    return result;
+    return result
 }
 
-export function setNested(obj, field, value) {
-    let fieldParts = field.split('.');
+export function setNested (obj: ObjectType, field: string, value: any) {
+    const fieldParts = field.split('.')
 
-    let subProxy = obj;
+    let subProxy: ObjectType = obj
     for (let i = 0; i < fieldParts.length; i++) {
-        let fieldPart = fieldParts[i];
-
-        let matches = fieldPart.match(/(.+)\[(\d+)\]$/);
+        const fieldPart = fieldParts[i]
+        const matches = fieldPart.match(/(.+)\[(\d+)\]$/)
 
         if (matches) {
             if (subProxy[matches[1]] === undefined) {
-                subProxy[matches[1]] = [];
+                subProxy[matches[1]] = []
             }
-            subProxy = subProxy[matches[1]];
+            subProxy = subProxy[matches[1]]
 
-            if (i == fieldParts.length - 1) {
+            if (i === fieldParts.length - 1) {
                 subProxy[matches[2]] = value
-                break;
+                break
             } else {
-                subProxy = subProxy[matches[2]];
+                subProxy = subProxy[matches[2]]
             }
         } else {
-            if (i == fieldParts.length - 1) {
+            if (i === fieldParts.length - 1) {
                 subProxy[fieldPart] = value
-                break;
+                break
             } else {
+                // eslint-disable-next-line max-depth
                 if (subProxy[fieldPart] === undefined) {
-                    subProxy[fieldPart] = {};
+                    subProxy[fieldPart] = {}
                 }
-                subProxy = subProxy[fieldPart];
+                subProxy = subProxy[fieldPart]
             }
         }
     }
 
-    return obj;
+    return obj
 }

@@ -1,8 +1,7 @@
 import Vue from 'vue'
 import { mount } from '@vue/test-utils'
 import flushPromises from 'flush-promises'
-import Formulario from '@/Formulario.js'
-import FormularioInput from '@/FormularioInput.vue'
+import Formulario from '@/Formulario.ts'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioGrouping from '@/FormularioGrouping.vue'
 

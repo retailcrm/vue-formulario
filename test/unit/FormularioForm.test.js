@@ -1,10 +1,9 @@
 import Vue from 'vue'
-import { mount, shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import flushPromises from 'flush-promises'
-import Formulario from '../../src/Formulario.js'
-import FormSubmission from '../../src/FormSubmission.js'
+import FormSubmission from '@/FormSubmission.ts'
+import Formulario from '@/Formulario.ts'
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioInput from '@/FormularioInput.vue'
 
 function validationMessages (instance) {
     instance.extend({
@@ -387,10 +386,10 @@ describe('FormularioForm', () => {
 
     it('displays field errors on inputs with errors prop', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { errors: { sipple: ['This field has an error'] }},
+            propsData: { errors: { fieldWithErrors: ['This field has an error'] }},
             slots: {
                 default: `
-                    <FormularioInput v-slot="vSlot" name="sipple">
+                    <FormularioInput v-slot="vSlot" name="fieldWithErrors">
                         <span v-for="error in vSlot.context.allErrors">{{ error.message }}</span>
                     </FormularioInput>
                 `

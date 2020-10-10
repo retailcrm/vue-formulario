@@ -14,201 +14,301 @@
     </div>
 </template>
 
-<script>
-import context from './libs/context'
+<script lang="ts">
+import Vue from 'vue'
+import {
+    Component,
+    Inject,
+    Model,
+    Prop,
+    Provide,
+    Watch,
+} from 'vue-property-decorator'
 import { shallowEqualObjects, parseRules, snakeToCamel, has, arrayify, groupBails } from './libs/utils'
+import { ValidationError } from '@/validation.types'
 
-export default {
-    name: 'FormularioInput',
+const ERROR_BEHAVIOR = {
+    BLUR: 'blur',
+    LIVE: 'live',
+    SUBMIT: 'submit',
+}
 
+@Component({
     inheritAttrs: false,
 
-    provide () {
-        return {
-            // Allows sub-components of this input to register arbitrary rules.
-            formularioRegisterRule: this.registerRule,
-            formularioRemoveRule: this.removeRule
-        }
-    },
-
-    inject: {
-        formularioSetter: { default: undefined },
-        formularioFieldValidation: { default: () => () => ({}) },
-        formularioRegister: { default: undefined },
-        formularioDeregister: { default: undefined },
-        getFormValues: { default: () => () => ({}) },
-        observeErrors: { default: undefined },
-        removeErrorObserver: { default: undefined },
-        path: { default: '' }
-    },
-
-    model: {
-        prop: 'formularioValue',
-        event: 'input'
-    },
-
     props: {
-        type: {
-            type: String,
-            default: 'text'
-        },
-
-        name: {
-            type: String,
-            required: true
-        },
-
-        /* eslint-disable */
-        formularioValue: {
-            default: ''
-        },
-
-        value: {
-            default: false
-        },
-        /* eslint-enable */
-
-        id: {
-            type: [String, Boolean, Number],
-            default: false
-        },
-
-        errors: {
-            type: [String, Array, Boolean],
-            default: false
-        },
-
-        validation: {
-            type: [String, Boolean, Array],
-            default: false
-        },
-
-        validationName: {
-            type: [String, Boolean],
-            default: false
-        },
-
-        errorBehavior: {
-            type: String,
-            default: 'blur',
-            validator (value) {
-                return ['blur', 'live', 'submit'].includes(value)
-            }
-        },
-
-        showErrors: {
-            type: Boolean,
-            default: false
-        },
-
         imageBehavior: {
             type: String,
             default: 'preview'
-        },
-
-        uploadUrl: {
-            type: [String, Boolean],
-            default: false
         },
 
         uploader: {
             type: [Function, Object, Boolean],
             default: false
         },
-
-        uploadBehavior: {
-            type: String,
-            default: 'live'
-        },
-
-        preventWindowDrops: {
-            type: Boolean,
-            default: true
-        },
-
-        validationMessages: {
-            type: Object,
-            default: () => ({})
-        },
-
-        validationRules: {
-            type: Object,
-            default: () => ({})
-        },
-
-        disableErrors: {
-            type: Boolean,
-            default: false
-        }
     },
+})
+export default class FormularioInput extends Vue {
+    @Inject({ default: undefined }) formularioSetter!: Function | undefined
+    @Inject({ default: () => () => ({}) }) formularioFieldValidation!: Function
+    @Inject({ default: undefined }) formularioRegister!: Function | undefined
+    @Inject({ default: undefined }) formularioDeregister!: Function | undefined
+    @Inject({ default: () => () => ({}) }) getFormValues!: Function
+    @Inject({ default: undefined }) observeErrors!: Function | undefined
+    @Inject({ default: undefined }) removeErrorObserver!: Function | undefined
+    @Inject({ default: '' }) path!: string
 
-    data () {
-        return {
-            defaultId: this.$formulario.nextId(this),
-            localAttributes: {},
-            localErrors: [],
-            proxy: this.getInitialValue(),
-            behavioralErrorVisibility: (this.errorBehavior === 'live'),
-            formShouldShowErrors: false,
-            validationErrors: [],
-            pendingValidation: Promise.resolve(),
-            // These registries are used for injected messages registrants only (mostly internal).
-            ruleRegistry: [],
-            messageRegistry: {}
+    @Provide() formularioRegisterRule = this.registerRule
+    @Provide() formularioRemoveRule = this.removeRule
+
+    @Model('input', {
+        default: '',
+    }) formularioValue: any
+
+    @Prop({
+        type: [String, Number, Boolean],
+        default: false,
+    }) id!: string | number | boolean
+
+    @Prop({ default: 'text' }) type!: string
+    @Prop({ required: true }) name: string | boolean
+    @Prop({ default: false }) value!: any
+
+    @Prop({
+        type: [String, Boolean, Array],
+        default: false,
+    }) validation
+
+    @Prop({
+        type: [String, Boolean],
+        default: false,
+    }) validationName!: string | boolean
+
+    @Prop({
+        type: Object,
+        default: () => ({}),
+    }) validationRules!: Object
+
+    @Prop({
+        type: Object,
+        default: () => ({}),
+    }) validationMessages!: Object
+
+    @Prop({
+        type: [Array, String, Boolean],
+        default: false,
+    }) errors!: [] | string | boolean
+
+    @Prop({
+        type: String,
+        default: ERROR_BEHAVIOR.BLUR,
+        validator: value => [ERROR_BEHAVIOR.BLUR, ERROR_BEHAVIOR.LIVE, ERROR_BEHAVIOR.SUBMIT].includes(value)
+    }) errorBehavior!: string
+
+    @Prop({ default: false }) showErrors!: boolean
+    @Prop({ default: false }) disableErrors!: boolean
+    @Prop({ default: false }) uploadUrl!: string | boolean
+    @Prop({ default: 'live' }) uploadBehavior!: string
+    @Prop({ default: true }) preventWindowDrops!: boolean
+
+    defaultId: string = this.$formulario.nextId(this)
+    localAttributes: Object = {}
+    localErrors: ValidationError[] = []
+    proxy: Object = this.getInitialValue()
+    behavioralErrorVisibility: boolean = this.errorBehavior === 'live'
+    formShouldShowErrors: boolean = false
+    validationErrors: [] = []
+    pendingValidation: Promise = Promise.resolve()
+    // These registries are used for injected messages registrants only (mostly internal).
+    ruleRegistry: [] = []
+    messageRegistry: Object = {}
+
+    get context () {
+        return this.defineModel({
+            attributes: this.elementAttributes,
+            blurHandler: this.blurHandler.bind(this),
+            disableErrors: this.disableErrors,
+            errors: this.explicitErrors,
+            allErrors: this.allErrors,
+            formShouldShowErrors: this.formShouldShowErrors,
+            getValidationErrors: this.getValidationErrors.bind(this),
+            hasGivenName: this.hasGivenName,
+            hasValidationErrors: this.hasValidationErrors.bind(this),
+            help: this.help,
+            id: this.id || this.defaultId,
+            imageBehavior: this.imageBehavior,
+            limit: this.limit,
+            name: this.nameOrFallback,
+            performValidation: this.performValidation.bind(this),
+            preventWindowDrops: this.preventWindowDrops,
+            repeatable: this.repeatable,
+            setErrors: this.setErrors.bind(this),
+            showValidationErrors: this.showValidationErrors,
+            uploadBehavior: this.uploadBehavior,
+            uploadUrl: this.mergedUploadUrl,
+            uploader: this.uploader || this.$formulario.getUploader(),
+            validationErrors: this.validationErrors,
+            value: this.value,
+            visibleValidationErrors: this.visibleValidationErrors,
+        })
+    }
+
+    get parsedValidationRules () {
+        const parsedValidationRules = {}
+        Object.keys(this.validationRules).forEach(key => {
+            parsedValidationRules[snakeToCamel(key)] = this.validationRules[key]
+        })
+        return parsedValidationRules
+    }
+
+    get messages () {
+        const messages = {}
+        Object.keys(this.validationMessages).forEach((key) => {
+            messages[snakeToCamel(key)] = this.validationMessages[key]
+        })
+        Object.keys(this.messageRegistry).forEach((key) => {
+            messages[snakeToCamel(key)] = this.messageRegistry[key]
+        })
+        return messages
+    }
+
+    /**
+     * Reducer for attributes that will be applied to each core input element.
+     */
+    get elementAttributes () {
+        const attrs = Object.assign({}, this.localAttributes)
+        // pass the ID prop through to the root element
+        if (this.id) {
+            attrs.id = this.id
+        } else {
+            attrs.id = this.defaultId
         }
-    },
-
-    computed: {
-        ...context,
-
-        parsedValidationRules () {
-            const parsedValidationRules = {}
-            Object.keys(this.validationRules).forEach(key => {
-                parsedValidationRules[snakeToCamel(key)] = this.validationRules[key]
-            })
-            return parsedValidationRules
-        },
-
-        messages () {
-            const messages = {}
-            Object.keys(this.validationMessages).forEach((key) => {
-                messages[snakeToCamel(key)] = this.validationMessages[key]
-            })
-            Object.keys(this.messageRegistry).forEach((key) => {
-                messages[snakeToCamel(key)] = this.messageRegistry[key]
-            })
-            return messages
+        // pass an explicitly given name prop through to the root element
+        if (this.hasGivenName) {
+            attrs.name = this.name
         }
-    },
 
-    watch: {
-        $attrs: {
-            handler (value) {
-                this.updateLocalAttributes(value)
-            },
-            deep: true
-        },
-
-        proxy (newValue, oldValue) {
-            this.performValidation()
-            if (!this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
-                this.context.model = newValue
-            }
-        },
-
-        formularioValue (newValue, oldValue) {
-            if (this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
-                this.context.model = newValue
-            }
-        },
-
-        showValidationErrors: {
-            handler (val) {
-                this.$emit('error-visibility', val)
-            },
-            immediate: true
+        // If there is help text, have this element be described by it.
+        if (this.help) {
+            attrs['aria-describedby'] = `${attrs.id}-help`
         }
-    },
+
+        return attrs
+    }
+
+    /**
+     * Return the element’s name, or select a fallback.
+     */
+    get nameOrFallback () {
+        return this.path !== '' ? `${this.path}.${this.name}` : this.name
+    }
+
+    /**
+     * Determine if an input has a user-defined name.
+     */
+    get hasGivenName () {
+        return typeof this.name !== 'boolean'
+    }
+
+    /**
+     * The validation label to use.
+     */
+    get mergedValidationName () {
+        return this.validationName || this.name
+    }
+
+    /**
+     * Use the uploadURL on the input if it exists, otherwise use the uploadURL
+     * that is defined as a plugin option.
+     */
+    get mergedUploadUrl () {
+        return this.uploadUrl || this.$formulario.getUploadUrl()
+    }
+
+    /**
+     * Does this computed property have errors
+     */
+    get hasErrors () {
+        return this.allErrors.length > 0
+    }
+
+    /**
+     * Returns if form has actively visible errors (of any kind)
+     */
+    get hasVisibleErrors () {
+        return ((this.validationErrors && this.showValidationErrors) || !!this.explicitErrors.length)
+    }
+
+    /**
+     * The merged errors computed property.
+     * Each error is an object with fields message (translated message), rule (rule name) and context
+     */
+    get allErrors (): ValidationError[] {
+        return [
+            ...this.explicitErrors,
+            ...arrayify(this.validationErrors)
+        ]
+    }
+
+    /**
+     * All of the currently visible validation errors (does not include error handling)
+     */
+    get visibleValidationErrors () {
+        return (this.showValidationErrors && this.validationErrors.length) ? this.validationErrors : []
+    }
+
+    /**
+     * These are errors we that have been explicity passed to us.
+     */
+    get explicitErrors (): ValidationError[] {
+        return [
+            ...arrayify(this.errors),
+            ...this.localErrors,
+            ...arrayify(this.error),
+        ].map(message => ({ rule: null, context: null, message }))
+    }
+
+    /**
+     * Determines if this formulario element is v-modeled or not.
+     */
+    get isVmodeled (): boolean {
+        return !!(Object.prototype.hasOwnProperty.call(this.$options.propsData, 'formularioValue') &&
+            this._events &&
+            Array.isArray(this._events.input) &&
+            this._events.input.length)
+    }
+
+    /**
+     * Determines if the field should show it's error (if it has one)
+     */
+    get showValidationErrors (): boolean {
+        return this.showErrors || this.formShouldShowErrors || this.behavioralErrorVisibility
+    }
+
+    @Watch('$attrs', { deep: true })
+    onAttrsChanged (value) {
+        this.updateLocalAttributes(value)
+    }
+
+    @Watch('proxy')
+    onProxyChanged (newValue, oldValue) {
+        this.performValidation()
+        if (!this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
+            this.context.model = newValue
+        }
+    }
+
+    @Watch('formularioValue')
+    onFormularioValueChanged (newValue, oldValue) {
+        if (this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
+            this.context.model = newValue
+        }
+    }
+
+    @Watch('showValidationErrors', { immediate: true })
+    onShowValidationErrorsChanged (val) {
+        this.$emit('error-visibility', val)
+    }
 
     created () {
         this.applyInitialValue()
@@ -219,10 +319,8 @@ export default {
             this.observeErrors({ callback: this.setErrors, type: 'input', field: this.nameOrFallback })
         }
         this.updateLocalAttributes(this.$attrs)
-        if (this.errorBehavior === 'live') {
-            this.performValidation()
-        }
-    },
+        this.performValidation()
+    }
 
     beforeDestroy () {
         if (!this.disableErrors && typeof this.removeErrorObserver === 'function') {
@@ -231,160 +329,203 @@ export default {
         if (typeof this.formularioDeregister === 'function') {
             this.formularioDeregister(this.nameOrFallback)
         }
-    },
+    }
 
-    methods: {
-        getInitialValue () {
-            if (has(this.$options.propsData, 'value')) {
-                return this.value
-            } else if (has(this.$options.propsData, 'formularioValue')) {
-                return this.formularioValue
-            }
+    /**
+     * Defines the model used throughout the existing context.
+     * @param {object} context
+     */
+    defineModel (context) {
+        return Object.defineProperty(context, 'model', {
+            get: this.modelGetter.bind(this),
+            set: this.modelSetter.bind(this),
+        })
+    }
+
+    /**
+     * Get the value from a model.
+     */
+    modelGetter () {
+        const model = this.isVmodeled ? 'formularioValue' : 'proxy'
+        if (this[model] === undefined) {
             return ''
-        },
+        }
+        return this[model]
+    }
 
-        applyInitialValue () {
-            // This should only be run immediately on created and ensures that the
-            // proxy and the model are both the same before any additional registration.
-            if (!shallowEqualObjects(this.context.model, this.proxy)) {
-                this.context.model = this.proxy
-            }
-        },
+    /**
+     * Set the value from a model.
+     */
+    modelSetter (value) {
+        if (!shallowEqualObjects(value, this.proxy)) {
+            this.proxy = value
+        }
+        this.$emit('input', value)
+        if (this.context.name && typeof this.formularioSetter === 'function') {
+            this.formularioSetter(this.context.name, value)
+        }
+    }
 
-        updateLocalAttributes (value) {
-            if (!shallowEqualObjects(value, this.localAttributes)) {
-                this.localAttributes = value
-            }
-        },
+    /**
+     * Bound into the context object.
+     */
+    blurHandler () {
+        this.$emit('blur')
+        if (this.errorBehavior === 'blur') {
+            this.behavioralErrorVisibility = true
+        }
+    }
 
-        performValidation () {
-            let rules = parseRules(this.validation, this.$formulario.rules(this.parsedValidationRules))
-            // Add in ruleRegistry rules. These are added directly via injection from
-            // children and not part of the standard validation rule set.
-            rules = this.ruleRegistry.length ? this.ruleRegistry.concat(rules) : rules
-            this.pendingValidation = this.runRules(rules)
-                .then(messages => this.didValidate(messages))
-            return this.pendingValidation
-        },
+    getInitialValue () {
+        if (has(this.$options.propsData, 'value')) {
+            return this.value
+        } else if (has(this.$options.propsData, 'formularioValue')) {
+            return this.formularioValue
+        }
+        return ''
+    }
 
-        runRules (rules) {
-            const run = ([rule, args, ruleName, modifier]) => {
-                var res = rule({
-                    value: this.context.model,
-                    getFormValues: this.getFormValues.bind(this),
-                    name: this.context.name
-                }, ...args)
-                res = (res instanceof Promise) ? res : Promise.resolve(res)
-                return res.then(result => result ? false : this.getMessageObject(ruleName, args))
-            }
+    applyInitialValue () {
+        // This should only be run immediately on created and ensures that the
+        // proxy and the model are both the same before any additional registration.
+        if (!shallowEqualObjects(this.context.model, this.proxy)) {
+            this.context.model = this.proxy
+        }
+    }
 
-            return new Promise(resolve => {
-                const resolveGroups = (groups, allMessages = []) => {
-                    const ruleGroup = groups.shift()
-                    if (Array.isArray(ruleGroup) && ruleGroup.length) {
-                        Promise.all(ruleGroup.map(run))
-                            .then(messages => messages.filter(m => !!m))
-                            .then(messages => {
-                                messages = Array.isArray(messages) ? messages : []
-                                // The rule passed or its a non-bailing group, and there are additional groups to check, continue
-                                if ((!messages.length || !ruleGroup.bail) && groups.length) {
-                                    return resolveGroups(groups, allMessages.concat(messages))
-                                }
-                                return resolve(allMessages.concat(messages))
-                            })
-                    } else {
-                        resolve([])
-                    }
-                }
-                resolveGroups(groupBails(rules))
-            })
-        },
+    updateLocalAttributes (value) {
+        if (!shallowEqualObjects(value, this.localAttributes)) {
+            this.localAttributes = value
+        }
+    }
 
-        didValidate (messages) {
-            const validationChanged = !shallowEqualObjects(messages, this.validationErrors)
-            this.validationErrors = messages
-            if (validationChanged) {
-                const errorObject = this.getErrorObject()
-                this.$emit('validation', errorObject)
-                if (this.formularioFieldValidation && typeof this.formularioFieldValidation === 'function') {
-                    this.formularioFieldValidation(errorObject)
-                }
-            }
-        },
+    performValidation () {
+        let rules = parseRules(this.validation, this.$formulario.rules(this.parsedValidationRules))
+        // Add in ruleRegistry rules. These are added directly via injection from
+        // children and not part of the standard validation rule set.
+        rules = this.ruleRegistry.length ? this.ruleRegistry.concat(rules) : rules
+        this.pendingValidation = this.runRules(rules)
+            .then(messages => this.didValidate(messages))
+        return this.pendingValidation
+    }
 
-        getMessageObject (ruleName, args) {
-            const context = {
-                args,
-                name: this.mergedValidationName,
+    runRules (rules) {
+        const run = ([rule, args, ruleName]) => {
+            let res = rule({
                 value: this.context.model,
-                vm: this,
-                formValues: this.getFormValues()
-            }
-            const message = this.getMessageFunc(ruleName)(context)
+                getFormValues: this.getFormValues.bind(this),
+                name: this.context.name
+            }, ...args)
+            res = (res instanceof Promise) ? res : Promise.resolve(res)
+            return res.then(result => result ? false : this.getMessageObject(ruleName, args))
+        }
 
-            return {
-                message: message,
-                rule: ruleName,
-                context: context
+        return new Promise(resolve => {
+            const resolveGroups = (groups, allMessages = []) => {
+                const ruleGroup = groups.shift()
+                if (Array.isArray(ruleGroup) && ruleGroup.length) {
+                    Promise.all(ruleGroup.map(run))
+                        .then(messages => messages.filter(m => !!m))
+                        .then(messages => {
+                            messages = Array.isArray(messages) ? messages : []
+                            // The rule passed or its a non-bailing group, and there are additional groups to check, continue
+                            if ((!messages.length || !ruleGroup.bail) && groups.length) {
+                                return resolveGroups(groups, allMessages.concat(messages))
+                            }
+                            return resolve(allMessages.concat(messages))
+                        })
+                } else {
+                    resolve([])
+                }
             }
-        },
+            resolveGroups(groupBails(rules))
+        })
+    }
 
-        getMessageFunc (ruleName) {
-            ruleName = snakeToCamel(ruleName)
-            if (this.messages && typeof this.messages[ruleName] !== 'undefined') {
-                switch (typeof this.messages[ruleName]) {
+    didValidate (messages) {
+        const validationChanged = !shallowEqualObjects(messages, this.validationErrors)
+        this.validationErrors = messages
+        if (validationChanged) {
+            const errorObject = this.getErrorObject()
+            this.$emit('validation', errorObject)
+            if (this.formularioFieldValidation && typeof this.formularioFieldValidation === 'function') {
+                this.formularioFieldValidation(errorObject)
+            }
+        }
+    }
+
+    getMessageObject (ruleName, args) {
+        const context = {
+            args,
+            name: this.mergedValidationName,
+            value: this.context.model,
+            vm: this,
+            formValues: this.getFormValues()
+        }
+        const message = this.getMessageFunc(ruleName)(context)
+
+        return {
+            rule: ruleName,
+            context,
+            message,
+        }
+    }
+
+    getMessageFunc (ruleName) {
+        ruleName = snakeToCamel(ruleName)
+        if (this.messages && typeof this.messages[ruleName] !== 'undefined') {
+            switch (typeof this.messages[ruleName]) {
                 case 'function':
                     return this.messages[ruleName]
                 case 'string':
                 case 'boolean':
                     return () => this.messages[ruleName]
-                }
             }
-            return (context) => this.$formulario.validationMessage(ruleName, context, this)
-        },
+        }
+        return (context) => this.$formulario.validationMessage(ruleName, context, this)
+    }
 
-        hasValidationErrors () {
-            return new Promise(resolve => {
-                this.$nextTick(() => {
-                    this.pendingValidation.then(() => resolve(!!this.validationErrors.length))
-                })
+    hasValidationErrors () {
+        return new Promise(resolve => {
+            this.$nextTick(() => {
+                this.pendingValidation.then(() => resolve(!!this.validationErrors.length))
             })
-        },
+        })
+    }
 
-        getValidationErrors () {
-            return new Promise(resolve => {
-                this.$nextTick(() => this.pendingValidation.then(() => resolve(this.getErrorObject())))
-            })
-        },
+    getValidationErrors () {
+        return new Promise(resolve => {
+            this.$nextTick(() => this.pendingValidation.then(() => resolve(this.getErrorObject())))
+        })
+    }
 
-        getErrorObject () {
-            return {
-                name: this.context.nameOrFallback || this.context.name,
-                errors: this.validationErrors.filter(s => typeof s === 'object'),
-                hasErrors: !!this.validationErrors.length
+    getErrorObject () {
+        return {
+            name: this.context.nameOrFallback || this.context.name,
+            errors: this.validationErrors.filter(s => typeof s === 'object'),
+            hasErrors: !!this.validationErrors.length
+        }
+    }
+
+    setErrors (errors) {
+        this.localErrors = arrayify(errors)
+    }
+
+    registerRule (rule, args, ruleName, message = null) {
+        if (!this.ruleRegistry.some(r => r[2] === ruleName)) {
+            // These are the raw rule format since they will be used directly.
+            this.ruleRegistry.push([rule, args, ruleName])
+            if (message !== null) {
+                this.messageRegistry[ruleName] = message
             }
-        },
+        }
+    }
 
-        setErrors (errors) {
-            this.localErrors = arrayify(errors)
-        },
-
-        registerRule (rule, args, ruleName, message = null) {
-            if (!this.ruleRegistry.some(r => r[2] === ruleName)) {
-                // These are the raw rule format since they will be used directly.
-                this.ruleRegistry.push([rule, args, ruleName])
-                if (message !== null) {
-                    this.messageRegistry[ruleName] = message
-                }
-            }
-        },
-
-        removeRule (key) {
-            const ruleIndex = this.ruleRegistry.findIndex(r => r[2] === key)
-            if (ruleIndex >= 0) {
-                this.ruleRegistry.splice(ruleIndex, 1)
-                delete this.messageRegistry[key]
-            }
+    removeRule (key) {
+        const ruleIndex = this.ruleRegistry.findIndex(r => r[2] === key)
+        if (ruleIndex >= 0) {
+            this.ruleRegistry.splice(ruleIndex, 1)
+            delete this.messageRegistry[key]
         }
     }
 }

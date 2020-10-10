@@ -7,42 +7,36 @@
     </div>
 </template>
 
-<script>
-export default {
-    name: 'FormularioGrouping',
+<script lang="ts">
+import Vue from 'vue'
+import { Component, Prop } from 'vue-property-decorator'
 
+@Component({
     provide () {
         return {
-            path: this.groupPath
+            path: this.groupPath,
         }
     },
 
     inject: ['path'],
+})
+export default class FormularioGrouping extends Vue {
+    @Prop({ required: true })
+    readonly name!: string
 
-    props: {
-        name: {
-            type: String,
-            required: true
-        },
+    @Prop({ default: false })
+    readonly isArrayItem!: boolean
 
-        isArrayItem: {
-            type: Boolean,
-            default: false
+    get groupPath () {
+        if (this.isArrayItem) {
+            return `${this.path}[${this.name}]`
         }
-    },
 
-    computed: {
-        groupPath () {
-            if (this.isArrayItem) {
-                return `${this.path}[${this.name}]`
-            }
-
-            if (this.path === '') {
-                return this.name
-            }
-
-            return `${this.path}.${this.name}`
+        if (this.path === '') {
+            return this.name
         }
+
+        return `${this.path}.${this.name}`
     }
 }
 </script>

@@ -1,6 +1,8 @@
+// @ts-ignore
 import isUrl from 'is-url'
 import FileUpload from '../FileUpload'
-import { shallowEqualObjects, regexForFormat } from './utils'
+import { shallowEqualObjects, regexForFormat, has } from './utils'
+import { ObjectType } from '@/common.types'
 
 /**
  * Library of rules
@@ -9,15 +11,15 @@ export default {
     /**
      * Rule: the value must be "yes", "on", "1", or true
      */
-    accepted: function ({ value }) {
+    accepted ({ value }: { value: any }) {
         return Promise.resolve(['yes', 'on', '1', 1, true, 'true'].includes(value))
     },
 
     /**
      * Rule: checks if a value is after a given date. Defaults to current time
      */
-    after: function ({ value }, compare = false) {
-        const timestamp = Date.parse(compare || new Date())
+    after ({ value }: { value: string }, compare: string | false = false) {
+        const timestamp = compare !== false ? Date.parse(compare) : new Date()
         const fieldValue = Date.parse(value)
         return Promise.resolve(isNaN(fieldValue) ? false : (fieldValue > timestamp))
     },
@@ -25,32 +27,34 @@ export default {
     /**
      * Rule: checks if the value is only alpha
      */
-    alpha: function ({ value }, set = 'default') {
+    alpha ({ value }: { value: string }, set: string = 'default') {
         const sets = {
             default: /^[a-zA-ZÀ-ÖØ-öø-ÿ]+$/,
             latin: /^[a-zA-Z]+$/
         }
-        const selectedSet = sets.hasOwnProperty(set) ? set : 'default'
+        const selectedSet = has(sets, set) ? set : 'default'
+        // @ts-ignore
         return Promise.resolve(sets[selectedSet].test(value))
     },
 
     /**
      * Rule: checks if the value is alpha numeric
      */
-    alphanumeric: function ({ value }, set = 'default') {
+    alphanumeric ({ value }: { value: string }, set = 'default') {
         const sets = {
             default: /^[a-zA-Z0-9À-ÖØ-öø-ÿ]+$/,
             latin: /^[a-zA-Z0-9]+$/
         }
-        const selectedSet = sets.hasOwnProperty(set) ? set : 'default'
+        const selectedSet = has(sets, set) ? set : 'default'
+        // @ts-ignore
         return Promise.resolve(sets[selectedSet].test(value))
     },
 
     /**
      * Rule: checks if a value is after a given date. Defaults to current time
      */
-    before: function ({ value }, compare = false) {
-        const timestamp = Date.parse(compare || new Date())
+    before ({ value }: { value: string }, compare: string | false = false) {
+        const timestamp = compare !== false ? Date.parse(compare) : new Date()
         const fieldValue = Date.parse(value)
         return Promise.resolve(isNaN(fieldValue) ? false : (fieldValue < timestamp))
     },
@@ -58,19 +62,19 @@ export default {
     /**
      * Rule: checks if the value is between two other values
      */
-    between: function ({ value }, from = 0, to = 10, force) {
+    between ({ value }: { value: string | number }, from: number = 0, to: number = 10, force: string) {
         return Promise.resolve((() => {
             if (from === null || to === null || isNaN(from) || isNaN(to)) {
                 return false
             }
-            if ((!isNaN(value) && force !== 'length') || force === 'value') {
+            if ((!isNaN(Number(value)) && force !== 'length') || force === 'value') {
                 value = Number(value)
                 from = Number(from)
                 to = Number(to)
                 return (value > from && value < to)
             }
             if (typeof value === 'string' || force === 'length') {
-                value = !isNaN(value) ? value.toString() : value
+                value = (!isNaN(Number(value)) ? value.toString() : value) as string
                 return value.length > from && value.length < to
             }
             return false
@@ -81,10 +85,10 @@ export default {
      * Confirm that the value of one field is the same as another, mostly used
      * for password confirmations.
      */
-    confirm: function ({ value, getFormValues, name }, field) {
+    confirm ({ value, getFormValues, name }: { value: any, getFormValues: () => ObjectType, name: string }, field: string) {
         return Promise.resolve((() => {
             const formValues = getFormValues()
-            var confirmationFieldName = field
+            let confirmationFieldName = field
             if (!confirmationFieldName) {
                 confirmationFieldName = /_confirm$/.test(name) ? name.substr(0, name.length - 8) : `${name}_confirm`
             }
@@ -96,9 +100,9 @@ export default {
      * Rule: ensures the value is a date according to Date.parse(), or a format
      * regex.
      */
-    date: function ({ value }, format = false) {
+    date ({ value }: { value: string }, format: string | false = false) {
         return Promise.resolve((() => {
-            if (format && typeof format === 'string') {
+            if (format) {
                 return regexForFormat(format).test(value)
             }
             return !isNaN(Date.parse(value))
@@ -108,7 +112,7 @@ export default {
     /**
      * Rule: tests
      */
-    email: function ({ value }) {
+    email ({ value }: { value: string}) {
         if (!value) {
             return Promise.resolve(() => { return true })
         }
@@ -121,7 +125,7 @@ export default {
     /**
      * Rule: Value ends with one of the given Strings
      */
-    endsWith: function ({ value }, ...stack) {
+    endsWith: function ({ value }: any, ...stack: any[]) {
         if (!value) {
             return Promise.resolve(() => { return true })
         }
@@ -141,7 +145,7 @@ export default {
     /**
      * Rule: Value is in an array (stack).
      */
-    in: function ({ value }, ...stack) {
+    in: function ({ value }: any, ...stack: any[]) {
         return Promise.resolve(stack.find(item => {
             if (typeof item === 'object') {
                 return shallowEqualObjects(item, value)
@@ -153,7 +157,7 @@ export default {
     /**
      * Rule: Match the value against a (stack) of patterns or strings
      */
-    matches: function ({ value }, ...stack) {
+    matches: function ({ value }: any, ...stack: any[]) {
         return Promise.resolve(!!stack.find(pattern => {
             if (typeof pattern === 'string' && pattern.substr(0, 1) === '/' && pattern.substr(-1) === '/') {
                 pattern = new RegExp(pattern.substr(1, pattern.length - 2))
@@ -168,7 +172,7 @@ export default {
     /**
      * Check the file type is correct.
      */
-    mime: function ({ value }, ...types) {
+    mime: function ({ value }: any, ...types: string[]) {
         return Promise.resolve((() => {
             if (value instanceof FileUpload) {
                 const fileList = value.getFiles()
@@ -186,7 +190,7 @@ export default {
     /**
      * Check the minimum value of a particular.
      */
-    min: function ({ value }, minimum = 1, force) {
+    min: function ({ value }: any, minimum = 1, force: string) {
         return Promise.resolve((() => {
             if (Array.isArray(value)) {
                 minimum = !isNaN(minimum) ? Number(minimum) : minimum
@@ -207,7 +211,7 @@ export default {
     /**
      * Check the maximum value of a particular.
      */
-    max: function ({ value }, maximum = 10, force) {
+    max: function ({ value }: any, maximum = 10, force: string) {
         return Promise.resolve((() => {
             if (Array.isArray(value)) {
                 maximum = !isNaN(maximum) ? Number(maximum) : maximum
@@ -228,7 +232,7 @@ export default {
     /**
      * Rule: Value is not in stack.
      */
-    not: function ({ value }, ...stack) {
+    not: function ({ value }: any, ...stack: any[]) {
         return Promise.resolve(stack.find(item => {
             if (typeof item === 'object') {
                 return shallowEqualObjects(item, value)
@@ -240,16 +244,16 @@ export default {
     /**
      * Rule: checks if the value is only alpha numeric
      */
-    number: function ({ value }) {
+    number ({ value }: { value: any }) {
         return Promise.resolve(!isNaN(value))
     },
 
     /**
      * Rule: must be a value
      */
-    required: function ({ value }, isRequired = true) {
+    required ({ value }: any, isRequired: string|boolean = true) {
         return Promise.resolve((() => {
-            if (!isRequired || ['no', 'false'].includes(isRequired)) {
+            if (!isRequired || ['no', 'false'].includes(isRequired as string)) {
                 return true
             }
             if (Array.isArray(value)) {
@@ -271,16 +275,14 @@ export default {
     /**
      * Rule: Value starts with one of the given Strings
      */
-    startsWith: function ({ value }, ...stack) {
+    startsWith ({ value }: { value: any }, ...stack: any[]) {
         if (!value) {
             return Promise.resolve(() => { return true })
         }
 
         return Promise.resolve((() => {
             if (typeof value === 'string' && stack.length) {
-                return stack.find(item => {
-                    return value.startsWith(item)
-                }) !== undefined
+                return stack.find(item => value.startsWith(item)) !== undefined
             } else if (typeof value === 'string' && stack.length === 0) {
                 return true
             }
@@ -291,14 +293,14 @@ export default {
     /**
      * Rule: checks if a string is a valid url
      */
-    url: function ({ value }) {
+    url ({ value }: { value: string }) {
         return Promise.resolve(isUrl(value))
     },
 
     /**
      * Rule: not a true rule — more like a compiler flag.
      */
-    bail: function () {
+    bail () {
         return Promise.resolve(true)
     }
 }

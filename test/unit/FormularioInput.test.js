@@ -1,11 +1,12 @@
+import Vue from 'vue'
 import flushPromises from 'flush-promises'
-import { mount, createLocalVue } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 
-import Formulario from '@/Formulario.js'
+import Formulario from '@/Formulario.ts'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 
-const globalRule = jest.fn((context) => { return false })
+const globalRule = jest.fn(() => { return false })
 
 function validationMessages (instance) {
     instance.extend({
@@ -18,19 +19,14 @@ function validationMessages (instance) {
     })
 }
 
-const localVue = createLocalVue()
-
-localVue.use(Formulario, {
+Vue.use(Formulario, {
     plugins: [validationMessages],
-    rules: {
-        globalRule
-    }
+    rules: { globalRule }
 })
 
 describe('FormularioInput', () => {
     it('allows custom field-rule level validation strings', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
@@ -64,7 +60,6 @@ describe('FormularioInput', () => {
 
     it('allows custom field-rule level validation functions', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
@@ -82,7 +77,6 @@ describe('FormularioInput', () => {
 
     it('uses custom async validation rules on defined on the field', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 name: 'test',
                 validation: 'required|foobar',
@@ -105,7 +99,6 @@ describe('FormularioInput', () => {
 
     it('uses custom sync validation rules on defined on the field', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 name: 'test',
                 validation: 'required|foobar',
@@ -128,7 +121,6 @@ describe('FormularioInput', () => {
 
     it('uses global custom validation rules', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 name: 'test',
                 validation: 'required|globalRule',
@@ -142,7 +134,6 @@ describe('FormularioInput', () => {
 
     it('emits correct validation event', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 validation: 'required',
                 errorBehavior: 'live',
@@ -167,7 +158,6 @@ describe('FormularioInput', () => {
 
     it('emits a error-visibility event on blur', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 validation: 'required',
                 errorBehavior: 'blur',
@@ -187,7 +177,6 @@ describe('FormularioInput', () => {
 
     it('emits error-visibility event immediately when live', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 validation: 'required',
                 errorBehavior: 'live',
@@ -201,7 +190,6 @@ describe('FormularioInput', () => {
 
     it('Does not emit an error-visibility event if visibility did not change', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 validation: 'in:xyz',
                 errorBehavior: 'live',
@@ -221,7 +209,6 @@ describe('FormularioInput', () => {
 
     it('can bail on validation when encountering the bail rule', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: { name: 'test', validation: 'bail|required|in:xyz', errorBehavior: 'live' }
         })
         await flushPromises();
@@ -230,7 +217,6 @@ describe('FormularioInput', () => {
 
     it('can show multiple validation errors if they occur before the bail rule', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: { name: 'test', validation: 'required|in:xyz|bail', errorBehavior: 'live' }
         })
         await flushPromises();
@@ -239,7 +225,6 @@ describe('FormularioInput', () => {
 
     it('can avoid bail behavior by using modifier', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: { name: 'test', validation: '^required|in:xyz|min:10,length', errorBehavior: 'live', value: '123' }
         })
         await flushPromises();
@@ -248,7 +233,6 @@ describe('FormularioInput', () => {
 
     it('prevents later error messages when modified rule fails', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: { name: 'test', validation: '^required|in:xyz|min:10,length', errorBehavior: 'live' }
         })
         await flushPromises();
@@ -257,7 +241,6 @@ describe('FormularioInput', () => {
 
     it('can bail in the middle of the rule set with a modifier', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: { name: 'test', validation: 'required|^in:xyz|min:10,length', errorBehavior: 'live' }
         })
         await flushPromises();
@@ -266,7 +249,6 @@ describe('FormularioInput', () => {
 
     it('does not show errors on blur when set error-behavior is submit', async () => {
         const wrapper = mount(FormularioInput, {
-            localVue,
             propsData: {
                 validation: 'required',
                 errorBehavior: 'submit',
@@ -291,8 +273,7 @@ describe('FormularioInput', () => {
 
     it('displays errors when error-behavior is submit and form is submitted', async () => {
         const wrapper = mount(FormularioForm, {
-            localVue,
-            propsData: {name: 'test'},
+            propsData: { name: 'test' },
             slots: {
                 default: `
                     <FormularioInput v-slot="inputProps" validation="required" name="testinput" error-behavior="submit">

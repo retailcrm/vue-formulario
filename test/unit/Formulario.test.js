@@ -1,4 +1,4 @@
-import Formulario from '@/Formulario.js'
+import Formulario from '@/Formulario.ts'
 
 describe('Formulario', () => {
     it('can merge simple object', () => {
@@ -71,7 +71,7 @@ describe('Formulario', () => {
         Vue.component = function (name, instance) {
             registry.push(name)
         }
-        Formulario.install(Vue, { extended: true })
+        Formulario.install(Vue)
         expect(Vue.prototype.$formulario).toBe(Formulario)
         expect(registry).toEqual(components)
     })

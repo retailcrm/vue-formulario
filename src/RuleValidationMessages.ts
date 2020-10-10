@@ -1,3 +1,7 @@
+import { Formulario } from '@/Formulario'
+import FormularioInput from '@/FormularioInput.vue'
+import { ValidationContext } from '@/validation.types'
+
 /**
  * This is an object of functions that each produce valid responses. There's no
  * need for these to be 1-1 with english, feel free to change the wording or
@@ -17,23 +21,22 @@ const validationMessages = {
     /**
      * The default render method for error messages.
      */
-    default: function (vm, context) {
+    default (vm: FormularioInput, context: ValidationContext): string {
         return vm.$t('validation.default', context)
     },
 
     /**
      * Valid accepted value.
      */
-    accepted: function (vm, context) {
+    accepted (vm: FormularioInput, context: ValidationContext): string {
         return vm.$t('validation.accepted', context)
     },
 
     /**
      * The date is not after.
      */
-    after: function (vm, context) {
+    after (vm: FormularioInput, context: ValidationContext): string {
         if (Array.isArray(context.args) && context.args.length) {
-            context.compare = context.args[0]
             return vm.$t('validation.after.compare', context)
         }
 
@@ -43,23 +46,22 @@ const validationMessages = {
     /**
      * The value is not a letter.
      */
-    alpha: function (vm, context) {
+    alpha (vm: FormularioInput, context: Object): string {
         return vm.$t('validation.alpha', context)
     },
 
     /**
      * Rule: checks if the value is alpha numeric
      */
-    alphanumeric: function (vm, context) {
+    alphanumeric (vm: FormularioInput, context: Object): string {
         return vm.$t('validation.alphanumeric', context)
     },
 
     /**
      * The date is not before.
      */
-    before: function (vm, context) {
+    before (vm: FormularioInput, context: ValidationContext): string {
         if (Array.isArray(context.args) && context.args.length) {
-            context.compare = context.args[0]
             return vm.$t('validation.before.compare', context)
         }
 
@@ -69,12 +71,10 @@ const validationMessages = {
     /**
      * The value is not between two numbers or lengths
      */
-    between: function (vm, context) {
-        context.from = context.args[0]
-        context.to = context.args[1]
-
+    between (vm: FormularioInput, context: ValidationContext): string {
         const force = Array.isArray(context.args) && context.args[2] ? context.args[2] : false
-        if ((!isNaN(value) && force !== 'length') || force === 'value') {
+
+        if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
             return vm.$t('validation.between.force', context)
         }
 
@@ -84,16 +84,15 @@ const validationMessages = {
     /**
      * The confirmation field does not match
      */
-    confirm: function (vm, context) {
+    confirm (vm: FormularioInput, context: ValidationContext): string {
         return vm.$t('validation.confirm', context)
     },
 
     /**
      * Is not a valid date.
      */
-    date: function (vm, context) {
+    date (vm: FormularioInput, context: ValidationContext): string {
         if (Array.isArray(context.args) && context.args.length) {
-            context.format = context.args[0]
             return vm.$t('validation.date.format', context)
         }
 
@@ -103,21 +102,21 @@ const validationMessages = {
     /**
      * Is not a valid email address.
      */
-    email: function (vm, context) {
+    email (vm: FormularioInput, context: ValidationContext): string {
         return vm.$t('validation.email.default', context)
     },
 
     /**
      * Ends with specified value
      */
-    endsWith: function (vm, context) {
+    endsWith (vm: FormularioInput, context: ValidationContext): string {
         return vm.$t('validation.endsWith.default', context)
     },
 
     /**
      * Value is an allowed value.
      */
-    in: function (vm, context) {
+    in: function (vm: FormularioInput, context: ValidationContext) {
         if (typeof context.value === 'string' && context.value) {
             return vm.$t('validation.in.string', context)
         }
@@ -128,32 +127,33 @@ const validationMessages = {
     /**
      * Value is not a match.
      */
-    matches: function (vm, context) {
+    matches (vm: FormularioInput, context: ValidationContext) {
         return vm.$t('validation.matches.default', context)
     },
 
     /**
      * The maximum value allowed.
      */
-    max: function (vm, context) {
-        context.maximum = context.args[0]
+    max (vm: FormularioInput, context: ValidationContext) {
+        const maximum = context.args[0] as number
 
         if (Array.isArray(context.value)) {
-            return vm.$tc('validation.max.array', context.maximum, context)
+            return vm.$tc('validation.max.array', maximum, context)
         }
         const force = Array.isArray(context.args) && context.args[1] ? context.args[1] : false
         if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
-            return vm.$tc('validation.max.force', context.maximum, context)
+            return vm.$tc('validation.max.force', maximum, context)
         }
-        return vm.$tc('validation.max.default', context.maximum, context)
+        return vm.$tc('validation.max.default', maximum, context)
     },
 
     /**
      * The (field-level) error message for mime errors.
      */
-    mime: function (vm, context) {
-        context.types = context.args[0]
-        if (context.types) {
+    mime (vm: FormularioInput, context: ValidationContext) {
+        const types = context.args[0]
+
+        if (types) {
             return vm.$t('validation.mime.default', context)
         } else {
             return vm.$t('validation.mime.no_formats_allowed', context)
@@ -163,51 +163,51 @@ const validationMessages = {
     /**
      * The maximum value allowed.
      */
-    min: function (vm, context) {
-        context.minimum = context.args[0]
+    min (vm: FormularioInput, context: ValidationContext) {
+        const minimum = context.args[0] as number
 
         if (Array.isArray(context.value)) {
-            return vm.$tc('validation.min.array', context.minimum, context)
+            return vm.$tc('validation.min.array', minimum, context)
         }
         const force = Array.isArray(context.args) && context.args[1] ? context.args[1] : false
         if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
-            return vm.$tc('validation.min.force', context.minimum, context)
+            return vm.$tc('validation.min.force', minimum, context)
         }
-        return vm.$tc('validation.min.default', context.minimum, context)
+        return vm.$tc('validation.min.default', minimum, context)
     },
 
     /**
      * The field is not an allowed value
      */
-    not: function (vm, context) {
+    not (vm: FormularioInput, context: Object) {
         return vm.$t('validation.not.default', context)
     },
 
     /**
      * The field is not a number
      */
-    number: function (vm, context) {
+    number (vm: FormularioInput, context: Object) {
         return vm.$t('validation.number.default', context)
     },
 
     /**
      * Required field.
      */
-    required: function (vm, context) {
+    required (vm: FormularioInput, context: Object) {
         return vm.$t('validation.required.default', context)
     },
 
     /**
      * Starts with specified value
      */
-    startsWith: function (vm, context) {
+    startsWith (vm: FormularioInput, context: Object) {
         return vm.$t('validation.startsWith.default', context)
     },
 
     /**
      * Value is not a url.
      */
-    url: function (vm, context) {
+    url (vm: FormularioInput, context: Object) {
         return vm.$t('validation.url.default', context)
     }
 }
@@ -216,8 +216,6 @@ const validationMessages = {
  * This creates a vue-formulario plugin that can be imported and used on each
  * project.
  */
-export default function (instance) {
-    instance.extend({
-        validationMessages
-    })
+export default function (instance: Formulario) {
+    instance.extend({ validationMessages })
 }

@@ -1,4 +1,27 @@
 import nanoid from 'nanoid/non-secure'
+import { AxiosResponse, AxiosError } from '@/axios.types'
+import { ObjectType } from '@/common.types'
+
+interface FileItem {
+    uuid: string
+    name: string
+    path: string | false
+    progress: number | false
+    error: any | false
+    complete: boolean
+    file: File
+    justFinished: boolean
+    removeFile(): void
+    previewData: string | false
+}
+
+interface ProgressSetter {
+    (progress: number): void
+}
+
+interface ErrorHandler {
+    (error: AxiosError): any
+}
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -6,13 +29,14 @@ import nanoid from 'nanoid/non-secure'
  * the upload flow.
  */
 class FileUpload {
-    /**
-     * Create a file upload object.
-     * @param {FileList} input
-     * @param {object} context
-     * @param {object} options
-     */
-    constructor (input, context, options = {}) {
+    public input: DataTransfer
+    public fileList: FileList
+    public files: FileItem[]
+    public options: ObjectType
+    public context: ObjectType
+    public results: any[] | boolean
+
+    constructor (input: DataTransfer, context: ObjectType, options: ObjectType = {}) {
         this.input = input
         this.fileList = input.files
         this.files = []
@@ -30,7 +54,7 @@ class FileUpload {
      * Given a pre-existing array of files, create a faux FileList.
      * @param {array} items expects an array of objects [{ url: '/uploads/file.pdf' }]
      */
-    rehydrateFileList (items) {
+    rehydrateFileList (items: any[]) {
         const fauxFileList = items.reduce((fileList, item) => {
             const key = this.options ? this.options.fileUrlKey : 'url'
             const url = item[key]
@@ -51,9 +75,9 @@ class FileUpload {
      * Produce an array of files and alert the callback.
      * @param {FileList} fileList
      */
-    addFileList (fileList) {
+    addFileList (fileList: FileList) {
         for (let i = 0; i < fileList.length; i++) {
-            const file = fileList[i]
+            const file: File = fileList[i]
             const uuid = nanoid()
             this.files.push({
                 progress: false,
@@ -65,6 +89,7 @@ class FileUpload {
                 uuid,
                 path: false,
                 removeFile: () => this.removeFile(uuid),
+                // @ts-ignore
                 previewData: file.previewData || false
             })
         }
@@ -94,24 +119,24 @@ class FileUpload {
     /**
      * Get a new uploader function.
      */
-    getUploader (...args) {
+    getUploader (...args: [File, ProgressSetter, ErrorHandler, ObjectType]) {
         if (this.uploaderIsAxios()) {
-            const formData = new FormData()
-            formData.append(this.context.name || 'file', args[0])
+            const data = new FormData()
+            data.append(this.context.name || 'file', args[0])
             if (this.context.uploadUrl === false) {
                 throw new Error('No uploadURL specified: https://vueformulate.com/guide/inputs/file/#props')
             }
-            return this.context.uploader.post(this.context.uploadUrl, formData, {
+            return this.context.uploader.post(this.context.uploadUrl, data, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
                 },
-                onUploadProgress: progressEvent => {
+                onUploadProgress: (event: ProgressEvent) => {
                     // args[1] here is the upload progress handler function
-                    args[1](Math.round((progressEvent.loaded * 100) / progressEvent.total))
+                    args[1](Math.round((event.loaded * 100) / event.total))
                 }
             })
-                .then(res => res.data)
-                .catch(err => args[2](err))
+                .then((response: AxiosResponse) => response.data)
+                .catch(args[2])
         }
         return this.context.uploader(...args)
     }
@@ -130,7 +155,7 @@ class FileUpload {
             Promise.all(this.files.map(file => {
                 return file.path ? Promise.resolve(file.path) : this.getUploader(
                     file.file,
-                    (progress) => {
+                    progress => {
                         file.progress = progress
                         if (progress >= 100) {
                             if (!file.complete) {
@@ -140,7 +165,7 @@ class FileUpload {
                             file.complete = true
                         }
                     },
-                    (error) => {
+                    error => {
                         file.progress = 0
                         file.error = error
                         file.complete = true
@@ -158,16 +183,15 @@ class FileUpload {
 
     /**
      * Remove a file from the uploader (and the file list)
-     * @param {string} uuid
      */
-    removeFile (uuid) {
+    removeFile (uuid: string) {
         this.files = this.files.filter(file => file.uuid !== uuid)
         this.context.performValidation()
         if (window && this.fileList instanceof FileList) {
             const transfer = new DataTransfer()
-            this.files.map(file => transfer.items.add(file.file))
+            this.files.map(({ file }) => transfer.items.add(file))
             this.fileList = transfer.files
-            this.input.files = this.fileList
+            this.input = transfer
         }
     }
 
@@ -178,6 +202,7 @@ class FileUpload {
         this.files.map(file => {
             if (!file.previewData && window && window.FileReader && /^image\//.test(file.file.type)) {
                 const reader = new FileReader()
+                // @ts-ignore
                 reader.onload = e => Object.assign(file, { previewData: e.target.result })
                 reader.readAsDataURL(file.file)
             }
