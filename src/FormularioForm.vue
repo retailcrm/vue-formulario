@@ -17,10 +17,12 @@ import {
     Watch,
 } from 'vue-property-decorator'
 import { arrayify, getNested, has, setNested, shallowEqualObjects } from './libs/utils'
+import { ObjectType } from '@/common.types'
 import Registry from './libs/registry'
 import FormSubmission from './FormSubmission'
+import FormularioInput from '@/FormularioInput.vue'
 
-@Component()
+@Component
 export default class FormularioForm extends Vue {
     @Provide() formularioFieldValidation (errorObject) {
         return this.$emit('validation', errorObject)
@@ -37,15 +39,15 @@ export default class FormularioForm extends Vue {
         this.errorObservers = this.errorObservers.filter(obs => obs.callback !== observer)
     }
 
-    @Prop({
-        type: [String, Boolean],
-        default: false
-    }) public readonly name!: string | boolean
-
     @Model('input', {
         type: Object,
         default: () => ({})
     }) readonly formularioValue!: Object
+
+    @Prop({
+        type: [String, Boolean],
+        default: false
+    }) public readonly name!: string | boolean
 
     @Prop({
         type: [Object, Boolean],
@@ -173,8 +175,7 @@ export default class FormularioForm extends Vue {
         this.$formulario.deregister(this)
     }
 
-    // @TODO: Check FormularioForm, seems need an interface
-    public register (field: string, component: FormularioForm) {
+    public register (field: string, component: FormularioInput) {
         this.registry.register(field, component)
     }
 
@@ -229,6 +230,7 @@ export default class FormularioForm extends Vue {
 
     setFieldValue (field, value) {
         if (value === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [field]: value, ...proxy } = this.proxy
             this.proxy = proxy
         } else {
@@ -238,7 +240,7 @@ export default class FormularioForm extends Vue {
     }
 
     hasValidationErrors () {
-        return Promise.all(this.registry.reduce((resolvers, cmp, name) => {
+        return Promise.all(this.registry.reduce((resolvers, cmp) => {
             resolvers.push(cmp.performValidation() && cmp.getValidationErrors())
             return resolvers
         }, [])).then(errorObjects => errorObjects.some(item => item.hasErrors))
@@ -259,13 +261,15 @@ export default class FormularioForm extends Vue {
         })
     }
 
-    setValues (values) {
+    setValues (values: ObjectType) {
         // Collect all keys, existing and incoming
         const keys = Array.from(new Set(Object.keys(values).concat(Object.keys(this.proxy))))
         keys.forEach(field => {
+            const fieldComponent = this.registry.get(field) as FormularioInput
+
             if (this.registry.has(field) &&
                 !shallowEqualObjects(getNested(values, field), getNested(this.proxy, field)) &&
-                !shallowEqualObjects(getNested(values, field), this.registry.get(field).proxy)
+                !shallowEqualObjects(getNested(values, field), fieldComponent.proxy)
             ) {
                 this.setFieldValue(field, getNested(values, field))
                 this.registry.get(field).context.model = getNested(values, field)

@@ -9,25 +9,24 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import {
+    Component,
+    Inject,
+    Prop,
+    Provide,
+} from 'vue-property-decorator'
 
-@Component({
-    provide () {
-        return {
-            path: this.groupPath,
-        }
-    },
-
-    inject: ['path'],
-})
+@Component
 export default class FormularioGrouping extends Vue {
+    @Inject({ default: '' }) path!: string
+
     @Prop({ required: true })
     readonly name!: string
 
     @Prop({ default: false })
     readonly isArrayItem!: boolean
 
-    get groupPath () {
+    @Provide('path') get groupPath (): string {
         if (this.isArrayItem) {
             return `${this.path}[${this.name}]`
         }

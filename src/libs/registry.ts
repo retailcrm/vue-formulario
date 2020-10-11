@@ -117,7 +117,7 @@ export default class Registry {
      * @param {function} callback
      * @param accumulator
      */
-    reduce (callback: Function, accumulator: any) {
+    reduce<U> (callback: Function, accumulator: U): U {
         this.registry.forEach((component, field) => {
             accumulator = callback(accumulator, component, field)
         })

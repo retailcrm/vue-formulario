@@ -34,29 +34,15 @@ const ERROR_BEHAVIOR = {
     SUBMIT: 'submit',
 }
 
-@Component({
-    inheritAttrs: false,
-
-    props: {
-        imageBehavior: {
-            type: String,
-            default: 'preview'
-        },
-
-        uploader: {
-            type: [Function, Object, Boolean],
-            default: false
-        },
-    },
-})
+@Component({ inheritAttrs: false })
 export default class FormularioInput extends Vue {
-    @Inject({ default: undefined }) formularioSetter!: Function | undefined
+    @Inject({ default: undefined }) formularioSetter!: Function|undefined
     @Inject({ default: () => () => ({}) }) formularioFieldValidation!: Function
-    @Inject({ default: undefined }) formularioRegister!: Function | undefined
-    @Inject({ default: undefined }) formularioDeregister!: Function | undefined
+    @Inject({ default: undefined }) formularioRegister!: Function|undefined
+    @Inject({ default: undefined }) formularioDeregister!: Function|undefined
     @Inject({ default: () => () => ({}) }) getFormValues!: Function
-    @Inject({ default: undefined }) observeErrors!: Function | undefined
-    @Inject({ default: undefined }) removeErrorObserver!: Function | undefined
+    @Inject({ default: undefined }) observeErrors!: Function|undefined
+    @Inject({ default: undefined }) removeErrorObserver!: Function|undefined
     @Inject({ default: '' }) path!: string
 
     @Provide() formularioRegisterRule = this.registerRule
@@ -69,10 +55,10 @@ export default class FormularioInput extends Vue {
     @Prop({
         type: [String, Number, Boolean],
         default: false,
-    }) id!: string | number | boolean
+    }) id!: string|number|boolean
 
     @Prop({ default: 'text' }) type!: string
-    @Prop({ required: true }) name: string | boolean
+    @Prop({ required: true }) name: string|boolean
     @Prop({ default: false }) value!: any
 
     @Prop({
@@ -83,7 +69,7 @@ export default class FormularioInput extends Vue {
     @Prop({
         type: [String, Boolean],
         default: false,
-    }) validationName!: string | boolean
+    }) validationName!: string|boolean
 
     @Prop({
         type: Object,
@@ -98,7 +84,7 @@ export default class FormularioInput extends Vue {
     @Prop({
         type: [Array, String, Boolean],
         default: false,
-    }) errors!: [] | string | boolean
+    }) errors!: []|string|boolean
 
     @Prop({
         type: String,
@@ -108,9 +94,11 @@ export default class FormularioInput extends Vue {
 
     @Prop({ default: false }) showErrors!: boolean
     @Prop({ default: false }) disableErrors!: boolean
-    @Prop({ default: false }) uploadUrl!: string | boolean
-    @Prop({ default: 'live' }) uploadBehavior!: string
     @Prop({ default: true }) preventWindowDrops!: boolean
+    @Prop({ default: 'preview' }) imageBehavior!: string
+    @Prop({ default: false }) uploader!: Function|Object|boolean
+    @Prop({ default: false }) uploadUrl!: string|boolean
+    @Prop({ default: 'live' }) uploadBehavior!: string
 
     defaultId: string = this.$formulario.nextId(this)
     localAttributes: ObjectType = {}
@@ -119,7 +107,7 @@ export default class FormularioInput extends Vue {
     behavioralErrorVisibility: boolean = this.errorBehavior === 'live'
     formShouldShowErrors: boolean = false
     validationErrors: [] = []
-    pendingValidation: Promise = Promise.resolve()
+    pendingValidation: Promise<any> = Promise.resolve()
     // These registries are used for injected messages registrants only (mostly internal).
     ruleRegistry: [] = []
     messageRegistry: ObjectType = {}
