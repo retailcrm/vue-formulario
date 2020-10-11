@@ -1,4 +1,4 @@
-import { Formulario } from '@/Formulario'
+import Formulario from '@/Formulario'
 import FormularioInput from '@/FormularioInput.vue'
 import { ValidationContext } from '@/validation/types'
 

@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import VueFormulario from '../src/Formulario'
+import VueFormulario from '@/index.ts'
 import FormulateSpecimens from './FormulateSpecimens.vue'
 
 Vue.config.productionTip = false

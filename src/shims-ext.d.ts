@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import { Formulario } from '@/Formulario'
+import Formulario from '@/Formulario'
 
 declare module 'vue/types/vue' {
     interface VueRoute {

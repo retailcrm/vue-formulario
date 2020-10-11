@@ -1,17 +1,17 @@
 import { VueConstructor } from 'vue'
-
-import library from './libs/library'
-import rules from './validation/rules'
-import mimes from './libs/mimes'
-import FileUpload from './FileUpload'
-import RuleValidationMessages from './RuleValidationMessages'
-import { arrayify, has } from './libs/utils'
 import isPlainObject from 'is-plain-object'
-import fauxUploader from './libs/faux-uploader'
+
+import library from '@/libs/library'
+import rules from '@/validation/rules'
+import mimes from '@/libs/mimes'
+import FileUpload from '@/FileUpload'
+import RuleValidationMessages from '@/RuleValidationMessages'
+import { arrayify, has } from '@/libs/utils'
+import fauxUploader from '@/libs/faux-uploader'
 
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
-import FormularioGrouping from './FormularioGrouping.vue'
+import FormularioGrouping from '@/FormularioGrouping.vue'
 import { ObjectType } from '@/common.types'
 import { ValidationContext } from '@/validation/types'
 
@@ -39,7 +39,7 @@ interface FormularioOptions {
 /**
  * The base formulario library.
  */
-class Formulario {
+export default class Formulario {
     public options: FormularioOptions
     public defaults: FormularioOptions
     public registry: Map<string, FormularioForm>
@@ -299,7 +299,3 @@ class Formulario {
         return new FileUpload(data, context, this.options)
     }
 }
-
-export { Formulario }
-
-export default new Formulario()

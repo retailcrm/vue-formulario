@@ -2,7 +2,7 @@ import Vue from 'vue'
 import flushPromises from 'flush-promises'
 import { mount } from '@vue/test-utils'
 
-import Formulario from '@/Formulario.ts'
+import Formulario from '@/index.ts'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 

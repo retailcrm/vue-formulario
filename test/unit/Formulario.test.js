@@ -1,4 +1,4 @@
-import Formulario from '@/Formulario.ts'
+import Formulario from '@/index.ts'
 
 describe('Formulario', () => {
     it('can merge simple object', () => {
