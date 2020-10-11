@@ -1,4 +1,4 @@
-import FileUpload from '../FileUpload'
+import FileUpload from '@/FileUpload'
 
 type ArrayType = [any]
 type ObjectType = { [key: string]: any }

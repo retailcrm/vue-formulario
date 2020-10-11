@@ -16,11 +16,11 @@ import {
     Provide,
     Watch,
 } from 'vue-property-decorator'
-import { arrayify, getNested, has, setNested, shallowEqualObjects } from './libs/utils'
+import { arrayify, getNested, has, setNested, shallowEqualObjects } from '@/libs/utils'
 import { ObjectType } from '@/common.types'
-import Registry from './libs/registry'
-import FormSubmission from './FormSubmission'
-import FormularioInput from '@/FormularioInput.vue'
+import Registry from '@/libs/registry'
+import FormSubmission from '@/FormSubmission'
+import FormularioInput from '@/FormularioInput'
 
 @Component
 export default class FormularioForm extends Vue {
