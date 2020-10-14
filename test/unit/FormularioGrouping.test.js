@@ -8,12 +8,12 @@ import FormularioGrouping from '@/FormularioGrouping.vue'
 Vue.use(Formulario)
 
 describe('FormularioGrouping', () => {
-    it('grouped fields to be setted', async () => {
+    it('Grouped fields to be set', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { name: 'form',  },
+            propsData: { name: 'form' },
             slots: {
                 default: `
-                    <FormularioGrouping name="sub">
+                    <FormularioGrouping name="group">
                         <FormularioInput name="text" v-slot="{ context }">
                             <input type="text" v-model="context.model">
                         </FormularioInput>
@@ -25,38 +25,40 @@ describe('FormularioGrouping', () => {
         wrapper.find('input[type="text"]').setValue('test')
 
         const submission = await wrapper.vm.formSubmitted()
-        expect(submission).toEqual({sub: {text: 'test'}})
+        expect(submission).toEqual({ group: { text: 'test' } })
     })
 
-    it('grouped fields to be getted', async () => {
+    it('Grouped fields to be got', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { name: 'form', formularioValue: { sub: {text: 'initial value'}, text: 'simple text' } },
+            propsData: {
+                name: 'form',
+                formularioValue: {
+                    group: { text: 'Group text' },
+                    text: 'Text',
+                }
+            },
             slots: {
                 default: `
-                    <FormularioGrouping name="sub">
-                        <FormularioInput name="text" v-slot="vSlot">
-                            <input type="text" v-model="vSlot.context.model">
+                    <FormularioGrouping name="group">
+                        <FormularioInput name="text" v-slot="{ context }">
+                            <input type="text" v-model="context.model">
                         </FormularioInput>
                     </FormularioGrouping>
                 `
             }
         })
-        expect(wrapper.find('input[type="text"]').element.value).toBe('initial value')
+        expect(wrapper.find('input[type="text"]').element.value).toBe('Group text')
     })
 
-    it('data reactive with grouped fields', async () => {
+    it('Data reactive with grouped fields', async () => {
         const wrapper = mount({
-            data () {
-                return {
-                    formValues: {}
-                }
-            },
+            data: () => ({ values: {} }),
             template: `
-                <FormularioForm name="form" v-model="formValues">
-                    <FormularioGrouping name="sub">
-                        <FormularioInput name="text" v-slot="vSlot">
-                            <input type="text" v-model="vSlot.context.model">
-                            <span>{{ formValues.sub.text }}</span>
+                <FormularioForm name="form" v-model="values">
+                    <FormularioGrouping name="group">
+                        <FormularioInput name="text" v-slot="{ context }">
+                            <input type="text" v-model="context.model">
+                            <span>{{ values.group.text }}</span>
                         </FormularioInput>
                     </FormularioGrouping>
                 </FormularioForm>
@@ -68,18 +70,20 @@ describe('FormularioGrouping', () => {
         expect(wrapper.find('span').text()).toBe('test')
     })
 
-    it('errors are setted for grouped fields', async () => {
+    it('Errors are set for grouped fields', async () => {
         const wrapper = mount({
-            data () {
-                return {
-                    formValues: {}
-                }
-            },
+            data: () => ({ values: {} }),
             template: `
-                <FormularioForm name="form" v-model="formValues" :errors="{'sub.text': 'Test error'}">
-                    <FormularioGrouping name="sub">
-                        <FormularioInput name="text" v-slot="vSlot">
-                            <span v-for="error in vSlot.context.allErrors">{{ error }}</span>
+                <FormularioForm
+                    v-model="values"
+                    :errors="{'group.text': 'Test error'}"
+                    name="form"
+                >
+                    <FormularioGrouping name="group">
+                        <FormularioInput name="text" v-slot="{ context }">
+                            <span v-for="error in context.allErrors">
+                                {{ error }}
+                            </span>
                         </FormularioInput>
                     </FormularioGrouping>
                 </FormularioForm>

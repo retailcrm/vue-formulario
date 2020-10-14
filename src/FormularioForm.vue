@@ -20,7 +20,7 @@ import { arrayify, getNested, has, setNested, shallowEqualObjects } from '@/libs
 import { ObjectType } from '@/common.types'
 import Registry from '@/libs/registry'
 import FormSubmission from '@/FormSubmission'
-import FormularioInput from '@/FormularioInput'
+import FormularioInput from '@/FormularioInput.vue'
 
 @Component
 export default class FormularioForm extends Vue {

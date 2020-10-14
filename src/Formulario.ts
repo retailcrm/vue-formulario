@@ -8,6 +8,7 @@ import FileUpload from '@/FileUpload'
 import RuleValidationMessages from '@/RuleValidationMessages'
 import { arrayify, has } from '@/libs/utils'
 import fauxUploader from '@/libs/faux-uploader'
+import merge from '@/utils/merge'
 
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
@@ -113,44 +114,10 @@ export default class Formulario {
      */
     extend (extendWith: FormularioOptions) {
         if (typeof extendWith === 'object') {
-            this.options = this.merge(this.options as FormularioOptions, extendWith)
+            this.options = merge(this.options as FormularioOptions, extendWith)
             return this
         }
         throw new Error(`VueFormulario extend() should be passed an object (was ${typeof extendWith})`)
-    }
-
-    /**
-     * Create a new object by copying properties of base and mergeWith.
-     * Note: arrays don't overwrite - they push
-     *
-     * @param {Object} base
-     * @param {Object} mergeWith
-     * @param {boolean} concatArrays
-     */
-    merge (base: ObjectType, mergeWith: ObjectType, concatArrays: boolean = true) {
-        const merged: ObjectType = {}
-
-        for (const key in base) {
-            if (has(mergeWith, key)) {
-                if (isPlainObject(mergeWith[key]) && isPlainObject(base[key])) {
-                    merged[key] = this.merge(base[key], mergeWith[key], concatArrays)
-                } else if (concatArrays && Array.isArray(base[key]) && Array.isArray(mergeWith[key])) {
-                    merged[key] = base[key].concat(mergeWith[key])
-                } else {
-                    merged[key] = mergeWith[key]
-                }
-            } else {
-                merged[key] = base[key]
-            }
-        }
-
-        for (const prop in mergeWith) {
-            if (!has(merged, prop)) {
-                merged[prop] = mergeWith[prop]
-            }
-        }
-
-        return merged
     }
 
     /**
