@@ -1,7 +1,8 @@
 import FileUpload from '@/FileUpload'
-
-type ArrayType = [any]
-type ObjectType = { [key: string]: any }
+import {
+    ArrayType,
+    ObjectType,
+} from '@/common.types'
 
 /**
  * Function to map over an object.

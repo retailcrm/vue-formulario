@@ -1,5 +1,4 @@
 import { VueConstructor } from 'vue'
-import isPlainObject from 'is-plain-object'
 
 import library from '@/libs/library'
 import rules from '@/validation/rules'
@@ -103,7 +102,7 @@ export default class Formulario {
         const options = this.options as FormularioOptions
         const path = vm.$route && vm.$route.path ? vm.$route.path : false
         const pathPrefix = path ? vm.$route.path.replace(/[/\\.\s]/g, '-') : 'global'
-        if (!Object.prototype.hasOwnProperty.call(this.idRegistry, pathPrefix)) {
+        if (!has(this.idRegistry, pathPrefix)) {
             this.idRegistry[pathPrefix] = 0
         }
         return `${options.idPrefix}${pathPrefix}-${++this.idRegistry[pathPrefix]}`
@@ -118,28 +117,6 @@ export default class Formulario {
             return this
         }
         throw new Error(`VueFormulario extend() should be passed an object (was ${typeof extendWith})`)
-    }
-
-    /**
-     * Determine what "class" of input this element is given the "type".
-     */
-    classify (type: string) {
-        if (has(this.options.library, type)) {
-            return this.options.library[type].classification
-        }
-
-        return 'unknown'
-    }
-
-    /**
-     * Determine what type of component to render given the "type".
-     */
-    component (type: string) {
-        if (has(this.options.library, type)) {
-            return this.options.library[type].component
-        }
-
-        return false
     }
 
     /**
