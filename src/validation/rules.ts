@@ -3,10 +3,7 @@ import isUrl from 'is-url'
 import FileUpload from '../FileUpload'
 import { shallowEqualObjects, regexForFormat, has } from '@/libs/utils'
 import { ObjectType } from '@/common.types'
-
-interface ValidatableData {
-    value: any,
-}
+import { ValidatableData } from '@/validation/types'
 
 interface ConfirmValidatableData extends ValidatableData {
     getFormValues: () => ObjectType,

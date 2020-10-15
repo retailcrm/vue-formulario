@@ -1,3 +1,7 @@
+interface ValidatableData {
+    value: any,
+}
+
 interface ValidationContext {
     args: any[]
     name: string
@@ -10,5 +14,6 @@ interface ValidationError {
     message: string
 }
 
+export { ValidatableData }
 export { ValidationContext }
 export { ValidationError }
