@@ -30,13 +30,12 @@ export function shallowEqualObjects (objA: any, objB: any) {
 
     const aKeys = Object.keys(objA)
     const bKeys = Object.keys(objB)
-    const len = aKeys.length
 
-    if (bKeys.length !== len) {
+    if (bKeys.length !== aKeys.length) {
         return false
     }
 
-    for (let i = 0; i < len; i++) {
+    for (let i = 0; i < aKeys.length; i++) {
         const key = aKeys[i]
 
         if (objA[key] !== objB[key]) {

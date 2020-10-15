@@ -58,7 +58,7 @@ export default class FormularioInput extends Vue {
     }) id!: string|number|boolean
 
     @Prop({ default: 'text' }) type!: string
-    @Prop({ required: true }) name: string|boolean
+    @Prop({ required: true }) name!: string|boolean
     @Prop({ default: false }) value!: any
 
     @Prop({
@@ -359,7 +359,7 @@ export default class FormularioInput extends Vue {
     /**
      * Bound into the context object.
      */
-    blurHandler () {
+    blurHandler (): void {
         this.$emit('blur')
         if (this.errorBehavior === 'blur') {
             this.behavioralErrorVisibility = true
@@ -367,9 +367,9 @@ export default class FormularioInput extends Vue {
     }
 
     getInitialValue () {
-        if (has(this.$options.propsData, 'value')) {
+        if (has(this.$options.propsData as ObjectType, 'value')) {
             return this.value
-        } else if (has(this.$options.propsData, 'formularioValue')) {
+        } else if (has(this.$options.propsData as ObjectType, 'formularioValue')) {
             return this.formularioValue
         }
         return ''

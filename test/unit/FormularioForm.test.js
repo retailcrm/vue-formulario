@@ -308,12 +308,14 @@ describe('FormularioForm', () => {
             template: `
             <div>
                 <FormularioForm
+                    class="formulario-form formulario-form--login"
                     name="login"
                     v-slot="vSlot"
                 >
                     <span v-for="error in vSlot.errors">{{ error }}</span>
                 </FormularioForm>
                 <FormularioForm
+                    class="formulario-form formulario-form--register"
                     name="register"
                     v-slot="vSlot"
                 >
@@ -335,12 +337,14 @@ describe('FormularioForm', () => {
             template: `
             <div>
                 <FormularioForm
+                    class="formulario-form formulario-form--login"
                     name="login"
                     v-slot="vSlot"
                 >
                     <span v-for="error in vSlot.errors">{{ error }}</span>
                 </FormularioForm>
                 <FormularioForm
+                    class="formulario-form formulario-form--register"
                     name="register"
                     v-slot="vSlot"
                 >

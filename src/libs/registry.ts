@@ -50,6 +50,19 @@ export default class Registry {
     }
 
     /**
+     * Check if the registry has elements, that equals or nested given key
+     */
+    hasNested (key: string) {
+        for (const i of this.registry.keys()) {
+            if (i === key || i.includes(key + '.')) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    /**
      * Get a particular registry value.
      */
     get (key: string): FormularioInput | undefined {
@@ -57,12 +70,36 @@ export default class Registry {
     }
 
     /**
+     * Get registry value for key or nested to given key
+     */
+    getNested (key: string) {
+        const result = new Map()
+
+        for (const i of this.registry.keys()) {
+            if (i === key || i.includes(key + '.')) {
+                result.set(i, this.registry.get(i))
+            }
+        }
+
+        return result
+    }
+
+    /**
      * Map over the registry (recursively).
      */
-    map (callback: Function) {
+    map (mapper: Function) {
         const value = {}
-        this.registry.forEach((component, field) => Object.assign(value, { [field]: callback(component, field) }))
+        this.registry.forEach((component, field) => Object.assign(value, { [field]: mapper(component, field) }))
         return value
+    }
+
+    /**
+     * Map over the registry (recursively).
+     */
+    forEach (callback: Function) {
+        this.registry.forEach((component, field) => {
+            callback(component, field)
+        })
     }
 
     /**

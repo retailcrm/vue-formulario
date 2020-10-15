@@ -1,8 +1,5 @@
 <template>
-    <form
-        :class="classes"
-        @submit.prevent="formSubmitted"
-    >
+    <form @submit.prevent="formSubmitted">
         <slot :errors="mergedFormErrors" />
     </form>
 </template>
@@ -78,13 +75,6 @@ export default class FormularioForm extends Vue {
 
     namedFieldErrors: Object = {}
 
-    get classes () {
-        return {
-            'formulario-form': true,
-            [`formulario-form--${this.name}`]: !!this.name
-        }
-    }
-
     get mergedFormErrors () {
         return this.formErrors.concat(this.namedErrors)
     }
@@ -118,7 +108,7 @@ export default class FormularioForm extends Vue {
     }
 
     get isVmodeled () {
-        return !!(Object.prototype.hasOwnProperty.call(this.$options.propsData, 'formularioValue') &&
+        return !!(has(this.$options.propsData, 'formularioValue') &&
             this._events &&
             Array.isArray(this._events.input) &&
             this._events.input.length)
@@ -248,14 +238,14 @@ export default class FormularioForm extends Vue {
 
     showErrors () {
         this.childrenShouldShowErrors = true
-        this.registry.map(input => {
+        this.registry.forEach((input: FormularioInput) => {
             input.formShouldShowErrors = true
         })
     }
 
     hideErrors () {
         this.childrenShouldShowErrors = false
-        this.registry.map(input => {
+        this.registry.forEach((input: FormularioInput) => {
             input.formShouldShowErrors = false
             input.behavioralErrorVisibility = false
         })
@@ -265,14 +255,26 @@ export default class FormularioForm extends Vue {
         // Collect all keys, existing and incoming
         const keys = Array.from(new Set(Object.keys(values).concat(Object.keys(this.proxy))))
         keys.forEach(field => {
-            const fieldComponent = this.registry.get(field) as FormularioInput
+            if (this.registry.hasNested(field)) {
+                this.registry.getNested(field).forEach((registryField, registryKey) => {
+                    if (
+                        !shallowEqualObjects(
+                            getNested(values, registryKey),
+                            getNested(this.proxy, registryKey)
+                        )
+                    ) {
+                        this.setFieldValue(registryKey, getNested(values, registryKey))
+                    }
 
-            if (this.registry.has(field) &&
-                !shallowEqualObjects(getNested(values, field), getNested(this.proxy, field)) &&
-                !shallowEqualObjects(getNested(values, field), fieldComponent.proxy)
-            ) {
-                this.setFieldValue(field, getNested(values, field))
-                this.registry.get(field).context.model = getNested(values, field)
+                    if (
+                        !shallowEqualObjects(
+                            getNested(values, registryKey),
+                            this.registry.get(registryKey).proxy
+                        )
+                    ) {
+                        this.registry.get(registryKey).context.model = getNested(values, registryKey)
+                    }
+                })
             }
         })
         this.applyInitialValues()
