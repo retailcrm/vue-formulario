@@ -136,6 +136,31 @@ describe('FormularioForm', () => {
         expect(wrapper.vm.formValues).toEqual({ testinput: 'edited value' })
     })
 
+    it('field data updates when it is type of date', async () => {
+        const wrapper = mount({
+            data () {
+                return {
+                    formValues: {
+                        testdate: new Date(123),
+                    }
+                }
+            },
+            template: `
+                <FormularioForm v-model="formValues" ref="form">
+                    <FormularioInput v-slot="inputProps" name="testdate" >
+                        <span v-if="inputProps.context.model">{{ inputProps.context.model.getTime() }}</span>
+                    </FormularioInput>
+                </FormularioForm>
+            `
+        })
+        expect(wrapper.find('span').text()).toBe('123')
+
+        wrapper.setData({ formValues: { testdate: new Date(234) } })
+        await flushPromises()
+
+        expect(wrapper.find('span').text()).toBe('234')
+    })
+
 
 
     // ===========================================================================
