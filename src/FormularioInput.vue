@@ -183,7 +183,9 @@ export default {
             this.observeErrors({ callback: this.setErrors, type: 'input', field: this.nameOrFallback })
         }
         this.updateLocalAttributes(this.$attrs)
-        this.performValidation()
+        if (this.errorBehavior === 'live') {
+            this.performValidation()
+        }
     },
     beforeDestroy () {
         if (!this.disableErrors && typeof this.removeErrorObserver === 'function') {

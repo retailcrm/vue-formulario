@@ -33,6 +33,14 @@ export function shallowEqualObjects (objA, objB) {
         return false
     }
 
+    if (objA instanceof Date && objB instanceof Date) {
+        return objA.getTime() === objB.getTime();
+    }
+
+    if (len === 0) {
+        return objA === objB;
+    }
+
     for (var i = 0; i < len; i++) {
         var key = aKeys[i]
 
