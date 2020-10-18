@@ -1,4 +1,5 @@
-dist/*
-test/*
-coverage/*
 /.cache
+coverage/*
+dist/*
+storybook/config/*
+test/*

@@ -113,6 +113,8 @@ export default class FormularioInput extends Vue {
 
     get context (): Record<string, any> {
         return this.defineModel({
+            id: this.id || this.defaultId,
+            name: this.nameOrFallback,
             attributes: this.elementAttributes,
             blurHandler: this.blurHandler.bind(this),
             disableErrors: this.disableErrors,
@@ -123,10 +125,8 @@ export default class FormularioInput extends Vue {
             hasGivenName: this.hasGivenName,
             hasValidationErrors: this.hasValidationErrors.bind(this),
             help: this.help,
-            id: this.id || this.defaultId,
             imageBehavior: this.imageBehavior,
             limit: this.limit,
-            name: this.nameOrFallback,
             performValidation: this.performValidation.bind(this),
             preventWindowDrops: this.preventWindowDrops,
             repeatable: this.repeatable,
@@ -149,7 +149,7 @@ export default class FormularioInput extends Vue {
         return parsedValidationRules
     }
 
-    get messages () {
+    get messages (): Record<string, any> {
         const messages = {}
         Object.keys(this.validationMessages).forEach((key) => {
             messages[snakeToCamel(key)] = this.validationMessages[key]
@@ -252,7 +252,6 @@ export default class FormularioInput extends Vue {
         return [
             ...arrayify(this.errors),
             ...this.localErrors,
-            ...arrayify(this.error),
         ].map(message => ({ rule: null, context: null, message }))
     }
 
@@ -460,7 +459,7 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    getMessageFunc (ruleName: string) {
+    getMessageFunc (ruleName: string): Function {
         ruleName = snakeToCamel(ruleName)
         if (this.messages && typeof this.messages[ruleName] !== 'undefined') {
             switch (typeof this.messages[ruleName]) {
