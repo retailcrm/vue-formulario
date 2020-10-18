@@ -45,7 +45,7 @@ export function shallowEqualObjects (objA: Record<string, any>, objB: Record<str
  * Given a string, convert snake_case to camelCase
  * @param {String} string
  */
-export function snakeToCamel (string: string | any) {
+export function snakeToCamel (string: string | any): string | any {
     if (typeof string === 'string') {
         return string.replace(/([_][a-z0-9])/ig, ($1) => {
             if (string.indexOf($1) !== 0 && string[string.indexOf($1) - 1] !== '_') {
@@ -55,6 +55,16 @@ export function snakeToCamel (string: string | any) {
         })
     }
     return string
+}
+
+/**
+ * Return the rule name with the applicable modifier as an array.
+ */
+function parseModifier (ruleName: any): [string|any, string|null] {
+    if (typeof ruleName === 'string' && /^[\^]/.test(ruleName.charAt(0))) {
+        return [snakeToCamel(ruleName.substr(1)), ruleName.charAt(0)]
+    }
+    return [snakeToCamel(ruleName), null]
 }
 
 /**
@@ -76,22 +86,6 @@ export function arrayify (item: any): any[] {
         return Object.values(item)
     }
     return []
-}
-
-/**
- * Given an array or string return an array of callables.
- * @param {array|string} validation
- * @param {array} rules and array of functions
- * @return {array} an array of functions
- */
-export function parseRules (validation: any, rules: any): any[] {
-    if (typeof validation === 'string') {
-        return parseRules(validation.split('|'), rules)
-    }
-    if (!Array.isArray(validation)) {
-        return []
-    }
-    return validation.map(rule => parseRule(rule, rules)).filter(f => !!f)
 }
 
 /**
@@ -129,13 +123,19 @@ function parseRule (rule: any, rules: Record<string, any>) {
 }
 
 /**
- * Return the rule name with the applicable modifier as an array.
+ * Given an array or string return an array of callables.
+ * @param {array|string} validation
+ * @param {array} rules and array of functions
+ * @return {array} an array of functions
  */
-function parseModifier (ruleName: any): [string|any, string|null] {
-    if (typeof ruleName === 'string' && /^[\^]/.test(ruleName.charAt(0))) {
-        return [snakeToCamel(ruleName.substr(1)), ruleName.charAt(0)]
+export function parseRules (validation: any[]|string, rules: any): any[] {
+    if (typeof validation === 'string') {
+        return parseRules(validation.split('|'), rules)
     }
-    return [snakeToCamel(ruleName), null]
+    if (!Array.isArray(validation)) {
+        return []
+    }
+    return validation.map(rule => parseRule(rule, rules)).filter(f => !!f)
 }
 
 /**
@@ -222,7 +222,7 @@ export function regexForFormat (format: string) {
  * Check if
  * @param {*} data
  */
-export function isScalar (data: any) {
+export function isScalar (data: any): boolean {
     switch (typeof data) {
         case 'symbol':
         case 'number':
