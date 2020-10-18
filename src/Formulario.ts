@@ -12,27 +12,26 @@ import merge from '@/utils/merge'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 import FormularioGrouping from '@/FormularioGrouping.vue'
-import { ObjectType } from '@/common.types'
 import { ValidationContext } from '@/validation/types'
 
 interface ErrorHandler {
-    (error: any, formName?: string): any
+    (error: any, formName?: string): any;
 }
 
 interface FormularioOptions {
-    components?: { [name: string]: VueConstructor }
-    plugins?: any[]
-    library?: any
-    rules?: any
-    mimes?: any
-    locale?: any
-    uploader?: any
-    uploadUrl?: any
-    fileUrlKey?: any
-    errorHandler?: ErrorHandler
-    uploadJustCompleteDuration?: any
-    validationMessages?: any
-    idPrefix?: string
+    components?: { [name: string]: VueConstructor };
+    plugins?: any[];
+    library?: any;
+    rules?: any;
+    mimes?: any;
+    locale?: any;
+    uploader?: any;
+    uploadUrl?: any;
+    fileUrlKey?: any;
+    errorHandler?: ErrorHandler;
+    uploadJustCompleteDuration?: any;
+    validationMessages?: any;
+    idPrefix?: string;
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -122,7 +121,7 @@ export default class Formulario {
     /**
      * Get validation rules by merging any passed in with global rules.
      */
-    rules (rules: Object = {}) {
+    rules (rules: Record<string, any> = {}) {
         return { ...this.options.rules, ...rules }
     }
 
@@ -206,7 +205,7 @@ export default class Formulario {
     /**
      * Set the form values.
      */
-    setValues (formName: string, values?: ObjectType) {
+    setValues (formName: string, values?: Record<string, any>) {
         if (values) {
             const form = this.registry.get(formName) as FormularioForm
             // @ts-ignore
@@ -224,7 +223,7 @@ export default class Formulario {
     /**
      * Get the global upload url.
      */
-    getUploadUrl () {
+    getUploadUrl (): string | boolean {
         return this.options.uploadUrl || false
     }
 
@@ -239,7 +238,7 @@ export default class Formulario {
     /**
      * Create a new instance of an upload.
      */
-    createUpload (data: DataTransfer, context: ObjectType) {
+    createUpload (data: DataTransfer, context: Record<string, any>) {
         return new FileUpload(data, context, this.options)
     }
 }

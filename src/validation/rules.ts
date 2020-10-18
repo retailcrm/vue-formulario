@@ -2,12 +2,11 @@
 import isUrl from 'is-url'
 import FileUpload from '../FileUpload'
 import { shallowEqualObjects, regexForFormat, has } from '@/libs/utils'
-import { ObjectType } from '@/common.types'
 import { ValidatableData } from '@/validation/types'
 
 interface ConfirmValidatableData extends ValidatableData {
-    getFormValues: () => ObjectType,
-    name: string,
+    getFormValues: () => Record<string, any>;
+    name: string;
 }
 
 /**
@@ -33,7 +32,7 @@ export default {
     /**
      * Rule: checks if the value is only alpha
      */
-    alpha ({ value }: { value: string }, set: string = 'default'): Promise<boolean> {
+    alpha ({ value }: { value: string }, set = 'default'): Promise<boolean> {
         const sets = {
             default: /^[a-zA-ZÀ-ÖØ-öø-ÿ]+$/,
             latin: /^[a-zA-Z]+$/
@@ -69,7 +68,7 @@ export default {
      * Rule: checks if the value is between two other values
      */
     between ({ value }: { value: string|number }, from: number|any = 0, to: number|any = 10, force?: string): Promise<boolean> {
-        return Promise.resolve((() => {
+        return Promise.resolve(((): boolean => {
             if (from === null || to === null || isNaN(from) || isNaN(to)) {
                 return false
             }
@@ -92,7 +91,7 @@ export default {
      * for password confirmations.
      */
     confirm ({ value, getFormValues, name }: ConfirmValidatableData, field?: string): Promise<boolean> {
-        return Promise.resolve((() => {
+        return Promise.resolve(((): boolean => {
             const formValues = getFormValues()
             let confirmationFieldName = field
             if (!confirmationFieldName) {
@@ -168,7 +167,7 @@ export default {
     mime ({ value }: { value: any }, ...types: string[]): Promise<boolean> {
         if (value instanceof FileUpload) {
             const files = value.getFiles()
-            const isMimeCorrect = (file: File) => types.includes(file.type)
+            const isMimeCorrect = (file: File): boolean => types.includes(file.type)
             const allValid: boolean = files.reduce((valid: boolean, { file }) => valid && isMimeCorrect(file), true)
 
             return Promise.resolve(allValid)
@@ -181,7 +180,7 @@ export default {
      * Check the minimum value of a particular.
      */
     min ({ value }: { value: any }, minimum: number | any = 1, force?: string): Promise<boolean> {
-        return Promise.resolve((() => {
+        return Promise.resolve(((): boolean => {
             if (Array.isArray(value)) {
                 minimum = !isNaN(minimum) ? Number(minimum) : minimum
                 return value.length >= minimum
@@ -202,7 +201,7 @@ export default {
      * Check the maximum value of a particular.
      */
     max ({ value }: { value: any }, maximum: string | number = 10, force?: string): Promise<boolean> {
-        return Promise.resolve((() => {
+        return Promise.resolve(((): boolean => {
             if (Array.isArray(value)) {
                 maximum = !isNaN(Number(maximum)) ? Number(maximum) : maximum
                 return value.length <= maximum
@@ -239,7 +238,7 @@ export default {
      * Rule: must be a value
      */
     required ({ value }: { value: any }, isRequired: string|boolean = true): Promise<boolean> {
-        return Promise.resolve((() => {
+        return Promise.resolve(((): boolean => {
             if (!isRequired || ['no', 'false'].includes(isRequired as string)) {
                 return true
             }

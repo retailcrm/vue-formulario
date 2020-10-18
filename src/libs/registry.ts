@@ -1,5 +1,4 @@
 import { shallowEqualObjects, has, getNested } from './utils'
-import { ObjectType } from '@/common.types'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 
@@ -23,36 +22,33 @@ export default class Registry {
     /**
      * Add an item to the registry.
      */
-    add (name: string, component: FormularioInput) {
+    add (name: string, component: FormularioInput): void {
         this.registry.set(name, component)
-        return this
     }
 
     /**
      * Remove an item from the registry.
-     * @param {string} name
      */
-    remove (name: string) {
+    remove (name: string): void {
         this.registry.delete(name)
         // @ts-ignore
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [name]: value, ...newProxy } = this.ctx.proxy
         // @ts-ignore
         this.ctx.proxy = newProxy
-        return this
     }
 
     /**
      * Check if the registry has the given key.
      */
-    has (key: string) {
+    has (key: string): boolean {
         return this.registry.has(key)
     }
 
     /**
      * Check if the registry has elements, that equals or nested given key
      */
-    hasNested (key: string) {
+    hasNested (key: string): boolean {
         for (const i of this.registry.keys()) {
             if (i === key || i.includes(key + '.')) {
                 return true
@@ -72,7 +68,7 @@ export default class Registry {
     /**
      * Get registry value for key or nested to given key
      */
-    getNested (key: string) {
+    getNested (key: string): Map<string, FormularioInput> {
         const result = new Map()
 
         for (const i of this.registry.keys()) {
@@ -87,7 +83,7 @@ export default class Registry {
     /**
      * Map over the registry (recursively).
      */
-    map (mapper: Function) {
+    map (mapper: Function): Record<string, any> {
         const value = {}
         this.registry.forEach((component, field) => Object.assign(value, { [field]: mapper(component, field) }))
         return value
@@ -96,7 +92,7 @@ export default class Registry {
     /**
      * Map over the registry (recursively).
      */
-    forEach (callback: Function) {
+    forEach (callback: Function): void {
         this.registry.forEach((component, field) => {
             callback(component, field)
         })
@@ -114,13 +110,13 @@ export default class Registry {
      * @param {string} field name of the field.
      * @param {FormularioForm} component the actual component instance.
      */
-    register (field: string, component: FormularioInput) {
+    register (field: string, component: FormularioInput): void {
         if (this.registry.has(field)) {
-            return false
+            return
         }
         this.registry.set(field, component)
-        const hasVModelValue = has(component.$options.propsData as ObjectType, 'formularioValue')
-        const hasValue = has(component.$options.propsData as ObjectType, 'value')
+        const hasVModelValue = has(component.$options.propsData as Record<string, any>, 'formularioValue')
+        const hasValue = has(component.$options.propsData as Record<string, any>, 'value')
         if (
             !hasVModelValue &&
             // @ts-ignore

@@ -1,26 +1,25 @@
 import nanoid from 'nanoid/non-secure'
 import { AxiosResponse, AxiosError } from '@/axios.types'
-import { ObjectType } from '@/common.types'
 
 interface FileItem {
-    uuid: string
-    name: string
-    path: string | false
-    progress: number | false
-    error: any | false
-    complete: boolean
-    file: File
-    justFinished: boolean
-    removeFile(): void
-    previewData: string | false
+    uuid: string;
+    name: string;
+    path: string | false;
+    progress: number | false;
+    error: any | false;
+    complete: boolean;
+    file: File;
+    justFinished: boolean;
+    removeFile(): void;
+    previewData: string | false;
 }
 
 interface ProgressSetter {
-    (progress: number): void
+    (progress: number): void;
 }
 
 interface ErrorHandler {
-    (error: AxiosError): any
+    (error: AxiosError): any;
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -32,11 +31,11 @@ class FileUpload {
     public input: DataTransfer
     public fileList: FileList
     public files: FileItem[]
-    public options: ObjectType
-    public context: ObjectType
+    public options: Record<string, any>
+    public context: Record<string, any>
     public results: any[] | boolean
 
-    constructor (input: DataTransfer, context: ObjectType = {}, options: ObjectType = {}) {
+    constructor (input: DataTransfer, context: Record<string, any> = {}, options: Record<string, any> = {}) {
         this.input = input
         this.fileList = input.files
         this.files = []
@@ -54,7 +53,7 @@ class FileUpload {
      * Given a pre-existing array of files, create a faux FileList.
      * @param {array} items expects an array of objects [{ url: '/uploads/file.pdf' }]
      */
-    rehydrateFileList (items: any[]) {
+    rehydrateFileList (items: any[]): void {
         const fauxFileList = items.reduce((fileList, item) => {
             const key = this.options ? this.options.fileUrlKey : 'url'
             const url = item[key]
@@ -75,7 +74,7 @@ class FileUpload {
      * Produce an array of files and alert the callback.
      * @param {FileList} fileList
      */
-    addFileList (fileList: FileList) {
+    addFileList (fileList: FileList): void {
         for (let i = 0; i < fileList.length; i++) {
             const file: File = fileList[i]
             const uuid = nanoid()
@@ -98,7 +97,7 @@ class FileUpload {
     /**
      * Check if the file has an.
      */
-    hasUploader () {
+    hasUploader (): boolean {
         return !!this.context.uploader
     }
 
@@ -108,7 +107,7 @@ class FileUpload {
      *
      * https://github.com/axios/axios/issues/737
      */
-    uploaderIsAxios () {
+    uploaderIsAxios (): boolean {
         return this.hasUploader &&
             typeof this.context.uploader.request === 'function' &&
             typeof this.context.uploader.get === 'function' &&
@@ -119,7 +118,7 @@ class FileUpload {
     /**
      * Get a new uploader function.
      */
-    getUploader (...args: [File, ProgressSetter, ErrorHandler, ObjectType]) {
+    getUploader (...args: [File, ProgressSetter, ErrorHandler, Record<string, any>]) {
         if (this.uploaderIsAxios()) {
             const data = new FormData()
             data.append(this.context.name || 'file', args[0])
@@ -184,7 +183,7 @@ class FileUpload {
     /**
      * Remove a file from the uploader (and the file list)
      */
-    removeFile (uuid: string) {
+    removeFile (uuid: string): void {
         this.files = this.files.filter(file => file.uuid !== uuid)
         this.context.performValidation()
         if (window && this.fileList instanceof FileList) {
@@ -223,7 +222,7 @@ class FileUpload {
         return this.files
     }
 
-    toString () {
+    toString (): string {
         const descriptor = this.files.length ? this.files.length + ' files' : 'empty'
         return this.results ? JSON.stringify(this.results, null, '  ') : `FileUpload(${descriptor})`
     }

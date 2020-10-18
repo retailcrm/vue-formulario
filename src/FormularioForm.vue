@@ -14,32 +14,31 @@ import {
     Watch,
 } from 'vue-property-decorator'
 import { arrayify, getNested, has, setNested, shallowEqualObjects } from '@/libs/utils'
-import { ObjectType } from '@/common.types'
 import Registry from '@/libs/registry'
 import FormSubmission from '@/FormSubmission'
 import FormularioInput from '@/FormularioInput.vue'
 
 @Component
 export default class FormularioForm extends Vue {
-    @Provide() formularioFieldValidation (errorObject) {
-        return this.$emit('validation', errorObject)
+    @Provide() formularioFieldValidation (errorObject): void {
+        this.$emit('validation', errorObject)
     }
 
     @Provide() formularioRegister = this.register
     @Provide() formularioDeregister = this.deregister
     @Provide() formularioSetter = this.setFieldValue
-    @Provide() getFormValues = () => this.proxy
+    @Provide() getFormValues = (): Record<string, any> => this.proxy
     @Provide() observeErrors = this.addErrorObserver
-    @Provide() path: string = ''
+    @Provide() path = ''
 
-    @Provide() removeErrorObserver (observer) {
+    @Provide() removeErrorObserver (observer): void {
         this.errorObservers = this.errorObservers.filter(obs => obs.callback !== observer)
     }
 
     @Model('input', {
         type: Object,
         default: () => ({})
-    }) readonly formularioValue!: Object
+    }) readonly formularioValue!: Record<string, any>
 
     @Prop({
         type: [String, Boolean],
@@ -49,31 +48,31 @@ export default class FormularioForm extends Vue {
     @Prop({
         type: [Object, Boolean],
         default: false
-    }) readonly values!: Object | Boolean
+    }) readonly values!: Record<string, any> | boolean
 
     @Prop({
         type: [Object, Boolean],
         default: false
-    }) readonly errors!: Object | Boolean
+    }) readonly errors!: Record<string, any> | boolean
 
     @Prop({
         type: Array,
         default: () => ([])
     }) readonly formErrors!: []
 
-    public proxy: Object = {}
+    public proxy: Record<string, any> = {}
 
     registry: Registry = new Registry(this)
 
-    childrenShouldShowErrors: boolean = false
+    childrenShouldShowErrors = false
 
-    formShouldShowErrors: boolean = false
+    formShouldShowErrors = false
 
     errorObservers: [] = []
 
     namedErrors: [] = []
 
-    namedFieldErrors: Object = {}
+    namedFieldErrors: Record<string, any> = {}
 
     get mergedFormErrors () {
         return this.formErrors.concat(this.namedErrors)
@@ -95,11 +94,11 @@ export default class FormularioForm extends Vue {
         return errors
     }
 
-    get hasFormErrorObservers () {
+    get hasFormErrorObservers (): boolean {
         return this.errorObservers.some(o => o.type === 'form')
     }
 
-    get hasInitialValue () {
+    get hasInitialValue (): boolean {
         return (
             (this.formularioValue && typeof this.formularioValue === 'object') ||
             (this.values && typeof this.values === 'object') ||
@@ -107,14 +106,14 @@ export default class FormularioForm extends Vue {
         )
     }
 
-    get isVmodeled () {
+    get isVmodeled (): boolean {
         return !!(has(this.$options.propsData, 'formularioValue') &&
             this._events &&
             Array.isArray(this._events.input) &&
             this._events.input.length)
     }
 
-    get initialValues () {
+    get initialValues (): Record<string, any> {
         if (
             has(this.$options.propsData, 'formularioValue') &&
             typeof this.formularioValue === 'object'
@@ -136,50 +135,50 @@ export default class FormularioForm extends Vue {
     }
 
     @Watch('formularioValue', { deep: true })
-    onFormularioValueChanged (values) {
+    onFormularioValueChanged (values): void {
         if (this.isVmodeled && values && typeof values === 'object') {
             this.setValues(values)
         }
     }
 
     @Watch('mergedFormErrors')
-    onMergedFormErrorsChanged (errors) {
+    onMergedFormErrorsChanged (errors): void {
         this.errorObservers
             .filter(o => o.type === 'form')
             .forEach(o => o.callback(errors))
     }
 
     @Watch('mergedFieldErrors', { immediate: true })
-    onMergedFieldErrorsChanged (errors) {
+    onMergedFieldErrorsChanged (errors): void {
         this.errorObservers
             .filter(o => o.type === 'input')
             .forEach(o => o.callback(errors[o.field] || []))
     }
 
-    created () {
+    created (): void {
         this.$formulario.register(this)
         this.applyInitialValues()
     }
 
-    destroyed () {
+    destroyed (): void {
         this.$formulario.deregister(this)
     }
 
-    public register (field: string, component: FormularioInput) {
+    public register (field: string, component: FormularioInput): void {
         this.registry.register(field, component)
     }
 
-    public deregister (field: string) {
+    public deregister (field: string): void {
         this.registry.remove(field)
     }
 
-    applyErrors ({ formErrors, inputErrors }) {
+    applyErrors ({ formErrors, inputErrors }): void {
         // given an object of errors, apply them to this form
         this.namedErrors = formErrors
         this.namedFieldErrors = inputErrors
     }
 
-    addErrorObserver (observer) {
+    addErrorObserver (observer): void {
         if (!this.errorObservers.find(obs => observer.callback === obs.callback)) {
             this.errorObservers.push(observer)
             if (observer.type === 'form') {
@@ -190,13 +189,13 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    registerErrorComponent (component) {
+    registerErrorComponent (component): void {
         if (!this.errorComponents.includes(component)) {
             this.errorComponents.push(component)
         }
     }
 
-    formSubmitted () {
+    formSubmitted (): Promise<void> {
         // perform validation here
         this.showErrors()
         const submission = new FormSubmission(this)
@@ -208,17 +207,16 @@ export default class FormularioForm extends Vue {
                     this.$emit('submit', data)
                     return data
                 }
-                return undefined
             })
     }
 
-    applyInitialValues () {
+    applyInitialValues (): void {
         if (this.hasInitialValue) {
             this.proxy = this.initialValues
         }
     }
 
-    setFieldValue (field, value) {
+    setFieldValue (field, value): void {
         if (value === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [field]: value, ...proxy } = this.proxy
@@ -229,21 +227,21 @@ export default class FormularioForm extends Vue {
         this.$emit('input', Object.assign({}, this.proxy))
     }
 
-    hasValidationErrors () {
+    hasValidationErrors (): Promise<boolean> {
         return Promise.all(this.registry.reduce((resolvers, cmp) => {
             resolvers.push(cmp.performValidation() && cmp.getValidationErrors())
             return resolvers
         }, [])).then(errorObjects => errorObjects.some(item => item.hasErrors))
     }
 
-    showErrors () {
+    showErrors (): void {
         this.childrenShouldShowErrors = true
         this.registry.forEach((input: FormularioInput) => {
             input.formShouldShowErrors = true
         })
     }
 
-    hideErrors () {
+    hideErrors (): void {
         this.childrenShouldShowErrors = false
         this.registry.forEach((input: FormularioInput) => {
             input.formShouldShowErrors = false
@@ -251,7 +249,7 @@ export default class FormularioForm extends Vue {
         })
     }
 
-    setValues (values: ObjectType) {
+    setValues (values: Record<string, any>): void {
         // Collect all keys, existing and incoming
         const keys = Array.from(new Set(Object.keys(values).concat(Object.keys(this.proxy))))
         keys.forEach(field => {

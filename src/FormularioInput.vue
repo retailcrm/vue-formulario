@@ -26,7 +26,6 @@ import {
 } from 'vue-property-decorator'
 import { shallowEqualObjects, parseRules, snakeToCamel, has, arrayify, groupBails } from './libs/utils'
 import { ValidationError } from '@/validation/types'
-import { ObjectType } from '@/common.types'
 
 const ERROR_BEHAVIOR = {
     BLUR: 'blur',
@@ -37,10 +36,10 @@ const ERROR_BEHAVIOR = {
 @Component({ inheritAttrs: false })
 export default class FormularioInput extends Vue {
     @Inject({ default: undefined }) formularioSetter!: Function|undefined
-    @Inject({ default: () => () => ({}) }) formularioFieldValidation!: Function
+    @Inject({ default: () => (): void => {} }) formularioFieldValidation!: Function
     @Inject({ default: undefined }) formularioRegister!: Function|undefined
     @Inject({ default: undefined }) formularioDeregister!: Function|undefined
-    @Inject({ default: () => () => ({}) }) getFormValues!: Function
+    @Inject({ default: () => (): Record<string, any> => ({}) }) getFormValues!: Function
     @Inject({ default: undefined }) observeErrors!: Function|undefined
     @Inject({ default: undefined }) removeErrorObserver!: Function|undefined
     @Inject({ default: '' }) path!: string
@@ -74,12 +73,12 @@ export default class FormularioInput extends Vue {
     @Prop({
         type: Object,
         default: () => ({}),
-    }) validationRules!: ObjectType
+    }) validationRules!: Record<string, any>
 
     @Prop({
         type: Object,
         default: () => ({}),
-    }) validationMessages!: ObjectType
+    }) validationMessages!: Record<string, any>
 
     @Prop({
         type: [Array, String, Boolean],
@@ -96,23 +95,23 @@ export default class FormularioInput extends Vue {
     @Prop({ default: false }) disableErrors!: boolean
     @Prop({ default: true }) preventWindowDrops!: boolean
     @Prop({ default: 'preview' }) imageBehavior!: string
-    @Prop({ default: false }) uploader!: Function|Object|boolean
+    @Prop({ default: false }) uploader!: Function|Record<string, any>|boolean
     @Prop({ default: false }) uploadUrl!: string|boolean
     @Prop({ default: 'live' }) uploadBehavior!: string
 
     defaultId: string = this.$formulario.nextId(this)
-    localAttributes: ObjectType = {}
+    localAttributes: Record<string, any> = {}
     localErrors: ValidationError[] = []
-    proxy: ObjectType = this.getInitialValue()
+    proxy: Record<string, any> = this.getInitialValue()
     behavioralErrorVisibility: boolean = this.errorBehavior === 'live'
-    formShouldShowErrors: boolean = false
+    formShouldShowErrors = false
     validationErrors: [] = []
     pendingValidation: Promise<any> = Promise.resolve()
     // These registries are used for injected messages registrants only (mostly internal).
     ruleRegistry: [] = []
-    messageRegistry: ObjectType = {}
+    messageRegistry: Record<string, any> = {}
 
-    get context () {
+    get context (): Record<string, any> {
         return this.defineModel({
             attributes: this.elementAttributes,
             blurHandler: this.blurHandler.bind(this),
@@ -164,7 +163,7 @@ export default class FormularioInput extends Vue {
     /**
      * Reducer for attributes that will be applied to each core input element.
      */
-    get elementAttributes () {
+    get elementAttributes (): Record<string, any> {
         const attrs = Object.assign({}, this.localAttributes)
         // pass the ID prop through to the root element
         if (this.id) {
@@ -188,14 +187,14 @@ export default class FormularioInput extends Vue {
     /**
      * Return the element’s name, or select a fallback.
      */
-    get nameOrFallback () {
+    get nameOrFallback (): string {
         return this.path !== '' ? `${this.path}.${this.name}` : this.name
     }
 
     /**
      * Determine if an input has a user-defined name.
      */
-    get hasGivenName () {
+    get hasGivenName (): boolean {
         return typeof this.name !== 'boolean'
     }
 
@@ -210,21 +209,21 @@ export default class FormularioInput extends Vue {
      * Use the uploadURL on the input if it exists, otherwise use the uploadURL
      * that is defined as a plugin option.
      */
-    get mergedUploadUrl () {
+    get mergedUploadUrl (): string | boolean {
         return this.uploadUrl || this.$formulario.getUploadUrl()
     }
 
     /**
      * Does this computed property have errors
      */
-    get hasErrors () {
+    get hasErrors (): boolean {
         return this.allErrors.length > 0
     }
 
     /**
      * Returns if form has actively visible errors (of any kind)
      */
-    get hasVisibleErrors () {
+    get hasVisibleErrors (): boolean {
         return ((this.validationErrors && this.showValidationErrors) || !!this.explicitErrors.length)
     }
 
@@ -275,12 +274,12 @@ export default class FormularioInput extends Vue {
     }
 
     @Watch('$attrs', { deep: true })
-    onAttrsChanged (value) {
+    onAttrsChanged (value): void {
         this.updateLocalAttributes(value)
     }
 
     @Watch('proxy')
-    onProxyChanged (newValue, oldValue) {
+    onProxyChanged (newValue, oldValue): void {
         this.performValidation()
         if (!this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
             this.context.model = newValue
@@ -288,18 +287,18 @@ export default class FormularioInput extends Vue {
     }
 
     @Watch('formularioValue')
-    onFormularioValueChanged (newValue, oldValue) {
+    onFormularioValueChanged (newValue, oldValue): void {
         if (this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
             this.context.model = newValue
         }
     }
 
     @Watch('showValidationErrors', { immediate: true })
-    onShowValidationErrorsChanged (val) {
+    onShowValidationErrorsChanged (val): void {
         this.$emit('error-visibility', val)
     }
 
-    created () {
+    created (): void {
         this.applyInitialValue()
         if (this.formularioRegister && typeof this.formularioRegister === 'function') {
             this.formularioRegister(this.nameOrFallback, this)
@@ -312,7 +311,7 @@ export default class FormularioInput extends Vue {
     }
 
     // noinspection JSUnusedGlobalSymbols
-    beforeDestroy () {
+    beforeDestroy (): void {
         if (!this.disableErrors && typeof this.removeErrorObserver === 'function') {
             this.removeErrorObserver(this.setErrors)
         }
@@ -346,7 +345,7 @@ export default class FormularioInput extends Vue {
     /**
      * Set the value from a model.
      */
-    modelSetter (value) {
+    modelSetter (value): void {
         if (!shallowEqualObjects(value, this.proxy)) {
             this.proxy = value
         }
@@ -366,16 +365,16 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    getInitialValue () {
-        if (has(this.$options.propsData as ObjectType, 'value')) {
+    getInitialValue (): any {
+        if (has(this.$options.propsData as Record<string, any>, 'value')) {
             return this.value
-        } else if (has(this.$options.propsData as ObjectType, 'formularioValue')) {
+        } else if (has(this.$options.propsData as Record<string, any>, 'formularioValue')) {
             return this.formularioValue
         }
         return ''
     }
 
-    applyInitialValue () {
+    applyInitialValue (): void {
         // This should only be run immediately on created and ensures that the
         // proxy and the model are both the same before any additional registration.
         if (!shallowEqualObjects(this.context.model, this.proxy)) {
@@ -383,7 +382,7 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    updateLocalAttributes (value) {
+    updateLocalAttributes (value): void {
         if (!shallowEqualObjects(value, this.localAttributes)) {
             this.localAttributes = value
         }
@@ -432,7 +431,7 @@ export default class FormularioInput extends Vue {
         })
     }
 
-    didValidate (messages) {
+    didValidate (messages): void {
         const validationChanged = !shallowEqualObjects(messages, this.validationErrors)
         this.validationErrors = messages
         if (validationChanged) {
@@ -461,7 +460,7 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    getMessageFunc (ruleName) {
+    getMessageFunc (ruleName: string) {
         ruleName = snakeToCamel(ruleName)
         if (this.messages && typeof this.messages[ruleName] !== 'undefined') {
             switch (typeof this.messages[ruleName]) {
@@ -497,11 +496,11 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    setErrors (errors) {
+    setErrors (errors): void {
         this.localErrors = arrayify(errors)
     }
 
-    registerRule (rule, args, ruleName, message = null) {
+    registerRule (rule, args, ruleName, message = null): void {
         if (!this.ruleRegistry.some(r => r[2] === ruleName)) {
             // These are the raw rule format since they will be used directly.
             this.ruleRegistry.push([rule, args, ruleName])
@@ -511,7 +510,7 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    removeRule (key) {
+    removeRule (key): void {
         const ruleIndex = this.ruleRegistry.findIndex(r => r[2] === key)
         if (ruleIndex >= 0) {
             this.ruleRegistry.splice(ruleIndex, 1)

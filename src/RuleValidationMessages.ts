@@ -46,14 +46,14 @@ const validationMessages = {
     /**
      * The value is not a letter.
      */
-    alpha (vm: FormularioInput, context: Object): string {
+    alpha (vm: FormularioInput, context: Record<string, any>): string {
         return vm.$t('validation.alpha', context)
     },
 
     /**
      * Rule: checks if the value is alpha numeric
      */
-    alphanumeric (vm: FormularioInput, context: Object): string {
+    alphanumeric (vm: FormularioInput, context: Record<string, any>): string {
         return vm.$t('validation.alphanumeric', context)
     },
 
@@ -116,7 +116,7 @@ const validationMessages = {
     /**
      * Value is an allowed value.
      */
-    in: function (vm: FormularioInput, context: ValidationContext) {
+    in: function (vm: FormularioInput, context: ValidationContext): string {
         if (typeof context.value === 'string' && context.value) {
             return vm.$t('validation.in.string', context)
         }
@@ -127,14 +127,14 @@ const validationMessages = {
     /**
      * Value is not a match.
      */
-    matches (vm: FormularioInput, context: ValidationContext) {
+    matches (vm: FormularioInput, context: ValidationContext): string {
         return vm.$t('validation.matches.default', context)
     },
 
     /**
      * The maximum value allowed.
      */
-    max (vm: FormularioInput, context: ValidationContext) {
+    max (vm: FormularioInput, context: ValidationContext): string {
         const maximum = context.args[0] as number
 
         if (Array.isArray(context.value)) {
@@ -150,7 +150,7 @@ const validationMessages = {
     /**
      * The (field-level) error message for mime errors.
      */
-    mime (vm: FormularioInput, context: ValidationContext) {
+    mime (vm: FormularioInput, context: ValidationContext): string {
         const types = context.args[0]
 
         if (types) {
@@ -163,7 +163,7 @@ const validationMessages = {
     /**
      * The maximum value allowed.
      */
-    min (vm: FormularioInput, context: ValidationContext) {
+    min (vm: FormularioInput, context: ValidationContext): string {
         const minimum = context.args[0] as number
 
         if (Array.isArray(context.value)) {
@@ -179,35 +179,35 @@ const validationMessages = {
     /**
      * The field is not an allowed value
      */
-    not (vm: FormularioInput, context: Object) {
+    not (vm: FormularioInput, context: Record<string, any>): string {
         return vm.$t('validation.not.default', context)
     },
 
     /**
      * The field is not a number
      */
-    number (vm: FormularioInput, context: Object) {
+    number (vm: FormularioInput, context: Record<string, any>): string {
         return vm.$t('validation.number.default', context)
     },
 
     /**
      * Required field.
      */
-    required (vm: FormularioInput, context: Object) {
+    required (vm: FormularioInput, context: Record<string, any>): string {
         return vm.$t('validation.required.default', context)
     },
 
     /**
      * Starts with specified value
      */
-    startsWith (vm: FormularioInput, context: Object) {
+    startsWith (vm: FormularioInput, context: Record<string, any>): string {
         return vm.$t('validation.startsWith.default', context)
     },
 
     /**
      * Value is not a url.
      */
-    url (vm: FormularioInput, context: Object) {
+    url (vm: FormularioInput, context: Record<string, any>): string {
         return vm.$t('validation.url.default', context)
     }
 }

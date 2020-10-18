@@ -265,9 +265,8 @@ describe('FormularioForm', () => {
         const wrapper = mount(FormularioForm, {
             propsData: { values: { name: 'Dave Barnett', candy: true } },
             slots: { default: `
-
-                <FormularioInput v-slot="inputProps" name="name" validation="required" >
-                    <input v-model="inputProps.context.model" type="text">
+                <FormularioInput v-slot="{ context }" name="name" validation="required">
+                    <input v-model="context.model" type="text">
                 </FormularioInput>
             ` }
         })
@@ -288,12 +287,8 @@ describe('FormularioForm', () => {
         const wrapper = mount({
             template: `
             <div>
-                <FormularioForm
-                    name="login"
-                />
-                <FormularioForm
-                    name="register"
-                />
+                <FormularioForm name="login" />
+                <FormularioForm name="register" />
             </div>
             `
         })

@@ -1,17 +1,17 @@
 interface ValidatableData {
-    value: any,
+    value: any;
 }
 
 interface ValidationContext {
-    args: any[]
-    name: string
-    value: any
+    args: any[];
+    name: string;
+    value: any;
 }
 
 interface ValidationError {
-    rule?: string
-    context?: any
-    message: string
+    rule?: string;
+    context?: any;
+    message: string;
 }
 
 export { ValidatableData }

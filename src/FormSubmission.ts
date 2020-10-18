@@ -15,18 +15,15 @@ export default class FormSubmission {
 
     /**
      * Determine if the form has any validation errors.
-     *
-     * @return {Promise} resolves a boolean
      */
-    hasValidationErrors () {
+    hasValidationErrors (): Promise<boolean> {
         return (this.form as any).hasValidationErrors()
     }
 
     /**
      * Asynchronously generate the values payload of this form.
-     * @return {Promise} resolves to json
      */
-    values () {
+    values (): Promise<Record<string, any>> {
         return new Promise((resolve, reject) => {
             const form = this.form as any
             const pending = []
@@ -36,9 +33,10 @@ export default class FormSubmission {
                 if (
                     Object.prototype.hasOwnProperty.call(values, key) &&
                     typeof form.proxy[key] === 'object' &&
-                    form.proxy[key] instanceof FileUpload) {
+                    form.proxy[key] instanceof FileUpload
+                ) {
                     pending.push(
-                        form.proxy[key].upload().then((data: Object) => Object.assign(values, { [key]: data }))
+                        form.proxy[key].upload().then((data: Record<string, any>) => Object.assign(values, { [key]: data }))
                     )
                 }
             }

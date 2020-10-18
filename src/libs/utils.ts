@@ -1,16 +1,12 @@
 import FileUpload from '@/FileUpload'
-import {
-    ArrayType,
-    ObjectType,
-} from '@/common.types'
 
 /**
  * Function to map over an object.
  * @param {Object} original An object to map over
  * @param {Function} callback
  */
-export function map (original: ObjectType, callback: Function) {
-    const obj: ObjectType = {}
+export function map (original: Record<string, any>, callback: Function): Record<string, any> {
+    const obj: Record<string, any> = {}
     for (const key in original) {
         if (Object.prototype.hasOwnProperty.call(original, key)) {
             obj[key] = callback(key, original[key])
@@ -19,7 +15,7 @@ export function map (original: ObjectType, callback: Function) {
     return obj
 }
 
-export function shallowEqualObjects (objA: any, objB: any) {
+export function shallowEqualObjects (objA: Record<string, any>, objB: Record<string, any>): boolean {
     if (objA === objB) {
         return true
     }
@@ -66,7 +62,7 @@ export function snakeToCamel (string: string | any) {
  * If given parameter is not string, object ot array, result will be an empty array.
  * @param {*} item
  */
-export function arrayify (item: any) {
+export function arrayify (item: any): any[] {
     if (!item) {
         return []
     }
@@ -102,7 +98,7 @@ export function parseRules (validation: any, rules: any): any[] {
  * Given a string or function, parse it and return an array in the format
  * [fn, [...arguments]]
  */
-function parseRule (rule: any, rules: ObjectType) {
+function parseRule (rule: any, rules: Record<string, any>) {
     if (typeof rule === 'function') {
         return [rule, []]
     }
@@ -243,12 +239,12 @@ export function isScalar (data: any) {
  * A simple (somewhat non-comprehensive) cloneDeep function, valid for our use
  * case of needing to unbind reactive watchers.
  */
-export function cloneDeep (value: any) {
+export function cloneDeep (value: any): any {
     if (typeof value !== 'object') {
         return value
     }
 
-    const copy: ArrayType | ObjectType = Array.isArray(value) ? [] : {}
+    const copy: any | Record<string, any> = Array.isArray(value) ? [] : {}
 
     for (const key in value) {
         if (Object.prototype.hasOwnProperty.call(value, key)) {
@@ -267,7 +263,7 @@ export function cloneDeep (value: any) {
  * Given a locale string, parse the options.
  * @param {string} locale
  */
-export function parseLocale (locale: string) {
+export function parseLocale (locale: string): string[] {
     const segments = locale.split('-')
     return segments.reduce((options: string[], segment: string) => {
         if (options.length) {
@@ -280,21 +276,14 @@ export function parseLocale (locale: string) {
 /**
  * Shorthand for Object.prototype.hasOwnProperty.call (space saving)
  */
-export function has (ctx: ObjectType, prop: string): boolean {
+export function has (ctx: Record<string, any>, prop: string): boolean {
     return Object.prototype.hasOwnProperty.call(ctx, prop)
 }
 
-/**
- * Set a unique Symbol identifier on an object.
- */
-export function setId (o: object, id: Symbol) {
-    return Object.defineProperty(o, '__id', Object.assign(Object.create(null), { value: id || Symbol('uuid') }))
-}
-
-export function getNested (obj: ObjectType, field: string) {
+export function getNested (obj: Record<string, any>, field: string): any {
     const fieldParts = field.split('.')
 
-    let result: ObjectType = obj
+    let result: Record<string, any> = obj
 
     for (const key in fieldParts) {
         const matches = fieldParts[key].match(/(.+)\[(\d+)\]$/)
@@ -315,10 +304,10 @@ export function getNested (obj: ObjectType, field: string) {
     return result
 }
 
-export function setNested (obj: ObjectType, field: string, value: any) {
+export function setNested (obj: Record<string, any>, field: string, value: any): void {
     const fieldParts = field.split('.')
 
-    let subProxy: ObjectType = obj
+    let subProxy: Record<string, any> = obj
     for (let i = 0; i < fieldParts.length; i++) {
         const fieldPart = fieldParts[i]
         const matches = fieldPart.match(/(.+)\[(\d+)\]$/)
@@ -348,6 +337,4 @@ export function setNested (obj: ObjectType, field: string, value: any) {
             }
         }
     }
-
-    return obj
 }
