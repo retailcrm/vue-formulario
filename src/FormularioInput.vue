@@ -303,7 +303,9 @@ export default class FormularioInput extends Vue {
             this.addErrorObserver({ callback: this.setErrors, type: 'input', field: this.nameOrFallback })
         }
         this.updateLocalAttributes(this.$attrs)
-        this.performValidation()
+        if (this.errorBehavior === ERROR_BEHAVIOR.LIVE) {
+            this.performValidation()
+        }
     }
 
     // noinspection JSUnusedGlobalSymbols

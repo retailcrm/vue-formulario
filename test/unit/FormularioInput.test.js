@@ -75,6 +75,22 @@ describe('FormularioInput', () => {
         expect(wrapper.find('span').text()).toBe('The string other value is not correct.')
     })
 
+    it('no validation on created when errorBehavior is not live', async () => {
+        const wrapper = mount(FormularioInput, {
+            propsData: {
+                name: 'test',
+                validation: 'required|in:abcdef',
+                validationMessages: {in: 'the value was different than expected'},
+                value: 'other value'
+            },
+            scopedSlots: {
+                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
+            }
+        })
+        await flushPromises()
+        expect(wrapper.find('span').exists()).toBe(false)
+    })
+
     it('uses custom async validation rules on defined on the field', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
@@ -282,12 +298,13 @@ describe('FormularioInput', () => {
                 `
             }
         })
+
         await flushPromises()
         expect(wrapper.find('span').exists()).toBe(false)
 
         wrapper.trigger('submit')
-        await flushPromises()
 
+        await flushPromises()
         expect(wrapper.find('span').exists()).toBe(true)
     })
 })

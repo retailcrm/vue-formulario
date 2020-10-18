@@ -31,6 +31,14 @@ export function shallowEqualObjects (objA: Record<string, any>, objB: Record<str
         return false
     }
 
+    if (objA instanceof Date && objB instanceof Date) {
+        return objA.getTime() === objB.getTime()
+    }
+
+    if (aKeys.length === 0) {
+        return objA === objB
+    }
+
     for (let i = 0; i < aKeys.length; i++) {
         const key = aKeys[i]
 

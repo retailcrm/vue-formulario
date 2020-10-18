@@ -160,8 +160,6 @@ describe('FormularioForm', () => {
         expect(wrapper.find('span').text()).toBe('234')
     })
 
-
-
     // ===========================================================================
     /**
      * @todo in vue-test-utils version 1.0.0-beta.29 has some bugs related to
