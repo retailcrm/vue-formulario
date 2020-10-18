@@ -17,3 +17,9 @@ interface ValidationError {
 export { ValidatableData }
 export { ValidationContext }
 export { ValidationError }
+
+export interface ErrorObserver {
+    type: string;
+    field: string;
+    callback: Function;
+}

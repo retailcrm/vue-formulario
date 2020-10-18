@@ -40,7 +40,7 @@ export default class FormularioInput extends Vue {
     @Inject({ default: undefined }) formularioRegister!: Function|undefined
     @Inject({ default: undefined }) formularioDeregister!: Function|undefined
     @Inject({ default: () => (): Record<string, any> => ({}) }) getFormValues!: Function
-    @Inject({ default: undefined }) observeErrors!: Function|undefined
+    @Inject({ default: undefined }) addErrorObserver!: Function|undefined
     @Inject({ default: undefined }) removeErrorObserver!: Function|undefined
     @Inject({ default: '' }) path!: string
 
@@ -124,12 +124,9 @@ export default class FormularioInput extends Vue {
             getValidationErrors: this.getValidationErrors.bind(this),
             hasGivenName: this.hasGivenName,
             hasValidationErrors: this.hasValidationErrors.bind(this),
-            help: this.help,
             imageBehavior: this.imageBehavior,
-            limit: this.limit,
             performValidation: this.performValidation.bind(this),
             preventWindowDrops: this.preventWindowDrops,
-            repeatable: this.repeatable,
             setErrors: this.setErrors.bind(this),
             showValidationErrors: this.showValidationErrors,
             uploadBehavior: this.uploadBehavior,
@@ -201,7 +198,7 @@ export default class FormularioInput extends Vue {
     /**
      * The validation label to use.
      */
-    get mergedValidationName () {
+    get mergedValidationName (): string {
         return this.validationName || this.name
     }
 
@@ -241,7 +238,7 @@ export default class FormularioInput extends Vue {
     /**
      * All of the currently visible validation errors (does not include error handling)
      */
-    get visibleValidationErrors () {
+    get visibleValidationErrors (): ValidationError[] {
         return (this.showValidationErrors && this.validationErrors.length) ? this.validationErrors : []
     }
 
@@ -302,8 +299,8 @@ export default class FormularioInput extends Vue {
         if (this.formularioRegister && typeof this.formularioRegister === 'function') {
             this.formularioRegister(this.nameOrFallback, this)
         }
-        if (!this.disableErrors && typeof this.observeErrors === 'function') {
-            this.observeErrors({ callback: this.setErrors, type: 'input', field: this.nameOrFallback })
+        if (!this.disableErrors && typeof this.addErrorObserver === 'function') {
+            this.addErrorObserver({ callback: this.setErrors, type: 'input', field: this.nameOrFallback })
         }
         this.updateLocalAttributes(this.$attrs)
         this.performValidation()
@@ -321,9 +318,8 @@ export default class FormularioInput extends Vue {
 
     /**
      * Defines the model used throughout the existing context.
-     * @param {object} context
      */
-    defineModel (context) {
+    defineModel (context): Record<string, any> {
         return Object.defineProperty(context, 'model', {
             get: this.modelGetter.bind(this),
             set: this.modelSetter.bind(this),
@@ -333,7 +329,7 @@ export default class FormularioInput extends Vue {
     /**
      * Get the value from a model.
      */
-    modelGetter () {
+    modelGetter (): any {
         const model = this.isVmodeled ? 'formularioValue' : 'proxy'
         if (this[model] === undefined) {
             return ''
@@ -467,13 +463,13 @@ export default class FormularioInput extends Vue {
                     return this.messages[ruleName]
                 case 'string':
                 case 'boolean':
-                    return () => this.messages[ruleName]
+                    return (): string => this.messages[ruleName]
             }
         }
-        return (context) => this.$formulario.validationMessage(ruleName, context, this)
+        return (context): string => this.$formulario.validationMessage(ruleName, context, this)
     }
 
-    hasValidationErrors () {
+    hasValidationErrors (): Promise<boolean> {
         return new Promise(resolve => {
             this.$nextTick(() => {
                 this.pendingValidation.then(() => resolve(!!this.validationErrors.length))

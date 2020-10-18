@@ -28,7 +28,6 @@ export default class FormularioForm extends Vue {
     @Provide() formularioDeregister = this.deregister
     @Provide() formularioSetter = this.setFieldValue
     @Provide() getFormValues = (): Record<string, any> => this.proxy
-    @Provide() observeErrors = this.addErrorObserver
     @Provide() path = ''
 
     @Provide() removeErrorObserver (observer): void {
@@ -50,15 +49,8 @@ export default class FormularioForm extends Vue {
         default: false
     }) readonly values!: Record<string, any> | boolean
 
-    @Prop({
-        type: [Object, Boolean],
-        default: false
-    }) readonly errors!: Record<string, any> | boolean
-
-    @Prop({
-        type: Array,
-        default: () => ([])
-    }) readonly formErrors!: []
+    @Prop({ default: false }) readonly errors!: Record<string, any> | boolean
+    @Prop({ default: () => ([]) }) readonly formErrors!: []
 
     public proxy: Record<string, any> = {}
 
@@ -74,11 +66,11 @@ export default class FormularioForm extends Vue {
 
     namedFieldErrors: Record<string, any> = {}
 
-    get mergedFormErrors () {
+    get mergedFormErrors (): Record<string, any> {
         return this.formErrors.concat(this.namedErrors)
     }
 
-    get mergedFieldErrors () {
+    get mergedFieldErrors (): Record<string, any> {
         const errors = {}
 
         if (this.errors) {
@@ -178,7 +170,8 @@ export default class FormularioForm extends Vue {
         this.namedFieldErrors = inputErrors
     }
 
-    addErrorObserver (observer): void {
+    @Provide()
+    addErrorObserver (observer: ErrorObserver): void {
         if (!this.errorObservers.find(obs => observer.callback === obs.callback)) {
             this.errorObservers.push(observer)
             if (observer.type === 'form') {
