@@ -21,7 +21,7 @@ export default {
             'vue-property-decorator': 'vuePropertyDecorator',
         },
     },
-    external: ['vue', 'vue-property-decorator'],
+    external: ['vue'],
     plugins: [
         resolve({
             browser: true,
@@ -31,7 +31,7 @@ export default {
         vue({ css: true, compileTemplate: true }),
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),
-        internal(['is-plain-object', 'nanoid/non-secure', 'is-url']),
+        internal(['is-plain-object', 'nanoid/non-secure', 'is-url', 'vue-property-decorator']),
         terser(),
     ]
 }
