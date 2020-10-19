@@ -33,7 +33,7 @@ const ERROR_BEHAVIOR = {
     SUBMIT: 'submit',
 }
 
-@Component({ inheritAttrs: false })
+@Component({ name: 'FormularioInput', inheritAttrs: false })
 export default class FormularioInput extends Vue {
     @Inject({ default: undefined }) formularioSetter!: Function|undefined
     @Inject({ default: () => (): void => {} }) formularioFieldValidation!: Function

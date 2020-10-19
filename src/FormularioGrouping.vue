@@ -16,7 +16,7 @@ import {
     Provide,
 } from 'vue-property-decorator'
 
-@Component
+@Component({ name: 'FormularioGrouping' })
 export default class FormularioGrouping extends Vue {
     @Inject({ default: '' }) path!: string
 
