@@ -1,12 +1,12 @@
 import Vue from 'vue'
-import VueI18n from 'vue-i18n'
 import flushPromises from 'flush-promises'
-import { mount, createLocalVue } from '@vue/test-utils'
-import Formulario from '@/Formulario.js'
+import { mount } from '@vue/test-utils'
+
+import Formulario from '@/index.ts'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 
-const globalRule = jest.fn((context) => { return false })
+const globalRule = jest.fn(() => { return false })
 
 function validationMessages (instance) {
     instance.extend({
@@ -21,9 +21,7 @@ function validationMessages (instance) {
 
 Vue.use(Formulario, {
     plugins: [validationMessages],
-    rules: {
-        globalRule
-    }
+    rules: { globalRule }
 })
 
 describe('FormularioInput', () => {
@@ -38,7 +36,7 @@ describe('FormularioInput', () => {
             },
             scopedSlots: {
                 default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
-            }
+            },
         })
         await flushPromises()
         expect(wrapper.find('span').text()).toBe('the value was different than expected')
@@ -75,6 +73,22 @@ describe('FormularioInput', () => {
         })
         await flushPromises()
         expect(wrapper.find('span').text()).toBe('The string other value is not correct.')
+    })
+
+    it('no validation on created when errorBehavior is not live', async () => {
+        const wrapper = mount(FormularioInput, {
+            propsData: {
+                name: 'test',
+                validation: 'required|in:abcdef',
+                validationMessages: {in: 'the value was different than expected'},
+                value: 'other value'
+            },
+            scopedSlots: {
+                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
+            }
+        })
+        await flushPromises()
+        expect(wrapper.find('span').exists()).toBe(false)
     })
 
     it('uses custom async validation rules on defined on the field', async () => {
@@ -135,13 +149,14 @@ describe('FormularioInput', () => {
     })
 
     it('emits correct validation event', async () => {
-        const wrapper = mount(FormularioInput, { propsData: {
-            name: 'test',
-            validation: 'required',
-            errorBehavior: 'live',
-            value: '',
-            name: 'testinput',
-        } })
+        const wrapper = mount(FormularioInput, {
+            propsData: {
+                validation: 'required',
+                errorBehavior: 'live',
+                value: '',
+                name: 'testinput',
+            }
+        })
         await flushPromises()
         const errorObject = wrapper.emitted('validation')[0][0]
         expect(errorObject).toEqual({
@@ -160,7 +175,6 @@ describe('FormularioInput', () => {
     it('emits a error-visibility event on blur', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
-                name: 'test',
                 validation: 'required',
                 errorBehavior: 'blur',
                 value: '',
@@ -178,13 +192,14 @@ describe('FormularioInput', () => {
     })
 
     it('emits error-visibility event immediately when live', async () => {
-        const wrapper = mount(FormularioInput, { propsData: {
-            name: 'test',
-            validation: 'required',
-            errorBehavior: 'live',
-            value: '',
-            name: 'testinput',
-        } })
+        const wrapper = mount(FormularioInput, {
+            propsData: {
+                validation: 'required',
+                errorBehavior: 'live',
+                value: '',
+                name: 'testinput',
+            }
+        })
         await flushPromises()
         expect(wrapper.emitted('error-visibility').length).toBe(1)
     })
@@ -192,7 +207,6 @@ describe('FormularioInput', () => {
     it('Does not emit an error-visibility event if visibility did not change', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
-                name: 'test',
                 validation: 'in:xyz',
                 errorBehavior: 'live',
                 value: 'bar',
@@ -275,7 +289,7 @@ describe('FormularioInput', () => {
 
     it('displays errors when error-behavior is submit and form is submitted', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: {name: 'test'},
+            propsData: { name: 'test' },
             slots: {
                 default: `
                     <FormularioInput v-slot="inputProps" validation="required" name="testinput" error-behavior="submit">
@@ -284,12 +298,13 @@ describe('FormularioInput', () => {
                 `
             }
         })
+
         await flushPromises()
         expect(wrapper.find('span').exists()).toBe(false)
 
         wrapper.trigger('submit')
-        await flushPromises()
 
+        await flushPromises()
         expect(wrapper.find('span').exists()).toBe(true)
     })
 })

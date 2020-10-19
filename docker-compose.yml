@@ -1,0 +1,9 @@
+version: '3.6'
+services:
+  node:
+    image: library/node:12
+    user: node
+    volumes:
+      - ./:/var/www/vue-formulario
+      - "$SSH_AUTH_SOCK:/ssh-auth.sock"
+    working_dir: /var/www/vue-formulario

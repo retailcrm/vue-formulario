@@ -1,3 +1,8 @@
+interface UploadedFile {
+    url: string
+    name: string
+}
+
 /**
  * A fake uploader used by default.
  *
@@ -6,8 +11,8 @@
  * @param {function} error
  * @param {object} options
  */
-export default function (file, progress, error, options) {
-    return new Promise((resolve, reject) => {
+export default function (file: any, progress: any, error: any, options: any): Promise<UploadedFile> {
+    return new Promise(resolve => {
         const totalTime = (options.fauxUploaderDuration || 2000) * (0.5 + Math.random())
         const start = performance.now()
 

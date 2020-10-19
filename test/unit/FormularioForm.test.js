@@ -1,10 +1,9 @@
 import Vue from 'vue'
-import { mount, shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import flushPromises from 'flush-promises'
-import Formulario from '../../src/Formulario.js'
-import FormSubmission from '../../src/FormSubmission.js'
+import FormSubmission from '@/FormSubmission.ts'
+import Formulario from '@/index.ts'
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioInput from '@/FormularioInput.vue'
 
 function validationMessages (instance) {
     instance.extend({
@@ -161,8 +160,6 @@ describe('FormularioForm', () => {
         expect(wrapper.find('span').text()).toBe('234')
     })
 
-
-
     // ===========================================================================
     /**
      * @todo in vue-test-utils version 1.0.0-beta.29 has some bugs related to
@@ -266,9 +263,8 @@ describe('FormularioForm', () => {
         const wrapper = mount(FormularioForm, {
             propsData: { values: { name: 'Dave Barnett', candy: true } },
             slots: { default: `
-
-                <FormularioInput v-slot="inputProps" name="name" validation="required" >
-                    <input v-model="inputProps.context.model" type="text">
+                <FormularioInput v-slot="{ context }" name="name" validation="required">
+                    <input v-model="context.model" type="text">
                 </FormularioInput>
             ` }
         })
@@ -289,12 +285,8 @@ describe('FormularioForm', () => {
         const wrapper = mount({
             template: `
             <div>
-                <FormularioForm
-                    name="login"
-                />
-                <FormularioForm
-                    name="register"
-                />
+                <FormularioForm name="login" />
+                <FormularioForm name="register" />
             </div>
             `
         })
@@ -309,12 +301,14 @@ describe('FormularioForm', () => {
             template: `
             <div>
                 <FormularioForm
+                    class="formulario-form formulario-form--login"
                     name="login"
                     v-slot="vSlot"
                 >
                     <span v-for="error in vSlot.errors">{{ error }}</span>
                 </FormularioForm>
                 <FormularioForm
+                    class="formulario-form formulario-form--register"
                     name="register"
                     v-slot="vSlot"
                 >
@@ -336,12 +330,14 @@ describe('FormularioForm', () => {
             template: `
             <div>
                 <FormularioForm
+                    class="formulario-form formulario-form--login"
                     name="login"
                     v-slot="vSlot"
                 >
                     <span v-for="error in vSlot.errors">{{ error }}</span>
                 </FormularioForm>
                 <FormularioForm
+                    class="formulario-form formulario-form--register"
                     name="register"
                     v-slot="vSlot"
                 >
@@ -387,10 +383,10 @@ describe('FormularioForm', () => {
 
     it('displays field errors on inputs with errors prop', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { errors: { sipple: ['This field has an error'] }},
+            propsData: { errors: { fieldWithErrors: ['This field has an error'] }},
             slots: {
                 default: `
-                    <FormularioInput v-slot="vSlot" name="sipple">
+                    <FormularioInput v-slot="vSlot" name="fieldWithErrors">
                         <span v-for="error in vSlot.context.allErrors">{{ error.message }}</span>
                     </FormularioInput>
                 `

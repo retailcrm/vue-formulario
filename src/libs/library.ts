@@ -5,10 +5,11 @@
  * overly terse for that reason alone, we wouldn't necessarily recommend this.
  */
 const fi = 'FormularioInput'
-const add = (n, c) => ({
-    classification: n,
-    component: fi + (c || (n[0].toUpperCase() + n.substr(1)))
+const add = (classification: string, c?: string) => ({
+    classification,
+    component: fi + (c || (classification[0].toUpperCase() + classification.substr(1)))
 })
+
 export default {
     // === SINGLE LINE TEXT STYLE INPUTS
     ...[

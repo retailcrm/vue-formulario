@@ -1,6 +1,13 @@
+// @ts-ignore
 import isUrl from 'is-url'
 import FileUpload from '../FileUpload'
-import { shallowEqualObjects, regexForFormat } from './utils'
+import { shallowEqualObjects, regexForFormat, has } from '@/libs/utils'
+import { ValidatableData } from '@/validation/types'
+
+interface ConfirmValidatableData extends ValidatableData {
+    getFormValues: () => Record<string, any>;
+    name: string;
+}
 
 /**
  * Library of rules
@@ -9,68 +16,70 @@ export default {
     /**
      * Rule: the value must be "yes", "on", "1", or true
      */
-    accepted: function ({ value }) {
+    accepted ({ value }: ValidatableData): Promise<boolean> {
         return Promise.resolve(['yes', 'on', '1', 1, true, 'true'].includes(value))
     },
 
     /**
      * Rule: checks if a value is after a given date. Defaults to current time
      */
-    after: function ({ value }, compare = false) {
-        const timestamp = Date.parse(compare || new Date())
-        const fieldValue = Date.parse(value)
+    after ({ value }: { value: Date|string }, compare: string | false = false): Promise<boolean> {
+        const timestamp = compare !== false ? Date.parse(compare) : Date.now()
+        const fieldValue = value instanceof Date ? value.getTime() : Date.parse(value)
         return Promise.resolve(isNaN(fieldValue) ? false : (fieldValue > timestamp))
     },
 
     /**
      * Rule: checks if the value is only alpha
      */
-    alpha: function ({ value }, set = 'default') {
+    alpha ({ value }: { value: string }, set = 'default'): Promise<boolean> {
         const sets = {
             default: /^[a-zA-ZÀ-ÖØ-öø-ÿ]+$/,
             latin: /^[a-zA-Z]+$/
         }
-        const selectedSet = sets.hasOwnProperty(set) ? set : 'default'
+        const selectedSet = has(sets, set) ? set : 'default'
+        // @ts-ignore
         return Promise.resolve(sets[selectedSet].test(value))
     },
 
     /**
      * Rule: checks if the value is alpha numeric
      */
-    alphanumeric: function ({ value }, set = 'default') {
+    alphanumeric ({ value }: { value: string }, set = 'default'): Promise<boolean> {
         const sets = {
             default: /^[a-zA-Z0-9À-ÖØ-öø-ÿ]+$/,
             latin: /^[a-zA-Z0-9]+$/
         }
-        const selectedSet = sets.hasOwnProperty(set) ? set : 'default'
+        const selectedSet = has(sets, set) ? set : 'default'
+        // @ts-ignore
         return Promise.resolve(sets[selectedSet].test(value))
     },
 
     /**
      * Rule: checks if a value is after a given date. Defaults to current time
      */
-    before: function ({ value }, compare = false) {
-        const timestamp = Date.parse(compare || new Date())
-        const fieldValue = Date.parse(value)
+    before ({ value }: { value: Date|string }, compare: string|false = false): Promise<boolean> {
+        const timestamp = compare !== false ? Date.parse(compare) : Date.now()
+        const fieldValue = value instanceof Date ? value.getTime() : Date.parse(value)
         return Promise.resolve(isNaN(fieldValue) ? false : (fieldValue < timestamp))
     },
 
     /**
      * Rule: checks if the value is between two other values
      */
-    between: function ({ value }, from = 0, to = 10, force) {
-        return Promise.resolve((() => {
+    between ({ value }: { value: string|number }, from: number|any = 0, to: number|any = 10, force?: string): Promise<boolean> {
+        return Promise.resolve(((): boolean => {
             if (from === null || to === null || isNaN(from) || isNaN(to)) {
                 return false
             }
-            if ((!isNaN(value) && force !== 'length') || force === 'value') {
+            if ((!isNaN(Number(value)) && force !== 'length') || force === 'value') {
                 value = Number(value)
                 from = Number(from)
                 to = Number(to)
                 return (value > from && value < to)
             }
             if (typeof value === 'string' || force === 'length') {
-                value = !isNaN(value) ? value.toString() : value
+                value = (!isNaN(Number(value)) ? value.toString() : value) as string
                 return value.length > from && value.length < to
             }
             return false
@@ -81,10 +90,10 @@ export default {
      * Confirm that the value of one field is the same as another, mostly used
      * for password confirmations.
      */
-    confirm: function ({ value, getFormValues, name }, field) {
-        return Promise.resolve((() => {
+    confirm ({ value, getFormValues, name }: ConfirmValidatableData, field?: string): Promise<boolean> {
+        return Promise.resolve(((): boolean => {
             const formValues = getFormValues()
-            var confirmationFieldName = field
+            let confirmationFieldName = field
             if (!confirmationFieldName) {
                 confirmationFieldName = /_confirm$/.test(name) ? name.substr(0, name.length - 8) : `${name}_confirm`
             }
@@ -96,64 +105,51 @@ export default {
      * Rule: ensures the value is a date according to Date.parse(), or a format
      * regex.
      */
-    date: function ({ value }, format = false) {
-        return Promise.resolve((() => {
-            if (format && typeof format === 'string') {
-                return regexForFormat(format).test(value)
-            }
-            return !isNaN(Date.parse(value))
-        })())
+    date ({ value }: { value: string }, format: string | false = false): Promise<boolean> {
+        return Promise.resolve(format ? regexForFormat(format).test(value) : !isNaN(Date.parse(value)))
     },
 
     /**
      * Rule: tests
      */
-    email: function ({ value }) {
+    email ({ value }: { value: string }): Promise<boolean> {
         if (!value) {
-            return Promise.resolve(() => { return true })
+            return Promise.resolve(true)
         }
 
         // eslint-disable-next-line
-        const isEmail = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
+        const isEmail = /^(([^<>()\[\].,;:\s@"]+(\.[^<>()\[\].,;:\s@"]+)*)|(".+"))@(([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})$/i
         return Promise.resolve(isEmail.test(value))
     },
 
     /**
      * Rule: Value ends with one of the given Strings
      */
-    endsWith: function ({ value }, ...stack) {
+    endsWith ({ value }: { value: any }, ...stack: any[]): Promise<boolean> {
         if (!value) {
-            return Promise.resolve(() => { return true })
+            return Promise.resolve(true)
         }
 
-        return Promise.resolve((() => {
-            if (typeof value === 'string' && stack.length) {
-                return stack.find(item => {
-                    return value.endsWith(item)
-                }) !== undefined
-            } else if (typeof value === 'string' && stack.length === 0) {
-                return true
-            }
-            return false
-        })())
+        if (typeof value === 'string') {
+            return Promise.resolve(stack.length === 0 || stack.some(str => value.endsWith(str)))
+        }
+
+        return Promise.resolve(false)
     },
 
     /**
      * Rule: Value is in an array (stack).
      */
-    in: function ({ value }, ...stack) {
-        return Promise.resolve(stack.find(item => {
-            if (typeof item === 'object') {
-                return shallowEqualObjects(item, value)
-            }
-            return item === value
-        }) !== undefined)
+    in ({ value }: { value: any }, ...stack: any[]): Promise<boolean> {
+        return Promise.resolve(stack.some(item => {
+            return typeof item === 'object' ? shallowEqualObjects(item, value) : item === value
+        }))
     },
 
     /**
      * Rule: Match the value against a (stack) of patterns or strings
      */
-    matches: function ({ value }, ...stack) {
+    matches ({ value }: { value: any }, ...stack: any[]): Promise<boolean> {
         return Promise.resolve(!!stack.find(pattern => {
             if (typeof pattern === 'string' && pattern.substr(0, 1) === '/' && pattern.substr(-1) === '/') {
                 pattern = new RegExp(pattern.substr(1, pattern.length - 2))
@@ -168,26 +164,23 @@ export default {
     /**
      * Check the file type is correct.
      */
-    mime: function ({ value }, ...types) {
-        return Promise.resolve((() => {
-            if (value instanceof FileUpload) {
-                const fileList = value.getFiles()
-                for (let i = 0; i < fileList.length; i++) {
-                    const file = fileList[i].file
-                    if (!types.includes(file.type)) {
-                        return false
-                    }
-                }
-            }
-            return true
-        })())
+    mime ({ value }: { value: any }, ...types: string[]): Promise<boolean> {
+        if (value instanceof FileUpload) {
+            const files = value.getFiles()
+            const isMimeCorrect = (file: File): boolean => types.includes(file.type)
+            const allValid: boolean = files.reduce((valid: boolean, { file }) => valid && isMimeCorrect(file), true)
+
+            return Promise.resolve(allValid)
+        }
+
+        return Promise.resolve(true)
     },
 
     /**
      * Check the minimum value of a particular.
      */
-    min: function ({ value }, minimum = 1, force) {
-        return Promise.resolve((() => {
+    min ({ value }: { value: any }, minimum: number | any = 1, force?: string): Promise<boolean> {
+        return Promise.resolve(((): boolean => {
             if (Array.isArray(value)) {
                 minimum = !isNaN(minimum) ? Number(minimum) : minimum
                 return value.length >= minimum
@@ -207,10 +200,10 @@ export default {
     /**
      * Check the maximum value of a particular.
      */
-    max: function ({ value }, maximum = 10, force) {
-        return Promise.resolve((() => {
+    max ({ value }: { value: any }, maximum: string | number = 10, force?: string): Promise<boolean> {
+        return Promise.resolve(((): boolean => {
             if (Array.isArray(value)) {
-                maximum = !isNaN(maximum) ? Number(maximum) : maximum
+                maximum = !isNaN(Number(maximum)) ? Number(maximum) : maximum
                 return value.length <= maximum
             }
             if ((!isNaN(value) && force !== 'length') || force === 'value') {
@@ -228,28 +221,25 @@ export default {
     /**
      * Rule: Value is not in stack.
      */
-    not: function ({ value }, ...stack) {
-        return Promise.resolve(stack.find(item => {
-            if (typeof item === 'object') {
-                return shallowEqualObjects(item, value)
-            }
-            return item === value
-        }) === undefined)
+    not ({ value }: { value: any }, ...stack: any[]): Promise<boolean> {
+        return Promise.resolve(!stack.some(item => {
+            return typeof item === 'object' ? shallowEqualObjects(item, value) : item === value
+        }))
     },
 
     /**
      * Rule: checks if the value is only alpha numeric
      */
-    number: function ({ value }) {
-        return Promise.resolve(!isNaN(value))
+    number ({ value }: { value: any }): Promise<boolean> {
+        return Promise.resolve(!isNaN(Number(value)))
     },
 
     /**
      * Rule: must be a value
      */
-    required: function ({ value }, isRequired = true) {
-        return Promise.resolve((() => {
-            if (!isRequired || ['no', 'false'].includes(isRequired)) {
+    required ({ value }: { value: any }, isRequired: string|boolean = true): Promise<boolean> {
+        return Promise.resolve(((): boolean => {
+            if (!isRequired || ['no', 'false'].includes(isRequired as string)) {
                 return true
             }
             if (Array.isArray(value)) {
@@ -271,34 +261,29 @@ export default {
     /**
      * Rule: Value starts with one of the given Strings
      */
-    startsWith: function ({ value }, ...stack) {
+    startsWith ({ value }: { value: any }, ...stack: string[]): Promise<boolean> {
         if (!value) {
-            return Promise.resolve(() => { return true })
+            return Promise.resolve(true)
         }
 
-        return Promise.resolve((() => {
-            if (typeof value === 'string' && stack.length) {
-                return stack.find(item => {
-                    return value.startsWith(item)
-                }) !== undefined
-            } else if (typeof value === 'string' && stack.length === 0) {
-                return true
-            }
-            return false
-        })())
+        if (typeof value === 'string') {
+            return Promise.resolve(stack.length === 0 || stack.some(str => value.startsWith(str)))
+        }
+
+        return Promise.resolve(false)
     },
 
     /**
      * Rule: checks if a string is a valid url
      */
-    url: function ({ value }) {
+    url ({ value }: { value: string }): Promise<boolean> {
         return Promise.resolve(isUrl(value))
     },
 
     /**
      * Rule: not a true rule — more like a compiler flag.
      */
-    bail: function () {
+    bail (): Promise<boolean> {
         return Promise.resolve(true)
     }
 }

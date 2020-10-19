@@ -1,36 +1,37 @@
-import resolve from '@rollup/plugin-node-resolve'
-import commonjs from '@rollup/plugin-commonjs' // Convert CommonJS modules to ES6
-import buble from '@rollup/plugin-buble' // Transpile/polyfill with reasonable browser support
-import vue from 'rollup-plugin-vue' // Handle .vue SFC files
+import alias from '@rollup/plugin-alias'
+import commonjs from '@rollup/plugin-commonjs'
 import internal from 'rollup-plugin-internal'
+import resolve from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
+import typescript from 'rollup-plugin-typescript2'
+import vue from 'rollup-plugin-vue'
 
+// noinspection JSUnusedGlobalSymbols
 export default {
-  input: 'src/Formulario.js', // Path relative to package.json
-  output: {
-    name: 'VueFormulario',
-    exports: 'default',
-    format: 'iife',
-    globals: {
-      'is-plain-object': 'isPlainObject',
-      'nanoid/non-secure': 'nanoid',
-      'is-url': 'isUrl',
-    }
-  },
-  plugins: [
-    resolve({
-      browser: true,
-      preferBuiltins: false
-    }),
-    commonjs(),
-    internal(['is-plain-object', 'nanoid/non-secure', 'is-url']),
-    vue({
-      css: true, // Dynamically inject css as a <style> tag
-      compileTemplate: true // Explicitly convert template to render function
-    }),
-    buble({
-      objectAssign: 'Object.assign'
-    }), // Transpile to ES5,
-    terser()
-  ]
+    input: 'src/index.ts',
+    output: {
+        name: 'VueFormulario',
+        exports: 'default',
+        format: 'iife',
+        globals: {
+            'is-plain-object': 'isPlainObject',
+            'is-url': 'isUrl',
+            'nanoid/non-secure': 'nanoid',
+            vue: 'Vue',
+            'vue-property-decorator': 'vuePropertyDecorator',
+        },
+    },
+    external: ['vue'],
+    plugins: [
+        resolve({
+            browser: true,
+            preferBuiltins: false,
+        }),
+        typescript({ check: false, sourceMap: false }),
+        vue({ css: true, compileTemplate: true }),
+        alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
+        commonjs(),
+        internal(['is-plain-object', 'nanoid/non-secure', 'is-url', 'vue-property-decorator']),
+        terser(),
+    ]
 }

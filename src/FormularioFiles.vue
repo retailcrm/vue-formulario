@@ -16,13 +16,16 @@
                 >
                     <img
                         :src="file.previewData"
+                        alt=""
                     >
                 </div>
+
                 <div
                     class="formulario-file-name"
                     :title="file.name"
                     v-text="file.name"
                 />
+
                 <div
                     v-if="file.progress !== false"
                     :data-just-finished="file.justFinished"
@@ -34,12 +37,14 @@
                         :style="{width: file.progress + '%'}"
                     />
                 </div>
+
                 <div
                     v-if="(file.complete && !file.justFinished) || file.progress === false"
                     class="formulario-file-remove"
                     @click="file.removeFile"
                 />
             </div>
+
             <div
                 v-if="file.error"
                 class="formulario-file-upload-error"
@@ -54,21 +59,25 @@ import FileUpload from './FileUpload'
 
 export default {
     name: 'FormularioFiles',
+
     props: {
         files: {
             type: FileUpload,
             required: true
         },
+
         imagePreview: {
             type: Boolean,
             default: false
         }
     },
+
     computed: {
         fileUploads () {
             return this.files.files || []
         }
     },
+
     watch: {
         files () {
             if (this.imagePreview) {
@@ -76,6 +85,7 @@ export default {
             }
         }
     },
+
     mounted () {
         if (this.imagePreview) {
             this.files.loadPreviews()

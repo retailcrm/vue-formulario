@@ -1,36 +1,42 @@
 import { cloneDeep } from './libs/utils'
 import FileUpload from './FileUpload'
+import FormularioForm from '@/FormularioForm.vue'
 
 export default class FormSubmission {
+    public form: FormularioForm
+
     /**
      * Initialize a formulario form.
      * @param {vm} form an instance of FormularioForm
      */
-    constructor (form) {
+    constructor (form: FormularioForm) {
         this.form = form
     }
 
     /**
      * Determine if the form has any validation errors.
-     *
-     * @return {Promise} resolves a boolean
      */
-    hasValidationErrors () {
-        return this.form.hasValidationErrors()
+    hasValidationErrors (): Promise<boolean> {
+        return (this.form as any).hasValidationErrors()
     }
 
     /**
      * Asynchronously generate the values payload of this form.
-     * @return {Promise} resolves to json
      */
-    values () {
+    values (): Promise<Record<string, any>> {
         return new Promise((resolve, reject) => {
+            const form = this.form as any
             const pending = []
-            const values = cloneDeep(this.form.proxy)
+            const values = cloneDeep(form.proxy)
+
             for (const key in values) {
-                if (typeof this.form.proxy[key] === 'object' && this.form.proxy[key] instanceof FileUpload) {
+                if (
+                    Object.prototype.hasOwnProperty.call(values, key) &&
+                    typeof form.proxy[key] === 'object' &&
+                    form.proxy[key] instanceof FileUpload
+                ) {
                     pending.push(
-                        this.form.proxy[key].upload().then(data => Object.assign(values, { [key]: data }))
+                        form.proxy[key].upload().then((data: Record<string, any>) => Object.assign(values, { [key]: data }))
                     )
                 }
             }

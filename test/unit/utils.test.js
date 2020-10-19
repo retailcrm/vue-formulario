@@ -1,6 +1,6 @@
-import { parseRules, parseLocale, regexForFormat, cloneDeep, isValueType, snakeToCamel, groupBails } from '@/libs/utils'
-import rules from '@/libs/rules'
-import FileUpload from '@/FileUpload';
+import { parseRules, parseLocale, regexForFormat, cloneDeep, isScalar, snakeToCamel, groupBails } from '@/libs/utils'
+import rules from '@/validation/rules.ts'
+import FileUpload from '@/FileUpload'
 
 describe('parseRules', () => {
   it('parses single string rules, returning empty arguments array', () => {
@@ -99,22 +99,22 @@ describe('regexForFormat', () => {
   it('fails date like YYYY-MM-DD with out of bounds day', () => expect(regexForFormat('YYYY-MM-DD').test('1987-01-32')).toBe(false))
 })
 
-describe('isValueType', () => {
-  it('passes on strings', () => expect(isValueType('hello')).toBe(true))
+describe('isScalar', () => {
+  it('passes on strings', () => expect(isScalar('hello')).toBe(true))
 
-  it('passes on numbers', () => expect(isValueType(123)).toBe(true))
+  it('passes on numbers', () => expect(isScalar(123)).toBe(true))
 
-  it('passes on booleans', () => expect(isValueType(false)).toBe(true))
+  it('passes on booleans', () => expect(isScalar(false)).toBe(true))
 
-  it('passes on symbols', () => expect(isValueType(Symbol(123))).toBe(true))
+  it('passes on symbols', () => expect(isScalar(Symbol(123))).toBe(true))
 
-  it('passes on null', () => expect(isValueType(null)).toBe(true))
+  it('passes on null', () => expect(isScalar(null)).toBe(true))
 
-  it('passes on undefined', () => expect(isValueType(undefined)).toBe(true))
+  it('passes on undefined', () => expect(isScalar(undefined)).toBe(true))
 
-  it('fails on pojo', () => expect(isValueType({})).toBe(false))
+  it('fails on pojo', () => expect(isScalar({})).toBe(false))
 
-  it('fails on custom type', () => expect(isValueType(FileUpload)).toBe(false))
+  it('fails on custom type', () => expect(isScalar(FileUpload)).toBe(false))
 })
 
 describe('cloneDeep', () => {
