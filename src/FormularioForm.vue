@@ -18,7 +18,7 @@ import Registry from '@/libs/registry'
 import FormSubmission from '@/FormSubmission'
 import FormularioInput from '@/FormularioInput.vue'
 
-@Component
+@Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
     @Provide() formularioFieldValidation (errorObject): void {
         this.$emit('validation', errorObject)
