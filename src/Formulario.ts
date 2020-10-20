@@ -167,7 +167,7 @@ export default class Formulario {
      * Given an array, this function will attempt to make sense of the given error
      * and hydrate a form with the resulting errors.
      */
-    handle (error: any, formName: string, skip: boolean = false) {
+    handle (error: any, formName: string, skip = false) {
         // @ts-ignore
         const e = skip ? error : this.options.errorHandler(error, formName)
         if (formName && this.registry.has(formName)) {
@@ -184,7 +184,7 @@ export default class Formulario {
     /**
      * Reset a form.
      */
-    reset (formName: string, initialValue: Object = {}) {
+    reset (formName: string, initialValue: Record<string, any> = {}) {
         this.resetValidation(formName)
         this.setValues(formName, initialValue)
     }

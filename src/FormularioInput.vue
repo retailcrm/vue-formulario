@@ -63,7 +63,7 @@ export default class FormularioInput extends Vue {
     @Prop({
         type: [String, Boolean, Array],
         default: false,
-    }) validation
+    }) validation!: string|any[]|boolean
 
     @Prop({
         type: [String, Boolean],
