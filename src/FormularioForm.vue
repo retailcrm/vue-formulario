@@ -211,7 +211,7 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    setFieldValue (field, value): void {
+    setFieldValue (field, value, emit: boolean = true): void {
         if (value === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [field]: value, ...proxy } = this.proxy
@@ -219,7 +219,9 @@ export default class FormularioForm extends Vue {
         } else {
             setNested(this.proxy, field, value)
         }
-        this.$emit('input', Object.assign({}, this.proxy))
+        if (emit) {
+            this.$emit('input', Object.assign({}, this.proxy))
+        }
     }
 
     hasValidationErrors (): Promise<boolean> {
@@ -247,6 +249,7 @@ export default class FormularioForm extends Vue {
     setValues (values: Record<string, any>): void {
         // Collect all keys, existing and incoming
         const keys = Array.from(new Set(Object.keys(values).concat(Object.keys(this.proxy))))
+        let proxyHasChanges = false;
         keys.forEach(field => {
             if (this.registry.hasNested(field)) {
                 this.registry.getNested(field).forEach((registryField, registryKey) => {
@@ -256,7 +259,8 @@ export default class FormularioForm extends Vue {
                             getNested(this.proxy, registryKey)
                         )
                     ) {
-                        this.setFieldValue(registryKey, getNested(values, registryKey))
+                        this.setFieldValue(registryKey, getNested(values, registryKey), false)
+                        proxyHasChanges = true;
                     }
 
                     if (
@@ -271,6 +275,10 @@ export default class FormularioForm extends Vue {
             }
         })
         this.applyInitialValues()
+
+        if (proxyHasChanges) {
+            this.$emit('input', Object.assign({}, this.proxy))
+        }
     }
 }
 </script>
