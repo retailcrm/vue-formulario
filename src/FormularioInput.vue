@@ -276,7 +276,11 @@ export default class FormularioInput extends Vue {
 
     @Watch('proxy')
     onProxyChanged (newValue, oldValue): void {
-        this.performValidation()
+        if (this.errorBehavior === ERROR_BEHAVIOR.LIVE) {
+            this.performValidation()
+        } else {
+            this.validationErrors = []
+        }
         if (!this.isVmodeled && !shallowEqualObjects(newValue, oldValue)) {
             this.context.model = newValue
         }

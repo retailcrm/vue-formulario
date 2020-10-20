@@ -58,6 +58,33 @@ describe('FormularioInput', () => {
         expect(wrapper.find('span').exists()).toBe(false)
     })
 
+    it('no validation on value change when errorBehavior is not live', async () => {
+        const wrapper = mount(FormularioInput, {
+            propsData: {
+                name: 'test',
+                validation: 'required|in:abcdef',
+                validationMessages: {in: 'the value was different than expected'},
+                errorBehavior: 'submit',
+                value: 'other value'
+            },
+            scopedSlots: {
+                default: `<div>
+                    <input type="text" v-model="props.context.model">
+                    <span v-for="error in props.context.allErrors">{{ error.message }}</span>
+                </div>`
+            }
+        })
+        await flushPromises()
+        expect(wrapper.find('span').exists()).toBe(false)
+
+        const input = wrapper.find('input[type="text"]')
+        input.element.value = 'test'
+        input.trigger('input')
+        await flushPromises()
+        expect(wrapper.find('input[type="text"]').element.value).toBe('test')
+        expect(wrapper.find('span').exists()).toBe(false)
+    })
+
     it('allows custom field-rule level validation functions', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
