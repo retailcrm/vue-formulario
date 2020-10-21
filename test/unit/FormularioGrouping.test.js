@@ -21,11 +21,19 @@ describe('FormularioGrouping', () => {
                 `
             }
         })
-        expect(wrapper.findAll('input[type="text"]').length).toBe(1)
-        wrapper.find('input[type="text"]').setValue('test')
 
-        const submission = await wrapper.vm.formSubmitted()
-        expect(submission).toEqual({ group: { text: 'test' } })
+        expect(wrapper.findAll('input[type="text"]').length).toBe(1)
+
+        wrapper.find('input[type="text"]').setValue('test')
+        wrapper.find('form').trigger('submit')
+
+        await flushPromises()
+
+        const emitted = wrapper.emitted()
+
+        expect(emitted['submit']).toBeTruthy()
+        expect(emitted['submit'].length).toBe(1)
+        expect(emitted['submit'][0]).toStrictEqual([{ group: { text: 'test' } }])
     })
 
     it('Grouped fields to be got', async () => {
