@@ -68,7 +68,7 @@ export function createValidatorGroups (rules: [ValidationRule, any[], string, st
             bail: true,
         })))
     } else {
-        groups.push(...rules.map(mapper))
+        groups.push(...enlarge(rules.map(mapper)))
     }
 
     return groups

@@ -225,7 +225,7 @@ export default {
      * Rule: checks if the value is only alpha numeric
      */
     number ({ value }: { value: any }): Promise<boolean> {
-        return Promise.resolve(!isNaN(Number(value)))
+        return Promise.resolve(String(value).length > 0 && !isNaN(Number(value)))
     },
 
     /**
