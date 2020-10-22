@@ -43,8 +43,8 @@ describe('FormularioForm', () => {
             propsData: { formularioValue: {} },
             slots: {
                 default: `
-                    <FormularioInput type="text" name="sub1" />
-                    <FormularioInput type="checkbox" name="sub2" />
+                    <FormularioInput name="sub1" />
+                    <FormularioInput name="sub2" />
                 `
             }
         })
@@ -56,8 +56,8 @@ describe('FormularioForm', () => {
             data: () => ({ active: true }),
             template: `
                 <FormularioForm>
-                    <FormularioInput v-if="active" type="text" name="sub1" />
-                    <FormularioInput type="checkbox" name="sub2" />
+                    <FormularioInput v-if="active" name="sub1" />
+                    <FormularioInput name="sub2" />
                 </FormularioForm>
             `
         })
@@ -152,7 +152,7 @@ describe('FormularioForm', () => {
             }),
             template: `
                 <FormularioForm v-model="formValues">
-                    <FormularioInput type="text" name="test" v-model="fieldValue" />
+                    <FormularioInput name="test" v-model="fieldValue" />
                 </FormularioForm>
             `
         })
@@ -164,13 +164,13 @@ describe('FormularioForm', () => {
     it('updates calls setFieldValue on form when a field contains a populated v-model on registration', () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
-                formularioValue: { testinput: '123' }
+                formularioValue: { test: '123' }
             },
             slots: {
-                default: '<FormularioInput type="text" name="testinput" formulario-value="override-data" />'
+                default: '<FormularioInput name="test" formulario-value="override-data" />'
             }
         })
-        expect(wrapper.emitted().input[wrapper.emitted().input.length - 1]).toEqual([{ testinput: 'override-data' }])
+        expect(wrapper.emitted().input[wrapper.emitted().input.length - 1]).toEqual([{ test: 'override-data' }])
     })
 
     it('updates an inputs value when the form v-model is modified', async () => {
@@ -190,9 +190,9 @@ describe('FormularioForm', () => {
         expect(wrapper.find('input[type="text"]').element['value']).toBe('1234')
     })
 
-    it('resolves hasValidationErrors to true', async () => {
+    it('Resolves hasValidationErrors to true', async () => {
         const wrapper = mount(FormularioForm, {
-            slots: { default: '<FormularioInput type="text" validation="required" name="fieldName" />' }
+            slots: { default: '<FormularioInput name="fieldName" validation="required" />' }
         })
         wrapper.find('form').trigger('submit')
         await flushPromises()
@@ -205,7 +205,7 @@ describe('FormularioForm', () => {
 
     it('Resolves submitted form values to an object', async () => {
         const wrapper = mount(FormularioForm, {
-            slots: { default: '<FormularioInput type="text" validation="required" name="fieldName" value="Justin" />' }
+            slots: { default: '<FormularioInput name="fieldName" validation="required" value="Justin" />' }
         })
         wrapper.find('form').trigger('submit')
         await flushPromises()
@@ -269,7 +269,7 @@ describe('FormularioForm', () => {
             slots: {
                 default: `
                     <FormularioInput name="inputA" />
-                    <FormularioInput name="inputB" type="textarea" />
+                    <FormularioInput name="inputB" />
                 `
             },
         })
@@ -286,7 +286,7 @@ describe('FormularioForm', () => {
             slots: {
                 default: `
                     <FormularioInput name="inputA" />
-                    <FormularioInput name="inputB" type="textarea" />
+                    <FormularioInput name="inputB" />
                 `
             },
         })
@@ -308,81 +308,75 @@ describe('FormularioForm', () => {
         expect(wrapper.vm.mergedFieldErrors.inputB.length).toBe(2)
     })
 
-    return
+    it('Emits correct validation event when no errors', async () => {
+        const wrapper = mount(FormularioForm, {
+            slots: {
+                default: `
+                    <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
+                        <input v-model="context.model" type="text" @blur="context.blurHandler">
+                    </FormularioInput>
+                    <FormularioInput name="bar" validation="required" />
+                `,
+            }
+        })
+        wrapper.find('input[type="text"]').setValue('foo')
+        wrapper.find('input[type="text"]').trigger('blur')
+
+        await flushPromises()
+
+        expect(wrapper.emitted('validation')).toBeTruthy()
+        expect(wrapper.emitted('validation').length).toBe(1)
+        expect(wrapper.emitted('validation')[0][0]).toEqual({
+            name: 'foo',
+            errors: [],
+        })
+    })
 
     it('Emits correct validation event on entry', async () => {
         const wrapper = mount(FormularioForm, {
             slots: { default: `
-                <FormularioInput v-slot="{ context }" validation="required|in:foo" name="foo" >
-                    <input v-model="context.model" type="text">
+                <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
+                    <input v-model="context.model" type="text" @blur="context.blurHandler">
                 </FormularioInput>
-                <FormularioInput type="radio" validation="required" name="bar" />
+                <FormularioInput name="bar" validation="required" />
             ` }
         })
         wrapper.find('input[type="text"]').setValue('bar')
+        wrapper.find('input[type="text"]').trigger('blur')
 
         await flushPromises()
 
-        const errorObjects = wrapper.emitted('validation')
-        // There should be 3 events, both inputs mounting, and the value being set removing required on testinput
-        expect(errorObjects.length).toBe(3)
-        // this should be the event from the setValue()
-        const errorObject = errorObjects[2][0]
-        expect(errorObject).toEqual({
+        expect(wrapper.emitted('validation')).toBeTruthy()
+        expect(wrapper.emitted('validation').length).toBe(1)
+        expect(wrapper.emitted('validation')[0][0]).toEqual({
             name: 'foo',
-            errors: [
-                expect.any(String)
-            ],
-            hasErrors: true
+            errors: [ expect.any(Object) ], // @TODO: Check object structure
         })
     })
 
-    it('emits correct validation event when no errors', async () => {
-        const wrapper = mount(FormularioForm, {
-            slots: { default: `
-                <div>
-                    <FormularioInput v-slot="inputProps" validation="required|in:bar" name="testinput" >
-                        <input v-model="inputProps.context.model" type="text">
-                    </FormularioInput>
-                    <FormularioInput type="radio" validation="required" name="bar" />
-                </div>
-            ` }
-        })
-        wrapper.find('input[type="text"]').setValue('bar')
-        await flushPromises()
-        const errorObjects = wrapper.emitted('validation')
-        expect(errorObjects.length).toBe(3)
-        const errorObject = errorObjects[2][0]
-        expect(errorObject).toEqual({
-            name: 'testinput',
-            errors: [],
-            hasErrors: false
-        })
-    })
+    return
 
-    it('removes field data when that field is de-registered', async () => {
+    it('Removes field data when that field is de-registered', async () => {
         const wrapper = mount({
+            data: () => ({ values: {} }),
             template: `
-                <FormularioForm
-                    v-model="formData"
-                >
-                    <FormularioInput v-slot="inputProps" name="foo">
-                        <input v-model="inputProps.context.model" type="text" value="abc123">
+                <FormularioForm v-model="values">
+                    <FormularioInput v-slot="{ context }" name="foo">
+                        <input v-model="context.model" type="text" value="abc123">
                     </FormularioInput>
-                    <FormularioInput type="checkbox" name="bar" v-if="formData.foo !== 'bar'" :value="1" />
+                    <FormularioInput v-if="values.foo !== 'bar'" name="bar" value="1" />
                 </FormularioForm>
             `,
-            data () {
-                return {
-                    formData: {}
-                }
-            }
         })
+
         await flushPromises()
+
         wrapper.find('input[type="text"]').setValue('bar')
+
         await flushPromises()
+
         expect(wrapper.findComponent(FormularioForm).vm.proxy).toEqual({ foo: 'bar' })
-        expect(wrapper.vm.formData).toEqual({ foo: 'bar' })
+        expect(wrapper.vm['values']).toEqual({ foo: 'bar' })
     })
 
     it('Allows resetting a form, hiding validation and clearing inputs.', async () => {
