@@ -1,15 +1,9 @@
 <template>
-    <div
-        class="formulario-input"
-        :data-has-errors="hasErrors"
-        :data-is-showing-errors="hasVisibleErrors"
-        :data-type="type"
-    >
+    <div class="formulario-input">
         <slot
             :id="id"
             :context="context"
-            :errors="errors"
-            :validationErrors="validationErrors"
+            :violations="validationErrors"
         />
     </div>
 </template>
@@ -23,11 +17,10 @@ import {
     Prop,
     Watch,
 } from 'vue-property-decorator'
-import { shallowEqualObjects, parseRules, snakeToCamel, has, arrayify } from './libs/utils'
+import { arrayify, has, parseRules, shallowEqualObjects, snakeToCamel } from './libs/utils'
 import {
     ValidationContext,
     ValidationError,
-    ValidationErrorBag,
     ValidationRule,
 } from '@/validation/types'
 import {
@@ -46,7 +39,7 @@ const ERROR_BEHAVIOR = {
 @Component({ name: 'FormularioInput', inheritAttrs: false })
 export default class FormularioInput extends Vue {
     @Inject({ default: undefined }) formularioSetter!: Function|undefined
-    @Inject({ default: () => (): void => {} }) formularioFieldValidation!: Function
+    @Inject({ default: () => (): void => {} }) onFormularioFieldValidation!: Function
     @Inject({ default: undefined }) formularioRegister!: Function|undefined
     @Inject({ default: undefined }) formularioDeregister!: Function|undefined
     @Inject({ default: () => (): Record<string, any> => ({}) }) getFormValues!: Function
@@ -56,68 +49,45 @@ export default class FormularioInput extends Vue {
 
     @Model('input', { default: '' }) formularioValue: any
 
-    @Prop({
-        type: [String, Number, Boolean],
-        default: false,
-    }) id!: string|number|boolean
-
-    @Prop({ default: 'text' }) type!: string
+    @Prop({ default: null }) id!: string|number|null
     @Prop({ required: true }) name!: string
     @Prop({ default: false }) value!: any
-
-    @Prop({
-        default: '',
-    }) validation!: string|any[]
-
-    @Prop({
-        type: Object,
-        default: () => ({}),
-    }) validationRules!: Record<string, ValidationRule>
-
-    @Prop({
-        type: Object,
-        default: () => ({}),
-    }) validationMessages!: Record<string, any>
-
+    @Prop({ default: '' }) validation!: string|any[]
+    @Prop({ default: () => ({}) }) validationRules!: Record<string, ValidationRule>
+    @Prop({ default: () => ({}) }) validationMessages!: Record<string, any>
     @Prop({ default: () => [] }) errors!: string[]
 
     @Prop({
-        type: String,
         default: ERROR_BEHAVIOR.BLUR,
-        validator: value => [ERROR_BEHAVIOR.BLUR, ERROR_BEHAVIOR.LIVE, ERROR_BEHAVIOR.SUBMIT].includes(value)
+        validator: behavior => [ERROR_BEHAVIOR.BLUR, ERROR_BEHAVIOR.LIVE, ERROR_BEHAVIOR.SUBMIT].includes(behavior)
     }) errorBehavior!: string
 
     @Prop({ default: false }) showErrors!: boolean
     @Prop({ default: false }) disableErrors!: boolean
     @Prop({ default: true }) preventWindowDrops!: boolean
-    @Prop({ default: 'preview' }) imageBehavior!: string
     @Prop({ default: false }) uploader!: Function|Record<string, any>|boolean
     @Prop({ default: false }) uploadUrl!: string|boolean
     @Prop({ default: 'live' }) uploadBehavior!: string
 
     defaultId: string = this.$formulario.nextId(this)
-    localErrors: string[] = []
     proxy: Record<string, any> = this.getInitialValue()
-    behavioralErrorVisibility: boolean = this.errorBehavior === 'live'
-    formShouldShowErrors = false
+    localErrors: string[] = []
     validationErrors: ValidationError[] = []
     pendingValidation: Promise<any> = Promise.resolve()
 
     get context (): Record<string, any> {
-        return this.defineModel({
+        return Object.defineProperty({
             id: this.id || this.defaultId,
             name: this.nameOrFallback,
             blurHandler: this.blurHandler.bind(this),
             errors: this.explicitErrors,
             allErrors: this.allErrors,
-            formShouldShowErrors: this.formShouldShowErrors,
-            imageBehavior: this.imageBehavior,
             performValidation: this.performValidation.bind(this),
-            showValidationErrors: this.showValidationErrors,
-            uploader: this.uploader || this.$formulario.getUploader(),
             validationErrors: this.validationErrors,
             value: this.value,
-            visibleValidationErrors: this.visibleValidationErrors,
+        }, 'model', {
+            get: this.modelGetter.bind(this),
+            set: this.modelSetter.bind(this),
         })
     }
 
@@ -152,13 +122,6 @@ export default class FormularioInput extends Vue {
     }
 
     /**
-     * Returns if form has actively visible errors (of any kind)
-     */
-    get hasVisibleErrors (): boolean {
-        return (this.validationErrors && this.showValidationErrors) || this.explicitErrors.length > 0
-    }
-
-    /**
      * The merged errors computed property.
      * Each error is an object with fields message (translated message), rule (rule name) and context
      */
@@ -167,13 +130,6 @@ export default class FormularioInput extends Vue {
             ...this.explicitErrors.map(message => ({ message })),
             ...arrayify(this.validationErrors)
         ]
-    }
-
-    /**
-     * All of the currently visible validation errors (does not include error handling)
-     */
-    get visibleValidationErrors (): ValidationError[] {
-        return (this.showValidationErrors && this.validationErrors.length) ? this.validationErrors : []
     }
 
     /**
@@ -188,13 +144,6 @@ export default class FormularioInput extends Vue {
      */
     get hasModel (): boolean {
         return has(this.$options.propsData || {}, 'formularioValue')
-    }
-
-    /**
-     * Determines if the field should show it's error (if it has one)
-     */
-    get showValidationErrors (): boolean {
-        return this.showErrors || this.formShouldShowErrors || this.behavioralErrorVisibility
     }
 
     @Watch('proxy')
@@ -214,11 +163,6 @@ export default class FormularioInput extends Vue {
         if (this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
             this.context.model = newValue
         }
-    }
-
-    @Watch('showValidationErrors', { immediate: true })
-    onShowValidationErrorsChanged (val: boolean): void {
-        this.$emit('error-visibility', val)
     }
 
     created (): void {
@@ -242,16 +186,6 @@ export default class FormularioInput extends Vue {
         if (typeof this.formularioDeregister === 'function') {
             this.formularioDeregister(this.nameOrFallback)
         }
-    }
-
-    /**
-     * Defines the model used throughout the existing context.
-     */
-    defineModel (context: Record<string, any>): Record<string, any> {
-        return Object.defineProperty(context, 'model', {
-            get: this.modelGetter.bind(this),
-            set: this.modelSetter.bind(this),
-        })
     }
 
     /**
@@ -283,8 +217,8 @@ export default class FormularioInput extends Vue {
      */
     blurHandler (): void {
         this.$emit('blur')
-        if (this.errorBehavior === 'blur') {
-            this.behavioralErrorVisibility = true
+        if (this.errorBehavior === ERROR_BEHAVIOR.BLUR) {
+            this.performValidation()
         }
     }
 
@@ -352,10 +286,13 @@ export default class FormularioInput extends Vue {
         const validationChanged = !shallowEqualObjects(violations, this.validationErrors)
         this.validationErrors = violations
         if (validationChanged) {
-            const errorBag = this.getErrorObject()
+            const errorBag = {
+                name: this.context.name,
+                errors: this.validationErrors,
+            }
             this.$emit('validation', errorBag)
-            if (this.formularioFieldValidation && typeof this.formularioFieldValidation === 'function') {
-                this.formularioFieldValidation(errorBag)
+            if (this.onFormularioFieldValidation && typeof this.onFormularioFieldValidation === 'function') {
+                this.onFormularioFieldValidation(errorBag)
             }
         }
     }
@@ -398,16 +335,13 @@ export default class FormularioInput extends Vue {
         })
     }
 
-    getErrorObject (): ValidationErrorBag {
-        return {
-            name: this.context.nameOrFallback || this.context.name,
-            errors: this.validationErrors.filter(s => typeof s === 'object'),
-            hasErrors: !!this.validationErrors.length
-        }
-    }
-
     setErrors (errors: string[]): void {
         this.localErrors = arrayify(errors)
+    }
+
+    resetValidation (): void {
+        this.localErrors = []
+        this.validationErrors = []
     }
 }
 </script>

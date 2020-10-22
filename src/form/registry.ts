@@ -1,4 +1,4 @@
-import { shallowEqualObjects, has, getNested } from './utils'
+import { shallowEqualObjects, has, getNested } from '@/libs/utils'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 

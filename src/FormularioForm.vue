@@ -13,8 +13,9 @@ import {
     Provide,
     Watch,
 } from 'vue-property-decorator'
-import { arrayify, cloneDeep, getNested, has, setNested, shallowEqualObjects } from '@/libs/utils'
-import Registry from '@/libs/registry'
+import { cloneDeep, getNested, has, setNested, shallowEqualObjects } from '@/libs/utils'
+import merge from '@/utils/merge'
+import Registry from '@/form/registry'
 import FormularioInput from '@/FormularioInput.vue'
 
 import {
@@ -25,40 +26,20 @@ import {
 
 import { ValidationErrorBag } from '@/validation/types'
 
-import FileUpload from '@/FileUpload'
-
 @Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
-    @Provide() formularioFieldValidation (errorBag: ValidationErrorBag): void {
-        this.$emit('validation', errorBag)
-    }
-
-    @Provide() getFormValues = (): Record<string, any> => this.proxy
-    @Provide() path = ''
-
-    @Model('input', {
-        type: Object,
-        default: () => ({})
-    }) readonly formularioValue!: Record<string, any>
-
-    @Prop({
-        type: [String, Boolean],
-        default: false
-    }) public readonly name!: string | boolean
-
-    @Prop({
-        type: [Object, Boolean],
-        default: false
-    }) readonly values!: Record<string, any> | boolean
+    @Model('input', { default: () => ({}) })
+    public readonly formularioValue!: Record<string, any>
 
     @Prop({ default: () => ({}) }) readonly errors!: Record<string, any>
     @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
+    @Provide()
+    public path = ''
+
     public proxy: Record<string, any> = {}
 
     registry: Registry = new Registry(this)
-
-    childrenShouldShowErrors = false
 
     private errorObserverRegistry = new ErrorObserverRegistry()
     private localFormErrors: string[] = []
@@ -68,46 +49,22 @@ export default class FormularioForm extends Vue {
         return [...this.formErrors, ...this.localFormErrors]
     }
 
-    get mergedFieldErrors (): Record<string, any> {
-        const errors: Record<string, any> = {}
-
-        if (this.errors) {
-            for (const fieldName in this.errors) {
-                errors[fieldName] = arrayify(this.errors[fieldName])
-            }
-        }
-
-        for (const fieldName in this.localFieldErrors) {
-            errors[fieldName] = arrayify(this.localFieldErrors[fieldName])
-        }
-
-        return errors
-    }
-
-    get hasInitialValue (): boolean {
-        return (
-            (this.formularioValue && typeof this.formularioValue === 'object') ||
-            (this.values && typeof this.values === 'object')
-        )
+    get mergedFieldErrors (): Record<string, string[]> {
+        return merge(this.errors || {}, this.localFieldErrors)
     }
 
     get hasModel (): boolean {
         return has(this.$options.propsData || {}, 'formularioValue')
     }
 
-    get hasValue (): boolean {
-        return has(this.$options.propsData || {}, 'values')
+    get hasInitialValue (): boolean {
+        return this.formularioValue && typeof this.formularioValue === 'object'
     }
 
     get initialValues (): Record<string, any> {
         if (this.hasModel && typeof this.formularioValue === 'object') {
             // If there is a v-model on the form/group, use those values as first priority
             return { ...this.formularioValue } // @todo - use a deep clone to detach reference types
-        }
-
-        if (this.hasValue && typeof this.values === 'object') {
-            // If there are values, use them as secondary priority
-            return { ...this.values }
         }
 
         return {}
@@ -134,14 +91,14 @@ export default class FormularioForm extends Vue {
         this.initProxy()
     }
 
-    onFormSubmit (): Promise<void> {
-        this.childrenShouldShowErrors = true
-        this.registry.forEach((input: FormularioInput) => {
-            input.formShouldShowErrors = true
-        })
+    @Provide()
+    getFormValues (): Record<string, any> {
+        return this.proxy
+    }
 
+    onFormSubmit (): Promise<void> {
         return this.hasValidationErrors()
-            .then(hasErrors => hasErrors ? undefined : this.getValues())
+            .then(hasErrors => hasErrors ? undefined : cloneDeep(this.proxy))
             .then(data => {
                 if (typeof data !== 'undefined') {
                     this.$emit('submit', data)
@@ -149,6 +106,11 @@ export default class FormularioForm extends Vue {
                     this.$emit('error')
                 }
             })
+    }
+
+    @Provide()
+    onFormularioFieldValidation (errorBag: ValidationErrorBag): void {
+        this.$emit('validation', errorBag)
     }
 
     @Provide()
@@ -176,65 +138,10 @@ export default class FormularioForm extends Vue {
         this.registry.remove(field)
     }
 
-    resetValidation (): void {
-        this.localFormErrors = []
-        this.localFieldErrors = {}
-        this.childrenShouldShowErrors = false
-        this.registry.forEach((input: FormularioInput) => {
-            input.formShouldShowErrors = false
-            input.behavioralErrorVisibility = false
-        })
-    }
-
     initProxy (): void {
         if (this.hasInitialValue) {
             this.proxy = this.initialValues
         }
-    }
-
-    @Provide('formularioSetter')
-    setFieldValue (field: string, value: any, emit = true): void {
-        if (value === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { [field]: value, ...proxy } = this.proxy
-            this.proxy = proxy
-        } else {
-            setNested(this.proxy, field, value)
-        }
-
-        if (emit) {
-            this.$emit('input', Object.assign({}, this.proxy))
-        }
-    }
-
-    hasValidationErrors (): Promise<boolean> {
-        return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], input: FormularioInput) => {
-            resolvers.push(input.performValidation() && input.hasValidationErrors())
-            return resolvers
-        }, [])).then(results => results.some(hasErrors => hasErrors))
-    }
-
-    /**
-     * Asynchronously generate the values payload of this form.
-     */
-    getValues (): Promise<Record<string, any>> {
-        return new Promise((resolve, reject) => {
-            const pending = []
-            const values = cloneDeep(this.proxy)
-
-            for (const key in values) {
-                if (has(values, key) && typeof this.proxy[key] === 'object' && this.proxy[key] instanceof FileUpload) {
-                    pending.push(
-                        this.proxy[key].upload()
-                            .then((data: Record<string, any>) => Object.assign(values, { [key]: data }))
-                    )
-                }
-            }
-
-            Promise.all(pending)
-                .then(() => resolve(values))
-                .catch(err => reject(err))
-        })
     }
 
     setValues (values: Record<string, any>): void {
@@ -266,10 +173,40 @@ export default class FormularioForm extends Vue {
         }
     }
 
+    @Provide('formularioSetter')
+    setFieldValue (field: string, value: any, emit = true): void {
+        if (value === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [field]: value, ...proxy } = this.proxy
+            this.proxy = proxy
+        } else {
+            setNested(this.proxy, field, value)
+        }
+
+        if (emit) {
+            this.$emit('input', Object.assign({}, this.proxy))
+        }
+    }
+
+    hasValidationErrors (): Promise<boolean> {
+        return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], input: FormularioInput) => {
+            resolvers.push(input.performValidation() && input.hasValidationErrors())
+            return resolvers
+        }, [])).then(results => results.some(hasErrors => hasErrors))
+    }
+
     setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {
         // given an object of errors, apply them to this form
         this.localFormErrors = formErrors || []
         this.localFieldErrors = inputErrors || {}
+    }
+
+    resetValidation (): void {
+        this.localFormErrors = []
+        this.localFieldErrors = {}
+        this.registry.forEach((input: FormularioInput) => {
+            input.resetValidation()
+        })
     }
 }
 </script>

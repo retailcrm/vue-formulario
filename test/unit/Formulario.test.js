@@ -2,11 +2,6 @@ import Formulario from '@/index.ts'
 
 describe('Formulario', () => {
     it('Installs on vue instance', () => {
-        const components = [
-            'FormularioForm',
-            'FormularioInput',
-            'FormularioGrouping',
-        ]
         const registry = []
         function Vue () {}
         Vue.component = function (name, instance) {
@@ -14,6 +9,10 @@ describe('Formulario', () => {
         }
         Formulario.install(Vue)
         expect(Vue.prototype.$formulario).toBe(Formulario)
-        expect(registry).toEqual(components)
+        expect(registry).toEqual([
+            'FormularioForm',
+            'FormularioGrouping',
+            'FormularioInput',
+        ])
     })
 })

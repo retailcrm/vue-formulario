@@ -1,12 +1,7 @@
-// @ts-ignore
 import isUrl from 'is-url'
-import FileUpload from '../FileUpload'
 import { shallowEqualObjects, regexForFormat, has } from '@/libs/utils'
 import { ValidatableData } from '@/validation/types'
 
-/**
- * Library of rules
- */
 export default {
     /**
      * Rule: the value must be "yes", "on", "1", or true
@@ -156,21 +151,6 @@ export default {
     },
 
     /**
-     * Check the file type is correct.
-     */
-    mime ({ value }: { value: any }, ...types: string[]): Promise<boolean> {
-        if (value instanceof FileUpload) {
-            const files = value.getFiles()
-            const isMimeCorrect = (file: File): boolean => types.includes(file.type)
-            const allValid: boolean = files.reduce((valid: boolean, { file }) => valid && isMimeCorrect(file), true)
-
-            return Promise.resolve(allValid)
-        }
-
-        return Promise.resolve(true)
-    },
-
-    /**
      * Check the minimum value of a particular.
      */
     min ({ value }: { value: any }, minimum: number | any = 1, force?: string): Promise<boolean> {
@@ -238,9 +218,6 @@ export default {
             }
             if (Array.isArray(value)) {
                 return !!value.length
-            }
-            if (value instanceof FileUpload) {
-                return value.getFiles().length > 0
             }
             if (typeof value === 'string') {
                 return !!value

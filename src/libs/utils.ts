@@ -1,20 +1,3 @@
-import FileUpload from '@/FileUpload'
-
-/**
- * Function to map over an object.
- * @param {Object} original An object to map over
- * @param {Function} callback
- */
-export function map (original: Record<string, any>, callback: Function): Record<string, any> {
-    const obj: Record<string, any> = {}
-    for (const key in original) {
-        if (Object.prototype.hasOwnProperty.call(original, key)) {
-            obj[key] = callback(key, original[key])
-        }
-    }
-    return obj
-}
-
 export function shallowEqualObjects (objA: Record<string, any>, objB: Record<string, any>): boolean {
     if (objA === objB) {
         return true
@@ -149,57 +132,6 @@ export function parseRules (validation: any[]|string, rules: any): any[] {
 }
 
 /**
- * Given an array of rules, group them by bail signals. For example for this:
- * bail|required|min:10|max:20
- * we would expect:
- * [[required], [min], [max]]
- * because any sub-array failure would cause a shutdown. While
- * ^required|min:10|max:10
- * would return:
- * [[required], [min, max]]
- * and no bailing would produce:
- * [[required, min, max]]
- */
-export function groupBails (rules: any[]): any[] {
-    const groups = []
-    const bailIndex = rules.findIndex(([,, rule]) => rule.toLowerCase() === 'bail')
-    if (bailIndex >= 0) {
-        // Get all the rules until the first bail rule (dont include the bail)
-        const preBail = rules.splice(0, bailIndex + 1).slice(0, -1)
-        // Rules before the `bail` rule are non-bailing
-        preBail.length && groups.push(preBail)
-        // All remaining rules are bailing rule groups
-        rules.map(rule => groups.push(Object.defineProperty([rule], 'bail', { value: true })))
-    } else {
-        groups.push(rules)
-    }
-
-    return groups.reduce((groups, group) => {
-        // @ts-ignore
-        const splitByMod = (group, bailGroup = false) => {
-            if (group.length < 2) {
-                return Object.defineProperty([group], 'bail', { value: bailGroup })
-            }
-            const splits = []
-            // @ts-ignore
-            const modIndex = group.findIndex(([,,, modifier]) => modifier === '^')
-            if (modIndex >= 0) {
-                const preMod = group.splice(0, modIndex)
-                // rules before the modifier are non-bailing rules.
-                preMod.length && splits.push(...splitByMod(preMod, bailGroup))
-                splits.push(Object.defineProperty([group.shift()], 'bail', { value: true }))
-                // rules after the modifier are non-bailing rules.
-                group.length && splits.push(...splitByMod(group, bailGroup))
-            } else {
-                splits.push(group)
-            }
-            return splits
-        }
-        return groups.concat(splitByMod(group))
-    }, [])
-}
-
-/**
  * Escape a string for use in regular expressions.
  */
 export function escapeRegExp (string: string): string {
@@ -255,7 +187,7 @@ export function cloneDeep (value: any): any {
 
     for (const key in value) {
         if (Object.prototype.hasOwnProperty.call(value, key)) {
-            if (isScalar(value[key]) || value[key] instanceof FileUpload) {
+            if (isScalar(value[key])) {
                 copy[key] = value[key]
             } else {
                 copy[key] = cloneDeep(value[key])

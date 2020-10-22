@@ -10,7 +10,6 @@ Vue.use(Formulario)
 describe('FormularioGrouping', () => {
     it('Grouped fields to be set', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { name: 'form' },
             slots: {
                 default: `
                     <FormularioGrouping name="group">
@@ -33,17 +32,16 @@ describe('FormularioGrouping', () => {
 
         expect(emitted['submit']).toBeTruthy()
         expect(emitted['submit'].length).toBe(1)
-        expect(emitted['submit'][0]).toStrictEqual([{ group: { text: 'test' } }])
+        expect(emitted['submit'][0]).toEqual([{ group: { text: 'test' } }])
     })
 
     it('Grouped fields to be got', async () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
-                name: 'form',
                 formularioValue: {
                     group: { text: 'Group text' },
                     text: 'Text',
-                }
+                },
             },
             slots: {
                 default: `
@@ -79,23 +77,20 @@ describe('FormularioGrouping', () => {
     })
 
     it('Errors are set for grouped fields', async () => {
-        const wrapper = mount({
-            data: () => ({ values: {} }),
-            template: `
-                <FormularioForm
-                    v-model="values"
-                    :errors="{'group.text': 'Test error'}"
-                    name="form"
-                >
+        const wrapper = mount(FormularioForm, {
+            propsData: {
+                formularioValue: {},
+                errors: { 'group.text': 'Test error' },
+            },
+            slots: {
+                default: `
                     <FormularioGrouping name="group">
-                        <FormularioInput name="text" v-slot="{ context }">
-                            <span v-for="error in context.allErrors">
-                                {{ error }}
-                            </span>
+                        <FormularioInput ref="input" name="text" v-slot="{ context }">
+                            <span v-for="error in context.allErrors">{{ error }}</span>
                         </FormularioInput>
                     </FormularioGrouping>
-                </FormularioForm>
-            `
+                `,
+            },
         })
         expect(wrapper.findAll('span').length).toBe(1)
     })

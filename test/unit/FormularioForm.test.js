@@ -214,20 +214,7 @@ describe('FormularioForm', () => {
 
         expect(emitted['submit']).toBeTruthy()
         expect(emitted['submit'].length).toBe(1)
-        expect(emitted['submit'][0]).toStrictEqual([{ fieldName: 'Justin' }])
-    })
-
-    it('accepts a values prop and uses it to set the initial values', async () => {
-        const wrapper = mount(FormularioForm, {
-            propsData: { values: { name: 'Dave Barnett', candy: true } },
-            slots: { default: `
-                <FormularioInput v-slot="{ context }" name="name" validation="required">
-                    <input v-model="context.model" type="text">
-                </FormularioInput>
-            ` }
-        })
-        await flushPromises()
-        expect(wrapper.find('input[type="text"]').element['value']).toBe('Dave Barnett')
+        expect(emitted['submit'][0]).toEqual([{ fieldName: 'Justin' }])
     })
 
     it('Receives a form-errors prop and displays it', async () => {

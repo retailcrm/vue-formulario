@@ -1,8 +1,5 @@
 <template>
-    <div
-        class="formulario-group"
-        data-type="group"
-    >
+    <div>
         <slot />
     </div>
 </template>

@@ -31,5 +31,4 @@ export interface ValidationError {
 export interface ValidationErrorBag {
     name: string;
     errors: ValidationError[];
-    hasErrors: boolean;
 }
