@@ -10,7 +10,6 @@ import merge from '@/utils/merge'
 import FileUpload from '@/FileUpload'
 
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioFormInterface from '@/FormularioFormInterface'
 import FormularioInput from '@/FormularioInput.vue'
 import FormularioGrouping from '@/FormularioGrouping.vue'
 
@@ -35,7 +34,6 @@ interface FormularioOptions {
  */
 export default class Formulario {
     public options: FormularioOptions
-    public registry: Map<string, FormularioFormInterface>
     public idRegistry: { [name: string]: number }
 
     constructor () {
@@ -54,7 +52,6 @@ export default class Formulario {
             validationMessages: messages,
             idPrefix: 'formulario-'
         }
-        this.registry = new Map()
         this.idRegistry = {}
     }
 
@@ -113,68 +110,6 @@ export default class Formulario {
             return this.options.validationMessages[rule](vm, context)
         } else {
             return this.options.validationMessages.default(vm, context)
-        }
-    }
-
-    /**
-     * Given an instance of a FormularioForm register it.
-     */
-    register (form: FormularioFormInterface): void {
-        if (typeof form.name === 'string') {
-            this.registry.set(form.name, form)
-        }
-    }
-
-    /**
-     * Given an instance of a form, remove it from the registry.
-     */
-    deregister (form: FormularioFormInterface): void {
-        if (typeof form.name === 'string' && this.registry.has(form.name)) {
-            this.registry.delete(form.name)
-        }
-    }
-
-    /**
-     * Given an array, this function will attempt to make sense of the given error
-     * and hydrate a form with the resulting errors.
-     */
-    handle ({ formErrors, inputErrors }: {
-        formErrors?: string[];
-        inputErrors?: Record<string, any>;
-    }, formName: string): void {
-        if (this.registry.has(formName)) {
-            const form = this.registry.get(formName) as FormularioFormInterface
-
-            form.loadErrors({
-                formErrors: formErrors || [],
-                inputErrors: inputErrors || {}
-            })
-        }
-    }
-
-    /**
-     * Reset a form.
-     */
-    reset (formName: string, initialValue: Record<string, any> = {}): void {
-        this.resetValidation(formName)
-        this.setValues(formName, initialValue)
-    }
-
-    /**
-     * Reset the form's validation messages.
-     */
-    resetValidation (formName: string): void {
-        if (this.registry.has(formName)) {
-            (this.registry.get(formName) as FormularioFormInterface).resetValidation()
-        }
-    }
-
-    /**
-     * Set the form values.
-     */
-    setValues (formName: string, values?: Record<string, any>): void {
-        if (this.registry.has(formName) && values) {
-            (this.registry.get(formName) as FormularioFormInterface).setValues({ ...values })
         }
     }
 

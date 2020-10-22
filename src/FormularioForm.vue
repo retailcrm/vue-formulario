@@ -27,10 +27,8 @@ import { ValidationErrorBag } from '@/validation/types'
 
 import FileUpload from '@/FileUpload'
 
-import FormularioFormInterface from '@/FormularioFormInterface'
-
 @Component({ name: 'FormularioForm' })
-export default class FormularioForm extends Vue implements FormularioFormInterface {
+export default class FormularioForm extends Vue {
     @Provide() formularioFieldValidation (errorBag: ValidationErrorBag): void {
         this.$emit('validation', errorBag)
     }
@@ -133,12 +131,7 @@ export default class FormularioForm extends Vue implements FormularioFormInterfa
     }
 
     created (): void {
-        this.$formulario.register(this)
         this.initProxy()
-    }
-
-    destroyed (): void {
-        this.$formulario.deregister(this)
     }
 
     onFormSubmit (): Promise<void> {
@@ -181,12 +174,6 @@ export default class FormularioForm extends Vue implements FormularioFormInterfa
     @Provide('formularioDeregister')
     deregister (field: string): void {
         this.registry.remove(field)
-    }
-
-    loadErrors ({ formErrors, inputErrors }: { formErrors: string[]; inputErrors: Record<string, string[]> }): void {
-        // given an object of errors, apply them to this form
-        this.localFormErrors = formErrors
-        this.localFieldErrors = inputErrors
     }
 
     resetValidation (): void {
@@ -277,6 +264,12 @@ export default class FormularioForm extends Vue implements FormularioFormInterfa
         if (proxyHasChanges) {
             this.$emit('input', { ...this.proxy })
         }
+    }
+
+    setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {
+        // given an object of errors, apply them to this form
+        this.localFormErrors = formErrors || []
+        this.localFieldErrors = inputErrors || {}
     }
 }
 </script>

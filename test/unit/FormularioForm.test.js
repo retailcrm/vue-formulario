@@ -38,160 +38,127 @@ describe('FormularioForm', () => {
         expect(spy).toHaveBeenCalled()
     })
 
-    it('Registers its subcomponents', () => {
+    it('Adds subcomponents to the registry', () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formularioValue: { testinput: 'has initial value' } },
+            propsData: { formularioValue: {} },
             slots: {
                 default: `
-                    <FormularioInput type="text" name="subinput1" />
-                    <FormularioInput type="checkbox" name="subinput2" />
+                    <FormularioInput type="text" name="sub1" />
+                    <FormularioInput type="checkbox" name="sub2" />
                 `
             }
         })
-        expect(wrapper.vm.registry.keys()).toEqual(['subinput1', 'subinput2'])
+        expect(wrapper.vm.registry.keys()).toEqual(['sub1', 'sub2'])
     })
 
-    it('deregisters a subcomponents', async () => {
+    it('Removes subcomponents from the registry', async () => {
         const wrapper = mount({
-            data () {
-                return {
-                    active: true
-                }
-            },
+            data: () => ({ active: true }),
             template: `
                 <FormularioForm>
-                    <FormularioInput v-if="active" type="text" name="subinput1" />
-                    <FormularioInput type="checkbox" name="subinput2" />
+                    <FormularioInput v-if="active" type="text" name="sub1" />
+                    <FormularioInput type="checkbox" name="sub2" />
                 </FormularioForm>
             `
         })
         await flushPromises()
-        expect(wrapper.findComponent(FormularioForm).vm.registry.keys()).toEqual(['subinput1', 'subinput2'])
+        expect(wrapper.findComponent(FormularioForm).vm.registry.keys()).toEqual(['sub1', 'sub2'])
         wrapper.setData({ active: false })
         await flushPromises()
-        expect(wrapper.findComponent(FormularioForm).vm.registry.keys()).toEqual(['subinput2'])
+        expect(wrapper.findComponent(FormularioForm).vm.registry.keys()).toEqual(['sub2'])
     })
 
-    it('can set a field’s initial value', async () => {
+    it('Can set a field’s initial value', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formularioValue: { testinput: 'has initial value' } },
-            slots: { default: `
-                <FormularioInput v-slot="inputProps" validation="required|in:bar" name="testinput" >
-                    <input v-model="inputProps.context.model" type="text">
-                </FormularioInput>
-            ` }
+            propsData: { formularioValue: { test: 'Has initial value' } },
+            slots: {
+                default: `
+                    <FormularioInput v-slot="{ context }" validation="required|in:bar" name="test" >
+                        <input v-model="context.model" type="text">
+                    </FormularioInput>
+                `
+            }
         })
         await flushPromises()
-        expect(wrapper.find('input').element.value).toBe('has initial value')
+        expect(wrapper.find('input').element['value']).toBe('Has initial value')
     })
 
-    it('lets individual fields override form initial value', () => {
+    it('Lets individual fields override form initial value', () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formularioValue: { testinput: 'has initial value' } },
-            slots: { default: `
-                <FormularioInput v-slot="inputProps" formulario-value="123" name="testinput" >
-                    <input v-model="inputProps.context.model" type="text">
-                </FormularioInput>
-            ` }
+            propsData: { formularioValue: { test: 'has initial value' } },
+            slots: {
+                default: `
+                    <FormularioInput v-slot="{ context }" formulario-value="123" name="test" >
+                        <input v-model="context.model" type="text">
+                    </FormularioInput>
+                `
+            }
         })
-        expect(wrapper.find('input').element.value).toBe('123')
+        expect(wrapper.find('input').element['value']).toBe('123')
     })
 
-    it('lets fields set form initial value with value prop', () => {
+    it('Lets fields set form initial value with value prop', () => {
         const wrapper = mount({
-            data () {
-                return {
-                    formValues: {}
-                }
-            },
-            template: `<FormularioForm v-model="formValues">
-                <FormularioInput name="name" value="123" />
-            </FormularioForm>`
-        })
-        expect(wrapper.vm.formValues).toEqual({ name: '123' })
-    })
-
-    it('receives updates to form model when individual fields are edited', () => {
-        const wrapper = mount({
-            data () {
-                return {
-                    formValues: {
-                        testinput: '',
-                    }
-                }
-            },
+            data: () => ({ values: {} }),
             template: `
-                <FormularioForm v-model="formValues">
-                    <FormularioInput v-slot="inputProps" name="testinput" >
-                        <input v-model="inputProps.context.model" type="text">
+                <FormularioForm v-model="values">
+                    <FormularioInput name="test" value="123" />
+                </FormularioForm>
+            `
+        })
+        expect(wrapper.vm['values']).toEqual({ test: '123' })
+    })
+
+    it('Receives updates to form model when individual fields are edited', () => {
+        const wrapper = mount({
+            data: () => ({ values: { test: '' } }),
+            template: `
+                <FormularioForm v-model="values">
+                    <FormularioInput v-slot="{ context }" name="test" >
+                        <input v-model="context.model" type="text">
                     </FormularioInput>
                 </FormularioForm>
             `
         })
-        wrapper.find('input').setValue('edited value')
-        expect(wrapper.vm.formValues).toEqual({ testinput: 'edited value' })
+        wrapper.find('input').setValue('Edited value')
+        expect(wrapper.vm['values']).toEqual({ test: 'Edited value' })
     })
 
-    it('field data updates when it is type of date', async () => {
+    it('Field data updates when it is type of date', async () => {
         const wrapper = mount({
-            data () {
-                return {
-                    formValues: {
-                        testdate: new Date(123),
-                    }
-                }
-            },
+            data: () => ({ formValues: { date: new Date(123) } }),
             template: `
                 <FormularioForm v-model="formValues" ref="form">
-                    <FormularioInput v-slot="inputProps" name="testdate" >
-                        <span v-if="inputProps.context.model">{{ inputProps.context.model.getTime() }}</span>
+                    <FormularioInput v-slot="{ context }" name="date" >
+                        <span v-if="context.model">{{ context.model.getTime() }}</span>
                     </FormularioInput>
                 </FormularioForm>
             `
         })
+
         expect(wrapper.find('span').text()).toBe('123')
 
-        wrapper.setData({ formValues: { testdate: new Date(234) } })
+        wrapper.setData({ formValues: { date: new Date(234) } })
         await flushPromises()
 
         expect(wrapper.find('span').text()).toBe('234')
     })
 
-    // ===========================================================================
-    /**
-     * @todo in vue-test-utils version 1.0.0-beta.29 has some bugs related to
-     * synchronous updating. Some details are here:
-     *
-     * @update this test was re-implemented in version 1.0.0-beta.31 and seems to
-     * be workign now with flushPromises(). Leaving these docs here for now.
-     *
-     * https://github.com/vuejs/vue-test-utils/issues/1130
-     *
-     * This test is being commented out until there is a resolution on this issue,
-     * and instead being replaced with a mock call.
-     */
-
-    it('updates initial form values when input contains a populated v-model', async () => {
+    it('Updates initial form values when input contains a populated v-model', async () => {
         const wrapper = mount({
-            data () {
-                return {
-                    formValues: {
-                        testinput: '',
-                    },
-                    fieldValue: '123'
-                }
-            },
+            data: () => ({
+                formValues: {  test: '' },
+                fieldValue: '123',
+            }),
             template: `
                 <FormularioForm v-model="formValues">
-                    <FormularioInput type="text" name="testinput" v-model="fieldValue" />
+                    <FormularioInput type="text" name="test" v-model="fieldValue" />
                 </FormularioForm>
             `
         })
         await flushPromises()
-        expect(wrapper.vm.formValues).toEqual({ testinput: '123' })
+        expect(wrapper.vm['formValues']).toEqual({ test: '123' })
     })
-
-    // ===========================================================================
 
     // Replacement test for the above test - not quite as good of a test.
     it('updates calls setFieldValue on form when a field contains a populated v-model on registration', () => {
@@ -208,25 +175,19 @@ describe('FormularioForm', () => {
 
     it('updates an inputs value when the form v-model is modified', async () => {
         const wrapper = mount({
-            data () {
-                return {
-                    formValues: {
-                        testinput: 'abcd',
-                    }
-                }
-            },
+            data: () => ({ formValues: { test: 'abcd' } }),
             template: `
                 <FormularioForm v-model="formValues">
-                    <FormularioInput v-slot="inputProps" name="testinput" >
-                        <input v-model="inputProps.context.model" type="text">
+                    <FormularioInput v-slot="{ context }" name="test" >
+                        <input v-model="context.model" type="text">
                     </FormularioInput>
                 </FormularioForm>
             `
         })
         await flushPromises()
-        wrapper.vm.formValues = { testinput: '1234' }
+        wrapper.vm.formValues = { test: '1234' }
         await flushPromises()
-        expect(wrapper.find('input[type="text"]').element.value).toBe('1234')
+        expect(wrapper.find('input[type="text"]').element['value']).toBe('1234')
     })
 
     it('resolves hasValidationErrors to true', async () => {
@@ -266,64 +227,12 @@ describe('FormularioForm', () => {
             ` }
         })
         await flushPromises()
-        expect(wrapper.find('input[type="text"]').element.value).toBe('Dave Barnett')
+        expect(wrapper.find('input[type="text"]').element['value']).toBe('Dave Barnett')
     })
 
-    it('automatically registers with root plugin', async () => {
+    it('Receives a form-errors prop and displays it', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formularioValue: { box3: [] }, name: 'login' }
-        })
-        expect(wrapper.vm.$formulario.registry.has('login')).toBe(true)
-        expect(wrapper.vm.$formulario.registry.get('login')).toBe(wrapper.vm)
-    })
-
-    it('Calls custom error handler with error and name', async () => {
-        const wrapper = mount({
-            template: `
-            <div>
-                <FormularioForm name="login" />
-                <FormularioForm name="register" />
-            </div>
-            `
-        })
-        wrapper.vm.$formulario.handle({ formErrors: ['This is an error message'] }, 'login')
-    })
-
-    it('Errors are displayed on correctly named components', async () => {
-        const wrapper = mount({
-            template: `
-            <div>
-                <FormularioForm
-                    class="form form--login"
-                    name="login"
-                    v-slot="{ errors }"
-                >
-                    <span v-for="error in errors" class="error">{{ error }}</span>
-                </FormularioForm>
-                <FormularioForm
-                    class="form form--register"
-                    name="register"
-                    v-slot="{ errors }"
-                >
-                    <span v-for="error in errors" class="error">{{ error }}</span>
-                </FormularioForm>
-            </div>
-            `
-        })
-        expect(
-            wrapper.vm.$formulario.registry.has('login') &&
-            wrapper.vm.$formulario.registry.has('register')
-        ).toBe(true)
-        wrapper.vm.$formulario.handle({ formErrors: ['This is an error message'] }, 'login')
-        await flushPromises()
-        expect(wrapper.findAll('.form').length).toBe(2)
-        expect(wrapper.find('.form--login .error').exists()).toBe(true)
-        expect(wrapper.find('.form--register .error').exists()).toBe(false)
-    })
-
-    it('receives a form-errors prop and displays it', async () => {
-        const wrapper = mount(FormularioForm, {
-            propsData: { name: 'main', formErrors: ['first', 'second'] },
+            propsData: { formErrors: ['first', 'second'] },
             scopedSlots: {
                 default: `
                     <div>
@@ -334,18 +243,18 @@ describe('FormularioForm', () => {
             }
         })
         await flushPromises()
-        expect(wrapper.vm.$formulario.registry.get('main').mergedFormErrors.length).toBe(2)
+        expect(wrapper.vm.mergedFormErrors.length).toBe(2)
     })
 
-    it('it aggregates form-errors prop with form-named errors', async () => {
+    it('Aggregates form-errors prop with form-named errors', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formErrors: ['first', 'second'], name: 'login' }
+            propsData: { formErrors: ['first', 'second'] }
         })
-        wrapper.vm.$formulario.handle({ formErrors: ['third'] }, 'login')
+        wrapper.vm.setErrors({ formErrors: ['third'] })
+
         await flushPromises()
 
-        let errors = wrapper.vm.$formulario.registry.get('login').mergedFormErrors
-        expect(Object.keys(errors).length).toBe(3)
+        expect(Object.keys(wrapper.vm.mergedFormErrors).length).toBe(3)
     })
 
     it('displays field errors on inputs with errors prop', async () => {
@@ -365,76 +274,75 @@ describe('FormularioForm', () => {
         expect(wrapper.find('span').text()).toEqual('This field has an error')
     })
 
+    it('Is able to display multiple errors on multiple elements', async () => {
+        const wrapper = mount(FormularioForm, {
+            propsData: {
+                errors: { inputA: ['first'], inputB: ['first', 'second']},
+            },
+            slots: {
+                default: `
+                    <FormularioInput name="inputA" />
+                    <FormularioInput name="inputB" type="textarea" />
+                `
+            },
+        })
+
+        await wrapper.vm.$nextTick()
+
+        expect(Object.keys(wrapper.vm.mergedFieldErrors).length).toBe(2)
+        expect(wrapper.vm.mergedFieldErrors.inputA.length).toBe(1)
+        expect(wrapper.vm.mergedFieldErrors.inputB.length).toBe(2)
+    })
+
+    it('Can set multiple field errors with setErrors()', async () => {
+        const wrapper = mount(FormularioForm, {
+            slots: {
+                default: `
+                    <FormularioInput name="inputA" />
+                    <FormularioInput name="inputB" type="textarea" />
+                `
+            },
+        })
+
+        expect(Object.keys(wrapper.vm.mergedFieldErrors).length).toBe(0)
+
+        wrapper.vm.setErrors({
+            inputErrors: {
+                inputA: ['first'],
+                inputB: ['first', 'second'],
+            }
+        })
+
+        await wrapper.vm.$nextTick()
+        await flushPromises()
+
+        expect(Object.keys(wrapper.vm.mergedFieldErrors).length).toBe(2)
+        expect(wrapper.vm.mergedFieldErrors.inputA.length).toBe(1)
+        expect(wrapper.vm.mergedFieldErrors.inputB.length).toBe(2)
+    })
+
     return
 
-    it('is able to display multiple errors on multiple elements', async () => {
-        const wrapper = mount({
-            template: `
-                <FormularioForm
-                    name="register"
-                    :errors="{inputA: ['first', 'second'], inputB: 'only one here', inputC: ['and one here']}"
-                >
-                    <FormularioInput name="inputA" />
-                    <FormularioInput name="inputB" type="textarea" />
-                    <FormularioInput name="inputC" type="checkbox" />
-                </FormularioForm>
-                `
-        })
-        await wrapper.vm.$nextTick()
-
-        let errors = wrapper.vm.$formulario.registry.get('register').mergedFieldErrors
-        expect(Object.keys(errors).length).toBe(3)
-        expect(errors.inputA.length).toBe(2)
-        expect(errors.inputB.length).toBe(1)
-        expect(errors.inputC.length).toBe(1)
-    })
-
-    it('it can set multiple field errors with handle()', async () => {
-        const wrapper = mount({
-            template: `
-                <FormularioForm name="register">
-                    <FormularioInput name="inputA" />
-                    <FormularioInput name="inputB" type="textarea" />
-                    <FormularioInput name="inputC" type="checkbox" />
-                </FormularioForm>
-                `
-        })
-
-        let errors = wrapper.vm.$formulario.registry.get('register').mergedFieldErrors
-        expect(Object.keys(errors).length).toBe(0)
-
-        wrapper.vm.$formulario.handle({ inputErrors: {inputA: ['first', 'second'], inputB: 'only one here', inputC: ['and one here']} }, "register")
-        await wrapper.vm.$nextTick()
-        await flushPromises()
-
-        errors = wrapper.vm.$formulario.registry.get('register').mergedFieldErrors
-        expect(Object.keys(errors).length).toBe(3)
-        expect(errors.inputA.length).toBe(2)
-        expect(errors.inputB.length).toBe(1)
-        expect(errors.inputC.length).toBe(1)
-
-    })
-
-    it('emits correct validation event on entry', async () => {
+    it('Emits correct validation event on entry', async () => {
         const wrapper = mount(FormularioForm, {
             slots: { default: `
-                <div>
-                    <FormularioInput v-slot="inputProps" validation="required|in:bar" name="testinput" >
-                        <input v-model="inputProps.context.model" type="text">
-                    </FormularioInput>
-                    <FormularioInput type="radio" validation="required" name="bar" />
-                </div>
+                <FormularioInput v-slot="{ context }" validation="required|in:foo" name="foo" >
+                    <input v-model="context.model" type="text">
+                </FormularioInput>
+                <FormularioInput type="radio" validation="required" name="bar" />
             ` }
         })
-        wrapper.find('input[type="text"]').setValue('foo')
+        wrapper.find('input[type="text"]').setValue('bar')
+
         await flushPromises()
+
         const errorObjects = wrapper.emitted('validation')
         // There should be 3 events, both inputs mounting, and the value being set removing required on testinput
         expect(errorObjects.length).toBe(3)
         // this should be the event from the setValue()
         const errorObject = errorObjects[2][0]
         expect(errorObject).toEqual({
-            name: 'testinput',
+            name: 'foo',
             errors: [
                 expect.any(String)
             ],
@@ -490,41 +398,41 @@ describe('FormularioForm', () => {
         expect(wrapper.vm.formData).toEqual({ foo: 'bar' })
     })
 
-    it('it allows resetting a form, hiding validation and clearing inputs.', async () => {
+    it('Allows resetting a form, hiding validation and clearing inputs.', async () => {
         const wrapper = mount({
+            data: () => ({ values: {} }),
             template: `
                 <FormularioForm
-                    v-model="formData"
+                    v-model="values"
                     name="login"
                     ref="form"
                 >
-                    <FormularioInput v-slot="inputProps" name="username" validation="required">
-                        <input v-model="inputProps.context.model" type="text">
+                    <FormularioInput v-slot="{ context }" name="username" validation="required">
+                        <input v-model="context.model" type="text">
                     </FormularioInput>
-                    <FormularioInput v-slot="inputProps" name="password" validation="required|min:4,length">
-                        <input v-model="inputProps.context.model" type="password">
+                    <FormularioInput v-slot="{ context }" name="password" validation="required|min:4,length">
+                        <input v-model="context.model" type="password">
                     </FormularioInput>
                 </FormularioForm>
             `,
-            data () {
-                return {
-                    formData: {}
-                }
-            }
         })
+
         const password = wrapper.find('input[type="password"]')
         password.setValue('foo')
         password.trigger('blur')
+
         wrapper.find('form').trigger('submit')
-        wrapper.vm.$formulario.handle({
-            inputErrors: { username: ['Failed'] }
-        }, 'login')
+        wrapper.vm.$refs.form.setErrors({ inputErrors: { username: ['Failed'] } })
+
         await flushPromises()
-        // First make sure we caugth the errors
+
+        // First make sure we caught the errors
         expect(Object.keys(wrapper.vm.$refs.form.mergedFieldErrors).length).toBe(1)
-        wrapper.vm.$formulario.reset('login')
+        wrapper.vm.$refs.form.resetValidation()
+        wrapper.vm.$refs.form.setValues({ })
+
         await flushPromises()
         expect(Object.keys(wrapper.vm.$refs.form.mergedFieldErrors).length).toBe(0)
-        expect(wrapper.vm.formData).toEqual({})
+        expect(wrapper.vm.values).toEqual({})
     })
 })

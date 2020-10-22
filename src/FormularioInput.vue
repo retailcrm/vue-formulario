@@ -305,12 +305,6 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    get validators (): any {
-        return createValidatorGroups(
-            parseRules(this.validation, this.$formulario.rules(this.parsedValidationRules))
-        )
-    }
-
     performValidation (): Promise<void> {
         this.pendingValidation = this.validate().then(errors => {
             this.didValidate(errors)
@@ -348,7 +342,9 @@ export default class FormularioInput extends Vue {
                     resolve([])
                 }
             }
-            resolveGroups(this.validators)
+            resolveGroups(createValidatorGroups(
+                parseRules(this.validation, this.$formulario.rules(this.parsedValidationRules))
+            ))
         })
     }
 
