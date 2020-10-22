@@ -56,18 +56,12 @@ export default class FormularioInput extends Vue {
     @Prop({ default: () => ({}) }) validationRules!: Record<string, ValidationRule>
     @Prop({ default: () => ({}) }) validationMessages!: Record<string, any>
     @Prop({ default: () => [] }) errors!: string[]
-
     @Prop({
         default: ERROR_BEHAVIOR.BLUR,
         validator: behavior => [ERROR_BEHAVIOR.BLUR, ERROR_BEHAVIOR.LIVE, ERROR_BEHAVIOR.SUBMIT].includes(behavior)
     }) errorBehavior!: string
 
-    @Prop({ default: false }) showErrors!: boolean
     @Prop({ default: false }) disableErrors!: boolean
-    @Prop({ default: true }) preventWindowDrops!: boolean
-    @Prop({ default: false }) uploader!: Function|Record<string, any>|boolean
-    @Prop({ default: false }) uploadUrl!: string|boolean
-    @Prop({ default: 'live' }) uploadBehavior!: string
 
     defaultId: string = this.$formulario.nextId(this)
     proxy: Record<string, any> = this.getInitialValue()
