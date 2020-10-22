@@ -161,7 +161,7 @@ describe('FormularioForm', () => {
     })
 
     // Replacement test for the above test - not quite as good of a test.
-    it('updates calls setFieldValue on form when a field contains a populated v-model on registration', () => {
+    it('Updates calls setFieldValue on form when a field contains a populated v-model on registration', () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
                 formularioValue: { test: '123' }
@@ -220,14 +220,6 @@ describe('FormularioForm', () => {
     it('Receives a form-errors prop and displays it', async () => {
         const wrapper = mount(FormularioForm, {
             propsData: { formErrors: ['first', 'second'] },
-            scopedSlots: {
-                default: `
-                    <div>
-                        <span v-for="error in props.formErrors">{{ error }}</span>
-                        <FormularioInput name="name" />
-                    </div>
-                `
-            }
         })
         await flushPromises()
         expect(wrapper.vm.mergedFormErrors.length).toBe(2)
@@ -262,17 +254,8 @@ describe('FormularioForm', () => {
     })
 
     it('Is able to display multiple errors on multiple elements', async () => {
-        const wrapper = mount(FormularioForm, {
-            propsData: {
-                errors: { inputA: ['first'], inputB: ['first', 'second']},
-            },
-            slots: {
-                default: `
-                    <FormularioInput name="inputA" />
-                    <FormularioInput name="inputB" />
-                `
-            },
-        })
+        const errors = { inputA: ['first'], inputB: ['first', 'second']}
+        const wrapper = mount(FormularioForm, { propsData: { errors } })
 
         await wrapper.vm.$nextTick()
 
@@ -282,14 +265,7 @@ describe('FormularioForm', () => {
     })
 
     it('Can set multiple field errors with setErrors()', async () => {
-        const wrapper = mount(FormularioForm, {
-            slots: {
-                default: `
-                    <FormularioInput name="inputA" />
-                    <FormularioInput name="inputB" />
-                `
-            },
-        })
+        const wrapper = mount(FormularioForm)
 
         expect(Object.keys(wrapper.vm.mergedFieldErrors).length).toBe(0)
 
