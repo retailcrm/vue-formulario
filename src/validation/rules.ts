@@ -4,11 +4,6 @@ import FileUpload from '../FileUpload'
 import { shallowEqualObjects, regexForFormat, has } from '@/libs/utils'
 import { ValidatableData } from '@/validation/types'
 
-interface ConfirmValidatableData extends ValidatableData {
-    getFormValues: () => Record<string, any>;
-    name: string;
-}
-
 /**
  * Library of rules
  */
@@ -90,14 +85,13 @@ export default {
      * Confirm that the value of one field is the same as another, mostly used
      * for password confirmations.
      */
-    confirm ({ value, getFormValues, name }: ConfirmValidatableData, field?: string): Promise<boolean> {
+    confirm ({ value, getFormValues, name }: ValidatableData, field?: string): Promise<boolean> {
         return Promise.resolve(((): boolean => {
-            const formValues = getFormValues()
             let confirmationFieldName = field
             if (!confirmationFieldName) {
                 confirmationFieldName = /_confirm$/.test(name) ? name.substr(0, name.length - 8) : `${name}_confirm`
             }
-            return formValues[confirmationFieldName] === value
+            return getFormValues()[confirmationFieldName] === value
         })())
     },
 

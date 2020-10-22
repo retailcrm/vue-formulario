@@ -1,6 +1,6 @@
 interface UploadedFile {
-    url: string
-    name: string
+    url: string;
+    name: string;
 }
 
 /**

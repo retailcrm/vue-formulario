@@ -1,22 +1,15 @@
 import Vue from 'vue'
 import { mount } from '@vue/test-utils'
 import flushPromises from 'flush-promises'
-import FormSubmission from '@/FormSubmission.ts'
 import Formulario from '@/index.ts'
 import FormularioForm from '@/FormularioForm.vue'
 
-function validationMessages (instance) {
-    instance.extend({
-        validationMessages: {
-            required: () => 'required',
-            'in': () => 'in',
-            min: () => 'min',
-        }
-    })
-}
-
 Vue.use(Formulario, {
-    plugins: [validationMessages]
+    validationMessages: {
+        required: () => 'required',
+        'in': () => 'in',
+        min: () => 'min',
+    }
 })
 
 describe('FormularioForm', () => {
@@ -34,22 +27,26 @@ describe('FormularioForm', () => {
         expect(wrapper.find('form div.default-slot-item').exists()).toBe(true)
     })
 
-    it('intercepts submit event', () => {
-        const formSubmitted = jest.fn()
+    it('Intercepts submit event', () => {
         const wrapper = mount(FormularioForm, {
             slots: {
-                default: "<button type='submit' />"
+                default: '<button type="submit" />'
             }
         })
-        const spy = jest.spyOn(wrapper.vm, 'formSubmitted')
+        const spy = jest.spyOn(wrapper.vm, 'onFormSubmit')
         wrapper.find('form').trigger('submit')
         expect(spy).toHaveBeenCalled()
     })
 
-    it('registers its subcomponents', () => {
+    it('Registers its subcomponents', () => {
         const wrapper = mount(FormularioForm, {
             propsData: { formularioValue: { testinput: 'has initial value' } },
-            slots: { default: '<FormularioInput type="text" name="subinput1" /><FormularioInput type="checkbox" name="subinput2" />' }
+            slots: {
+                default: `
+                    <FormularioInput type="text" name="subinput1" />
+                    <FormularioInput type="checkbox" name="subinput2" />
+                `
+            }
         })
         expect(wrapper.vm.registry.keys()).toEqual(['subinput1', 'subinput2'])
     })
@@ -232,31 +229,31 @@ describe('FormularioForm', () => {
         expect(wrapper.find('input[type="text"]').element.value).toBe('1234')
     })
 
-    it('emits an instance of FormSubmission', async () => {
-        const wrapper = mount(FormularioForm, {
-            slots: { default: '<FormularioInput type="text" formulario-value="123" name="testinput" />' }
-        })
-        wrapper.find('form').trigger('submit')
-        await flushPromises()
-        expect(wrapper.emitted('submit-raw')[0][0]).toBeInstanceOf(FormSubmission)
-    })
-
     it('resolves hasValidationErrors to true', async () => {
         const wrapper = mount(FormularioForm, {
-            slots: { default: '<FormularioInput type="text" validation="required" name="testinput" />' }
+            slots: { default: '<FormularioInput type="text" validation="required" name="fieldName" />' }
         })
         wrapper.find('form').trigger('submit')
         await flushPromises()
-        const submission = wrapper.emitted('submit-raw')[0][0]
-        expect(await submission.hasValidationErrors()).toBe(true)
+
+        const emitted = wrapper.emitted()
+
+        expect(emitted['error']).toBeTruthy()
+        expect(emitted['error'].length).toBe(1)
     })
 
-    it('resolves submitted form values to an object', async () => {
+    it('Resolves submitted form values to an object', async () => {
         const wrapper = mount(FormularioForm, {
-            slots: { default: '<FormularioInput type="text" validation="required" name="testinput" value="Justin" />' }
+            slots: { default: '<FormularioInput type="text" validation="required" name="fieldName" value="Justin" />' }
         })
-        const submission = await wrapper.vm.formSubmitted()
-        expect(submission).toEqual({testinput: 'Justin'})
+        wrapper.find('form').trigger('submit')
+        await flushPromises()
+
+        const emitted = wrapper.emitted()
+
+        expect(emitted['submit']).toBeTruthy()
+        expect(emitted['submit'].length).toBe(1)
+        expect(emitted['submit'][0]).toStrictEqual([{ fieldName: 'Justin' }])
     })
 
     it('accepts a values prop and uses it to set the initial values', async () => {
@@ -280,8 +277,7 @@ describe('FormularioForm', () => {
         expect(wrapper.vm.$formulario.registry.get('login')).toBe(wrapper.vm)
     })
 
-    it('calls custom error handler with error and name', async () => {
-        const mockHandler = jest.fn((err, name) => err);
+    it('Calls custom error handler with error and name', async () => {
         const wrapper = mount({
             template: `
             <div>
@@ -290,68 +286,39 @@ describe('FormularioForm', () => {
             </div>
             `
         })
-        wrapper.vm.$formulario.extend({ errorHandler: mockHandler })
         wrapper.vm.$formulario.handle({ formErrors: ['This is an error message'] }, 'login')
-        expect(mockHandler.mock.calls.length).toBe(1);
-        expect(mockHandler.mock.calls[0]).toEqual([{ formErrors: ['This is an error message'] }, 'login']);
     })
 
-    it('errors are displayed on correctly named components', async () => {
+    it('Errors are displayed on correctly named components', async () => {
         const wrapper = mount({
             template: `
             <div>
                 <FormularioForm
-                    class="formulario-form formulario-form--login"
+                    class="form form--login"
                     name="login"
-                    v-slot="vSlot"
+                    v-slot="{ errors }"
                 >
-                    <span v-for="error in vSlot.errors">{{ error }}</span>
+                    <span v-for="error in errors" class="error">{{ error }}</span>
                 </FormularioForm>
                 <FormularioForm
-                    class="formulario-form formulario-form--register"
+                    class="form form--register"
                     name="register"
-                    v-slot="vSlot"
+                    v-slot="{ errors }"
                 >
-                    <span v-for="error in vSlot.errors">{{ error }}</span>
+                    <span v-for="error in errors" class="error">{{ error }}</span>
                 </FormularioForm>
             </div>
             `
         })
-        expect(wrapper.vm.$formulario.registry.has('login') && wrapper.vm.$formulario.registry.has('register')).toBe(true)
+        expect(
+            wrapper.vm.$formulario.registry.has('login') &&
+            wrapper.vm.$formulario.registry.has('register')
+        ).toBe(true)
         wrapper.vm.$formulario.handle({ formErrors: ['This is an error message'] }, 'login')
         await flushPromises()
-        expect(wrapper.findAll('.formulario-form').length).toBe(2)
-        expect(wrapper.find('.formulario-form--login span').exists()).toBe(true)
-        expect(wrapper.find('.formulario-form--register span').exists()).toBe(false)
-    })
-
-    it('errors are displayed on correctly named components', async () => {
-        const wrapper = mount({
-            template: `
-            <div>
-                <FormularioForm
-                    class="formulario-form formulario-form--login"
-                    name="login"
-                    v-slot="vSlot"
-                >
-                    <span v-for="error in vSlot.errors">{{ error }}</span>
-                </FormularioForm>
-                <FormularioForm
-                    class="formulario-form formulario-form--register"
-                    name="register"
-                    v-slot="vSlot"
-                >
-                    <span v-for="error in vSlot.errors">{{ error }}</span>
-                </FormularioForm>
-            </div>
-            `
-        })
-        expect(wrapper.vm.$formulario.registry.has('login') && wrapper.vm.$formulario.registry.has('register')).toBe(true)
-        wrapper.vm.$formulario.handle({ formErrors: ['This is an error message'] }, 'login')
-        await flushPromises()
-        expect(wrapper.findAll('.formulario-form').length).toBe(2)
-        expect(wrapper.find('.formulario-form--login span').exists()).toBe(true)
-        expect(wrapper.find('.formulario-form--register span').exists()).toBe(false)
+        expect(wrapper.findAll('.form').length).toBe(2)
+        expect(wrapper.find('.form--login .error').exists()).toBe(true)
+        expect(wrapper.find('.form--register .error').exists()).toBe(false)
     })
 
     it('receives a form-errors prop and displays it', async () => {
@@ -386,8 +353,8 @@ describe('FormularioForm', () => {
             propsData: { errors: { fieldWithErrors: ['This field has an error'] }},
             slots: {
                 default: `
-                    <FormularioInput v-slot="vSlot" name="fieldWithErrors">
-                        <span v-for="error in vSlot.context.allErrors">{{ error.message }}</span>
+                    <FormularioInput v-slot="{ context }" name="fieldWithErrors">
+                        <span v-for="error in context.allErrors">{{ error.message }}</span>
                     </FormularioInput>
                 `
             }

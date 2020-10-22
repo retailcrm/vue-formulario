@@ -1,34 +1,29 @@
 import { VueConstructor } from 'vue'
 
-import library from '@/libs/library'
-import rules from '@/validation/rules'
 import mimes from '@/libs/mimes'
-import FileUpload from '@/FileUpload'
-import RuleValidationMessages from '@/RuleValidationMessages'
-import { arrayify, has } from '@/libs/utils'
+import { has } from '@/libs/utils'
 import fauxUploader from '@/libs/faux-uploader'
+import rules from '@/validation/rules'
+import messages from '@/validation/messages'
 import merge from '@/utils/merge'
 
+import FileUpload from '@/FileUpload'
+
 import FormularioForm from '@/FormularioForm.vue'
+import FormularioFormInterface from '@/FormularioFormInterface'
 import FormularioInput from '@/FormularioInput.vue'
 import FormularioGrouping from '@/FormularioGrouping.vue'
-import { ValidationContext } from '@/validation/types'
 
-interface ErrorHandler {
-    (error: any, formName?: string): any;
-}
+import { ValidationContext, ValidationRule } from '@/validation/types'
 
 interface FormularioOptions {
     components?: { [name: string]: VueConstructor };
     plugins?: any[];
-    library?: any;
     rules?: any;
     mimes?: any;
-    locale?: any;
     uploader?: any;
     uploadUrl?: any;
     fileUrlKey?: any;
-    errorHandler?: ErrorHandler;
     uploadJustCompleteDuration?: any;
     validationMessages?: any;
     idPrefix?: string;
@@ -40,32 +35,23 @@ interface FormularioOptions {
  */
 export default class Formulario {
     public options: FormularioOptions
-    public defaults: FormularioOptions
-    public registry: Map<string, FormularioForm>
+    public registry: Map<string, FormularioFormInterface>
     public idRegistry: { [name: string]: number }
 
-    /**
-     * Instantiate our base options.
-     */
     constructor () {
-        this.options = {}
-        this.defaults = {
+        this.options = {
             components: {
                 FormularioForm,
                 FormularioInput,
                 FormularioGrouping,
             },
-            library,
             rules,
             mimes,
-            locale: false,
             uploader: fauxUploader,
             uploadUrl: false,
             fileUrlKey: 'url',
             uploadJustCompleteDuration: 1000,
-            errorHandler: (error: any) => error,
-            plugins: [RuleValidationMessages],
-            validationMessages: {},
+            validationMessages: messages,
             idPrefix: 'formulario-'
         }
         this.registry = new Map()
@@ -75,17 +61,11 @@ export default class Formulario {
     /**
      * Install vue formulario, and register it’s components.
      */
-    install (Vue: VueConstructor, options?: FormularioOptions) {
+    install (Vue: VueConstructor, options?: FormularioOptions): void {
         Vue.prototype.$formulario = this
-        this.options = this.defaults
-        let plugins = this.defaults.plugins as any[]
-        if (options && Array.isArray(options.plugins) && options.plugins.length) {
-            plugins = plugins.concat(options.plugins)
-        }
-        plugins.forEach(plugin => (typeof plugin === 'function') ? plugin(this) : null)
         this.extend(options || {})
         for (const componentName in this.options.components) {
-            if (Object.prototype.hasOwnProperty.call(this.options.components, componentName)) {
+            if (has(this.options.components, componentName)) {
                 Vue.component(componentName, this.options.components[componentName])
             }
         }
@@ -97,7 +77,7 @@ export default class Formulario {
      * However, SSR and deterministic ids can be very challenging, so this
      * implementation is open to community review.
      */
-    nextId (vm: Vue) {
+    nextId (vm: Vue): string {
         const options = this.options as FormularioOptions
         const path = vm.$route && vm.$route.path ? vm.$route.path : false
         const pathPrefix = path ? vm.$route.path.replace(/[/\\.\s]/g, '-') : 'global'
@@ -110,9 +90,9 @@ export default class Formulario {
     /**
      * Given a set of options, apply them to the pre-existing options.
      */
-    extend (extendWith: FormularioOptions) {
+    extend (extendWith: FormularioOptions): Formulario {
         if (typeof extendWith === 'object') {
-            this.options = merge(this.options as FormularioOptions, extendWith)
+            this.options = merge(this.options, extendWith)
             return this
         }
         throw new Error(`VueFormulario extend() should be passed an object (was ${typeof extendWith})`)
@@ -121,14 +101,14 @@ export default class Formulario {
     /**
      * Get validation rules by merging any passed in with global rules.
      */
-    rules (rules: Record<string, any> = {}) {
+    rules (rules: Record<string, ValidationRule> = {}): () => Record<string, ValidationRule> {
         return { ...this.options.rules, ...rules }
     }
 
     /**
      * Get the validation message for a particular error.
      */
-    validationMessage (rule: string, context: ValidationContext, vm: Vue) {
+    validationMessage (rule: string, context: ValidationContext, vm: Vue): string {
         if (has(this.options.validationMessages, rule)) {
             return this.options.validationMessages[rule](vm, context)
         } else {
@@ -139,10 +119,8 @@ export default class Formulario {
     /**
      * Given an instance of a FormularioForm register it.
      */
-    register (form: FormularioForm) {
-        // @ts-ignore
-        if (form.$options.name === 'FormularioForm' && form.name) {
-            // @ts-ignore
+    register (form: FormularioFormInterface): void {
+        if (typeof form.name === 'string') {
             this.registry.set(form.name, form)
         }
     }
@@ -150,16 +128,9 @@ export default class Formulario {
     /**
      * Given an instance of a form, remove it from the registry.
      */
-    deregister (form: FormularioForm) {
-        if (
-            form.$options.name === 'FormularioForm' &&
-            // @ts-ignore
-            form.name &&
-            // @ts-ignore
-            this.registry.has(form.name as string)
-        ) {
-            // @ts-ignore
-            this.registry.delete(form.name as string)
+    deregister (form: FormularioFormInterface): void {
+        if (typeof form.name === 'string' && this.registry.has(form.name)) {
+            this.registry.delete(form.name)
         }
     }
 
@@ -167,24 +138,24 @@ export default class Formulario {
      * Given an array, this function will attempt to make sense of the given error
      * and hydrate a form with the resulting errors.
      */
-    handle (error: any, formName: string, skip = false) {
-        // @ts-ignore
-        const e = skip ? error : this.options.errorHandler(error, formName)
-        if (formName && this.registry.has(formName)) {
-            const form = this.registry.get(formName) as FormularioForm
-            // @ts-ignore
-            form.applyErrors({
-                formErrors: arrayify(e.formErrors),
-                inputErrors: e.inputErrors || {}
+    handle ({ formErrors, inputErrors }: {
+        formErrors?: string[];
+        inputErrors?: Record<string, any>;
+    }, formName: string): void {
+        if (this.registry.has(formName)) {
+            const form = this.registry.get(formName) as FormularioFormInterface
+
+            form.loadErrors({
+                formErrors: formErrors || [],
+                inputErrors: inputErrors || {}
             })
         }
-        return e
     }
 
     /**
      * Reset a form.
      */
-    reset (formName: string, initialValue: Record<string, any> = {}) {
+    reset (formName: string, initialValue: Record<string, any> = {}): void {
         this.resetValidation(formName)
         this.setValues(formName, initialValue)
     }
@@ -192,31 +163,25 @@ export default class Formulario {
     /**
      * Reset the form's validation messages.
      */
-    resetValidation (formName: string) {
-        const form = this.registry.get(formName) as FormularioForm
-        // @ts-ignore
-        form.hideErrors(formName)
-        // @ts-ignore
-        form.namedErrors = []
-        // @ts-ignore
-        form.namedFieldErrors = {}
+    resetValidation (formName: string): void {
+        if (this.registry.has(formName)) {
+            (this.registry.get(formName) as FormularioFormInterface).resetValidation()
+        }
     }
 
     /**
      * Set the form values.
      */
-    setValues (formName: string, values?: Record<string, any>) {
-        if (values) {
-            const form = this.registry.get(formName) as FormularioForm
-            // @ts-ignore
-            form.setValues({ ...values })
+    setValues (formName: string, values?: Record<string, any>): void {
+        if (this.registry.has(formName) && values) {
+            (this.registry.get(formName) as FormularioFormInterface).setValues({ ...values })
         }
     }
 
     /**
      * Get the file uploader.
      */
-    getUploader () {
+    getUploader (): any {
         return this.options.uploader || false
     }
 
@@ -231,14 +196,14 @@ export default class Formulario {
      * When re-hydrating a file uploader with an array, get the sub-object key to
      * access the url of the file. Usually this is just "url".
      */
-    getFileUrlKey () {
+    getFileUrlKey (): string {
         return this.options.fileUrlKey || 'url'
     }
 
     /**
      * Create a new instance of an upload.
      */
-    createUpload (data: DataTransfer, context: Record<string, any>) {
+    createUpload (data: DataTransfer, context: Record<string, any>): FileUpload {
         return new FileUpload(data, context, this.options)
     }
 }

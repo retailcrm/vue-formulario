@@ -8,20 +8,14 @@ import FormularioInput from '@/FormularioInput.vue'
 
 const globalRule = jest.fn(() => { return false })
 
-function validationMessages (instance) {
-    instance.extend({
-        validationMessages: {
-            required: () => 'required',
-            'in': () => 'in',
-            min: () => 'min',
-            globalRule: () => 'globalRule',
-        }
-    })
-}
-
 Vue.use(Formulario, {
-    plugins: [validationMessages],
-    rules: { globalRule }
+    rules: { globalRule },
+    validationMessages: {
+        required: () => 'required',
+        'in': () => 'in',
+        min: () => 'min',
+        globalRule: () => 'globalRule',
+    }
 })
 
 describe('FormularioInput', () => {

@@ -138,12 +138,14 @@ function parseRule (rule: any, rules: Record<string, any>) {
  */
 export function parseRules (validation: any[]|string, rules: any): any[] {
     if (typeof validation === 'string') {
-        return parseRules(validation.split('|'), rules)
+        return parseRules(validation.split('|').filter(f => f.length), rules)
     }
     if (!Array.isArray(validation)) {
         return []
     }
-    return validation.map(rule => parseRule(rule, rules)).filter(f => !!f)
+    return validation.map(rule => {
+        return parseRule(rule, rules)
+    }).filter(f => !!f)
 }
 
 /**
@@ -157,9 +159,8 @@ export function parseRules (validation: any[]|string, rules: any): any[] {
  * [[required], [min, max]]
  * and no bailing would produce:
  * [[required, min, max]]
- * @param {array} rules
  */
-export function groupBails (rules: any[]) {
+export function groupBails (rules: any[]): any[] {
     const groups = []
     const bailIndex = rules.findIndex(([,, rule]) => rule.toLowerCase() === 'bail')
     if (bailIndex >= 0) {
@@ -200,19 +201,17 @@ export function groupBails (rules: any[]) {
 
 /**
  * Escape a string for use in regular expressions.
- * @param {string} string
  */
-export function escapeRegExp (string: string) {
+export function escapeRegExp (string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // $& means the whole matched string
 }
 
 /**
  * Given a string format (date) return a regex to match against.
- * @param {string} format
  */
-export function regexForFormat (format: string) {
+export function regexForFormat (format: string): RegExp {
     const escaped = `^${escapeRegExp(format)}$`
-    const formats = {
+    const formats: Record<string, string> = {
         MM: '(0[1-9]|1[012])',
         M: '([1-9]|1[012])',
         DD: '([012][1-9]|3[01])',
@@ -220,8 +219,8 @@ export function regexForFormat (format: string) {
         YYYY: '\\d{4}',
         YY: '\\d{2}'
     }
+
     return new RegExp(Object.keys(formats).reduce((regex, format) => {
-        // @ts-ignore
         return regex.replace(format, formats[format])
     }, escaped))
 }
