@@ -1,20 +1,3 @@
-import FileUpload from '@/FileUpload'
-
-/**
- * Function to map over an object.
- * @param {Object} original An object to map over
- * @param {Function} callback
- */
-export function map (original: Record<string, any>, callback: Function): Record<string, any> {
-    const obj: Record<string, any> = {}
-    for (const key in original) {
-        if (Object.prototype.hasOwnProperty.call(original, key)) {
-            obj[key] = callback(key, original[key])
-        }
-    }
-    return obj
-}
-
 export function shallowEqualObjects (objA: Record<string, any>, objB: Record<string, any>): boolean {
     if (objA === objB) {
         return true
@@ -138,81 +121,29 @@ function parseRule (rule: any, rules: Record<string, any>) {
  */
 export function parseRules (validation: any[]|string, rules: any): any[] {
     if (typeof validation === 'string') {
-        return parseRules(validation.split('|'), rules)
+        return parseRules(validation.split('|').filter(f => f.length), rules)
     }
     if (!Array.isArray(validation)) {
         return []
     }
-    return validation.map(rule => parseRule(rule, rules)).filter(f => !!f)
-}
-
-/**
- * Given an array of rules, group them by bail signals. For example for this:
- * bail|required|min:10|max:20
- * we would expect:
- * [[required], [min], [max]]
- * because any sub-array failure would cause a shutdown. While
- * ^required|min:10|max:10
- * would return:
- * [[required], [min, max]]
- * and no bailing would produce:
- * [[required, min, max]]
- * @param {array} rules
- */
-export function groupBails (rules: any[]) {
-    const groups = []
-    const bailIndex = rules.findIndex(([,, rule]) => rule.toLowerCase() === 'bail')
-    if (bailIndex >= 0) {
-        // Get all the rules until the first bail rule (dont include the bail)
-        const preBail = rules.splice(0, bailIndex + 1).slice(0, -1)
-        // Rules before the `bail` rule are non-bailing
-        preBail.length && groups.push(preBail)
-        // All remaining rules are bailing rule groups
-        rules.map(rule => groups.push(Object.defineProperty([rule], 'bail', { value: true })))
-    } else {
-        groups.push(rules)
-    }
-
-    return groups.reduce((groups, group) => {
-        // @ts-ignore
-        const splitByMod = (group, bailGroup = false) => {
-            if (group.length < 2) {
-                return Object.defineProperty([group], 'bail', { value: bailGroup })
-            }
-            const splits = []
-            // @ts-ignore
-            const modIndex = group.findIndex(([,,, modifier]) => modifier === '^')
-            if (modIndex >= 0) {
-                const preMod = group.splice(0, modIndex)
-                // rules before the modifier are non-bailing rules.
-                preMod.length && splits.push(...splitByMod(preMod, bailGroup))
-                splits.push(Object.defineProperty([group.shift()], 'bail', { value: true }))
-                // rules after the modifier are non-bailing rules.
-                group.length && splits.push(...splitByMod(group, bailGroup))
-            } else {
-                splits.push(group)
-            }
-            return splits
-        }
-        return groups.concat(splitByMod(group))
-    }, [])
+    return validation.map(rule => {
+        return parseRule(rule, rules)
+    }).filter(f => !!f)
 }
 
 /**
  * Escape a string for use in regular expressions.
- * @param {string} string
  */
-export function escapeRegExp (string: string) {
+export function escapeRegExp (string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // $& means the whole matched string
 }
 
 /**
  * Given a string format (date) return a regex to match against.
- * @param {string} format
  */
-export function regexForFormat (format: string) {
+export function regexForFormat (format: string): RegExp {
     const escaped = `^${escapeRegExp(format)}$`
-    const formats = {
+    const formats: Record<string, string> = {
         MM: '(0[1-9]|1[012])',
         M: '([1-9]|1[012])',
         DD: '([012][1-9]|3[01])',
@@ -220,8 +151,8 @@ export function regexForFormat (format: string) {
         YYYY: '\\d{4}',
         YY: '\\d{2}'
     }
+
     return new RegExp(Object.keys(formats).reduce((regex, format) => {
-        // @ts-ignore
         return regex.replace(format, formats[format])
     }, escaped))
 }
@@ -256,7 +187,7 @@ export function cloneDeep (value: any): any {
 
     for (const key in value) {
         if (Object.prototype.hasOwnProperty.call(value, key)) {
-            if (isScalar(value[key]) || value[key] instanceof FileUpload) {
+            if (isScalar(value[key])) {
                 copy[key] = value[key]
             } else {
                 copy[key] = cloneDeep(value[key])

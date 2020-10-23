@@ -1,6 +1,5 @@
-import { parseRules, parseLocale, regexForFormat, cloneDeep, isScalar, snakeToCamel, groupBails } from '@/libs/utils'
+import { cloneDeep, isScalar, parseRules, regexForFormat, snakeToCamel } from '@/libs/utils'
 import rules from '@/validation/rules.ts'
-import FileUpload from '@/FileUpload'
 
 describe('parseRules', () => {
   it('parses single string rules, returning empty arguments array', () => {
@@ -113,8 +112,6 @@ describe('isScalar', () => {
   it('passes on undefined', () => expect(isScalar(undefined)).toBe(true))
 
   it('fails on pojo', () => expect(isScalar({})).toBe(false))
-
-  it('fails on custom type', () => expect(isScalar(FileUpload)).toBe(false))
 })
 
 describe('cloneDeep', () => {
@@ -173,85 +170,5 @@ describe('snakeToCamel', () => {
   it('returns the same function if passed', () => {
     const fn = () => {}
     expect(snakeToCamel(fn)).toBe(fn)
-  })
-})
-
-
-describe('parseLocale', () => {
-  it('properly orders the options', () => {
-    expect(parseLocale('en-US-VA')).toEqual(['en-US-VA', 'en-US', 'en'])
-  })
-
-  it('properly parses a single option', () => {
-    expect(parseLocale('en')).toEqual(['en'])
-  })
-})
-
-describe('groupBails', () => {
-  it('wraps non bailed rules in an array', () => {
-    const bailGroups = groupBails([[,,'required'], [,,'min']])
-    expect(bailGroups).toEqual(
-      [ [[,,'required'], [,,'min']] ] // dont bail on either of these
-    )
-    expect(bailGroups.map(group => !!group.bail)).toEqual([false])
-  })
-
-  it('splits bailed rules into two arrays array', () => {
-    const bailGroups = groupBails([[,,'required'], [,,'max'], [,, 'bail'], [,, 'matches'], [,,'min']])
-    expect(bailGroups).toEqual([
-      [ [,,'required'], [,,'max'] ], // dont bail on these
-      [ [,, 'matches'] ], // bail on this one
-      [ [,,'min'] ] // bail on this one
-    ])
-    expect(bailGroups.map(group => !!group.bail)).toEqual([false, true, true])
-  })
-
-  it('splits entire rule set when bail is at the beginning', () => {
-    const bailGroups = groupBails([[,, 'bail'], [,,'required'], [,,'max'], [,, 'matches'], [,,'min']])
-    expect(bailGroups).toEqual([
-      [ [,, 'required'] ], // bail on this one
-      [ [,, 'max'] ],  // bail on this one
-      [ [,, 'matches'] ],  // bail on this one
-      [ [,, 'min'] ]  // bail on this one
-    ])
-    expect(bailGroups.map(group => !!group.bail)).toEqual([true, true, true, true])
-  })
-
-  it('splits no rules when bail is at the end', () => {
-    const bailGroups = groupBails([[,,'required'], [,,'max'], [,, 'matches'], [,,'min'], [,, 'bail']])
-    expect(bailGroups).toEqual([
-      [ [,, 'required'], [,, 'max'], [,, 'matches'], [,, 'min'] ] // dont bail on these
-    ])
-    expect(bailGroups.map(group => !!group.bail)).toEqual([false])
-  })
-
-  it('splits individual modified names into two groups when at the begining', () => {
-    const bailGroups = groupBails([[,,'required', '^'], [,,'max'], [,, 'matches'], [,,'min'] ])
-    expect(bailGroups).toEqual([
-      [ [,, 'required', '^'] ], // bail on this one
-      [ [,, 'max'], [,, 'matches'], [,, 'min'] ] // dont bail on these
-    ])
-    expect(bailGroups.map(group => !!group.bail)).toEqual([true, false])
-  })
-
-  it('splits individual modified names into three groups when in the middle', () => {
-    const bailGroups = groupBails([[,,'required'], [,,'max'], [,, 'matches', '^'], [,,'min'] ])
-    expect(bailGroups).toEqual([
-      [ [,, 'required'], [,, 'max'] ], // dont bail on these
-      [ [,, 'matches', '^'] ], // bail on this one
-      [ [,, 'min'] ] // dont bail on this
-    ])
-    expect(bailGroups.map(group => !!group.bail)).toEqual([false, true, false])
-  })
-
-  it('splits individual modified names into four groups when used twice', () => {
-    const bailGroups = groupBails([[,,'required', '^'], [,,'max'], [,, 'matches', '^'], [,,'min'] ])
-    expect(bailGroups).toEqual([
-      [ [,, 'required', '^'] ], // bail on this
-      [ [,, 'max'] ], // dont bail on this
-      [ [,, 'matches', '^'] ], // bail on this
-      [ [,, 'min'] ] // dont bail on this
-    ])
-    expect(bailGroups.map(group => !!group.bail)).toEqual([true, false, true, false])
   })
 })

@@ -1,5 +1,5 @@
 <template>
-    <form @submit.prevent="formSubmitted">
+    <form @submit.prevent="onFormSubmit">
         <slot :errors="mergedFormErrors" />
     </form>
 </template>
@@ -13,205 +13,173 @@ import {
     Provide,
     Watch,
 } from 'vue-property-decorator'
-import { arrayify, getNested, has, setNested, shallowEqualObjects } from '@/libs/utils'
-import Registry from '@/libs/registry'
-import FormSubmission from '@/FormSubmission'
+import { cloneDeep, getNested, has, setNested, shallowEqualObjects } from '@/libs/utils'
+import merge from '@/utils/merge'
+import Registry from '@/form/registry'
 import FormularioInput from '@/FormularioInput.vue'
 
-import { ErrorObserver } from '@/validation/types'
+import {
+    ErrorHandler,
+    ErrorObserver,
+    ErrorObserverRegistry,
+} from '@/validation/ErrorObserver'
+
+import { ValidationErrorBag } from '@/validation/types'
 
 @Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
-    @Provide() formularioFieldValidation (errorObject): void {
-        this.$emit('validation', errorObject)
-    }
+    @Model('input', { default: () => ({}) })
+    public readonly formularioValue!: Record<string, any>
 
-    @Provide() formularioRegister = this.register
-    @Provide() formularioDeregister = this.deregister
-    @Provide() formularioSetter = this.setFieldValue
-    @Provide() getFormValues = (): Record<string, any> => this.proxy
-    @Provide() path = ''
+    // Errors record, describing state validation errors of whole form
+    @Prop({ default: () => ({}) }) readonly errors!: Record<string, any>
+    // Form errors only used on FormularioForm default slot
+    @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
-    @Provide() removeErrorObserver (observer): void {
-        this.errorObservers = this.errorObservers.filter(obs => obs.callback !== observer)
-    }
-
-    @Model('input', {
-        type: Object,
-        default: () => ({})
-    }) readonly formularioValue!: Record<string, any>
-
-    @Prop({
-        type: [String, Boolean],
-        default: false
-    }) public readonly name!: string | boolean
-
-    @Prop({
-        type: [Object, Boolean],
-        default: false
-    }) readonly values!: Record<string, any> | boolean
-
-    @Prop({ default: false }) readonly errors!: Record<string, any> | boolean
-    @Prop({ default: () => ([]) }) readonly formErrors!: []
+    @Provide()
+    public path = ''
 
     public proxy: Record<string, any> = {}
 
     registry: Registry = new Registry(this)
 
-    childrenShouldShowErrors = false
+    private errorObserverRegistry = new ErrorObserverRegistry()
+    // Local error messages are temporal, they wiped each resetValidation call
+    private localFormErrors: string[] = []
+    private localFieldErrors: Record<string, string[]> = {}
 
-    formShouldShowErrors = false
-
-    errorObservers: [] = []
-
-    namedErrors: [] = []
-
-    namedFieldErrors: Record<string, any> = {}
-
-    get mergedFormErrors (): Record<string, any> {
-        return this.formErrors.concat(this.namedErrors)
+    get mergedFormErrors (): string[] {
+        return [...this.formErrors, ...this.localFormErrors]
     }
 
-    get mergedFieldErrors (): Record<string, any> {
-        const errors = {}
-
-        if (this.errors) {
-            for (const fieldName in this.errors) {
-                errors[fieldName] = arrayify(this.errors[fieldName])
-            }
-        }
-
-        for (const fieldName in this.namedFieldErrors) {
-            errors[fieldName] = arrayify(this.namedFieldErrors[fieldName])
-        }
-
-        return errors
+    get mergedFieldErrors (): Record<string, string[]> {
+        return merge(this.errors || {}, this.localFieldErrors)
     }
 
-    get hasFormErrorObservers (): boolean {
-        return this.errorObservers.some(o => o.type === 'form')
+    get hasModel (): boolean {
+        return has(this.$options.propsData || {}, 'formularioValue')
     }
 
     get hasInitialValue (): boolean {
-        return (
-            (this.formularioValue && typeof this.formularioValue === 'object') ||
-            (this.values && typeof this.values === 'object') ||
-            (this.isGrouping && typeof this.context.model[this.index] === 'object')
-        )
-    }
-
-    get isVmodeled (): boolean {
-        return !!(has(this.$options.propsData, 'formularioValue') &&
-            this._events &&
-            Array.isArray(this._events.input) &&
-            this._events.input.length)
+        return this.formularioValue && typeof this.formularioValue === 'object'
     }
 
     get initialValues (): Record<string, any> {
-        if (
-            has(this.$options.propsData, 'formularioValue') &&
-            typeof this.formularioValue === 'object'
-        ) {
+        if (this.hasModel && typeof this.formularioValue === 'object') {
             // If there is a v-model on the form/group, use those values as first priority
-            return Object.assign({}, this.formularioValue) // @todo - use a deep clone to detach reference types
-        } else if (
-            has(this.$options.propsData, 'values') &&
-            typeof this.values === 'object'
-        ) {
-            // If there are values, use them as secondary priority
-            return Object.assign({}, this.values)
-        } else if (
-            this.isGrouping && typeof this.context.model[this.index] === 'object'
-        ) {
-            return this.context.model[this.index]
+            return { ...this.formularioValue } // @todo - use a deep clone to detach reference types
         }
+
         return {}
     }
 
     @Watch('formularioValue', { deep: true })
-    onFormularioValueChanged (values): void {
-        if (this.isVmodeled && values && typeof values === 'object') {
+    onFormularioValueChanged (values: Record<string, any>): void {
+        if (this.hasModel && values && typeof values === 'object') {
             this.setValues(values)
         }
     }
 
     @Watch('mergedFormErrors')
-    onMergedFormErrorsChanged (errors): void {
-        this.errorObservers
-            .filter(o => o.type === 'form')
-            .forEach(o => o.callback(errors))
+    onMergedFormErrorsChanged (errors: string[]): void {
+        this.errorObserverRegistry.filter(o => o.type === 'form').observe(errors)
     }
 
     @Watch('mergedFieldErrors', { immediate: true })
-    onMergedFieldErrorsChanged (errors): void {
-        this.errorObservers
-            .filter(o => o.type === 'input')
-            .forEach(o => o.callback(errors[o.field] || []))
+    onMergedFieldErrorsChanged (errors: Record<string, string[]>): void {
+        this.errorObserverRegistry.filter(o => o.type === 'input').observe(errors)
     }
 
     created (): void {
-        this.$formulario.register(this)
-        this.applyInitialValues()
-    }
-
-    destroyed (): void {
-        this.$formulario.deregister(this)
-    }
-
-    public register (field: string, component: FormularioInput): void {
-        this.registry.register(field, component)
-    }
-
-    public deregister (field: string): void {
-        this.registry.remove(field)
-    }
-
-    applyErrors ({ formErrors, inputErrors }): void {
-        // given an object of errors, apply them to this form
-        this.namedErrors = formErrors
-        this.namedFieldErrors = inputErrors
+        this.initProxy()
     }
 
     @Provide()
-    addErrorObserver (observer: ErrorObserver): void {
-        if (!this.errorObservers.find(obs => observer.callback === obs.callback)) {
-            this.errorObservers.push(observer)
-            if (observer.type === 'form') {
-                observer.callback(this.mergedFormErrors)
-            } else if (has(this.mergedFieldErrors, observer.field)) {
-                observer.callback(this.mergedFieldErrors[observer.field])
-            }
-        }
+    getFormValues (): Record<string, any> {
+        return this.proxy
     }
 
-    registerErrorComponent (component): void {
-        if (!this.errorComponents.includes(component)) {
-            this.errorComponents.push(component)
-        }
-    }
-
-    formSubmitted (): Promise<void> {
-        // perform validation here
-        this.showErrors()
-        const submission = new FormSubmission(this)
-        this.$emit('submit-raw', submission)
-        return submission.hasValidationErrors()
-            .then(hasErrors => hasErrors ? undefined : submission.values())
+    onFormSubmit (): Promise<void> {
+        return this.hasValidationErrors()
+            .then(hasErrors => hasErrors ? undefined : cloneDeep(this.proxy))
             .then(data => {
                 if (typeof data !== 'undefined') {
                     this.$emit('submit', data)
-                    return data
+                } else {
+                    this.$emit('error')
                 }
             })
     }
 
-    applyInitialValues (): void {
+    @Provide()
+    onFormularioFieldValidation (errorBag: ValidationErrorBag): void {
+        this.$emit('validation', errorBag)
+    }
+
+    @Provide()
+    addErrorObserver (observer: ErrorObserver): void {
+        this.errorObserverRegistry.add(observer)
+        if (observer.type === 'form') {
+            observer.callback(this.mergedFormErrors)
+        } else if (observer.field && has(this.mergedFieldErrors, observer.field)) {
+            observer.callback(this.mergedFieldErrors[observer.field])
+        }
+    }
+
+    @Provide()
+    removeErrorObserver (observer: ErrorHandler): void {
+        this.errorObserverRegistry.remove(observer)
+    }
+
+    @Provide('formularioRegister')
+    register (field: string, component: FormularioInput): void {
+        this.registry.register(field, component)
+    }
+
+    @Provide('formularioDeregister')
+    deregister (field: string): void {
+        this.registry.remove(field)
+    }
+
+    initProxy (): void {
         if (this.hasInitialValue) {
             this.proxy = this.initialValues
         }
     }
 
-    setFieldValue (field, value, emit: boolean = true): void {
+    setValues (values: Record<string, any>): void {
+        const keys = Array.from(new Set([...Object.keys(values), ...Object.keys(this.proxy)]))
+        let proxyHasChanges = false
+        keys.forEach(field => {
+            if (!this.registry.hasNested(field)) {
+                return
+            }
+
+            this.registry.getNested(field).forEach((registryField, registryKey) => {
+                const $input = this.registry.get(registryKey) as FormularioInput
+                const oldValue = getNested(this.proxy, registryKey)
+                const newValue = getNested(values, registryKey)
+
+                if (!shallowEqualObjects(newValue, oldValue)) {
+                    this.setFieldValue(registryKey, newValue, false)
+                    proxyHasChanges = true
+                }
+
+                if (!shallowEqualObjects(newValue, $input.proxy)) {
+                    $input.context.model = newValue
+                }
+            })
+        })
+
+        this.initProxy()
+
+        if (proxyHasChanges) {
+            this.$emit('input', { ...this.proxy })
+        }
+    }
+
+    @Provide('formularioSetter')
+    setFieldValue (field: string, value: any, emit = true): void {
         if (value === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [field]: value, ...proxy } = this.proxy
@@ -219,66 +187,31 @@ export default class FormularioForm extends Vue {
         } else {
             setNested(this.proxy, field, value)
         }
+
         if (emit) {
             this.$emit('input', Object.assign({}, this.proxy))
         }
     }
 
     hasValidationErrors (): Promise<boolean> {
-        return Promise.all(this.registry.reduce((resolvers, cmp) => {
-            resolvers.push(cmp.performValidation() && cmp.getValidationErrors())
+        return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], input: FormularioInput) => {
+            resolvers.push(input.performValidation() && input.hasValidationErrors())
             return resolvers
-        }, [])).then(errorObjects => errorObjects.some(item => item.hasErrors))
+        }, [])).then(results => results.some(hasErrors => hasErrors))
     }
 
-    showErrors (): void {
-        this.childrenShouldShowErrors = true
+    setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {
+        // given an object of errors, apply them to this form
+        this.localFormErrors = formErrors || []
+        this.localFieldErrors = inputErrors || {}
+    }
+
+    resetValidation (): void {
+        this.localFormErrors = []
+        this.localFieldErrors = {}
         this.registry.forEach((input: FormularioInput) => {
-            input.formShouldShowErrors = true
+            input.resetValidation()
         })
-    }
-
-    hideErrors (): void {
-        this.childrenShouldShowErrors = false
-        this.registry.forEach((input: FormularioInput) => {
-            input.formShouldShowErrors = false
-            input.behavioralErrorVisibility = false
-        })
-    }
-
-    setValues (values: Record<string, any>): void {
-        // Collect all keys, existing and incoming
-        const keys = Array.from(new Set(Object.keys(values).concat(Object.keys(this.proxy))))
-        let proxyHasChanges = false;
-        keys.forEach(field => {
-            if (this.registry.hasNested(field)) {
-                this.registry.getNested(field).forEach((registryField, registryKey) => {
-                    if (
-                        !shallowEqualObjects(
-                            getNested(values, registryKey),
-                            getNested(this.proxy, registryKey)
-                        )
-                    ) {
-                        this.setFieldValue(registryKey, getNested(values, registryKey), false)
-                        proxyHasChanges = true;
-                    }
-
-                    if (
-                        !shallowEqualObjects(
-                            getNested(values, registryKey),
-                            this.registry.get(registryKey).proxy
-                        )
-                    ) {
-                        this.registry.get(registryKey).context.model = getNested(values, registryKey)
-                    }
-                })
-            }
-        })
-        this.applyInitialValues()
-
-        if (proxyHasChanges) {
-            this.$emit('input', Object.assign({}, this.proxy))
-        }
     }
 }
 </script>

@@ -1,5 +1,4 @@
 import rules from '@/validation/rules.ts'
-import FileUpload from '../../src/FileUpload'
 
 
 /**
@@ -321,32 +320,6 @@ describe('matches', () => {
 })
 
 /**
- * Mime types.
- */
-describe('mime', () => {
-  it('passes basic image/jpeg stack', async () => {
-    const fileUpload = new FileUpload({
-      files: [ { type: 'image/jpeg' } ]
-    })
-    expect(await rules.mime({ value: fileUpload }, 'image/png', 'image/jpeg')).toBe(true)
-  })
-
-  it('passes when match is at begining of stack', async () => {
-    const fileUpload = new FileUpload({
-      files: [ { type: 'document/pdf' } ]
-    })
-    expect(await rules.mime({ value: fileUpload }, 'document/pdf')).toBe(true)
-  })
-
-  it('fails when not in stack', async () => {
-    const fileUpload = new FileUpload({
-      files: [ { type: 'application/json' } ]
-    })
-    expect(await rules.mime({ value: fileUpload }, 'image/png', 'image/jpeg')).toBe(false)
-  })
-})
-
-/**
  * Minimum.
  */
 describe('min', () => {
@@ -459,10 +432,6 @@ describe('required', () => {
   it('passes with empty value if second argument is false', async () => expect(await rules.required({ value: '' }, false)).toBe(true))
 
   it('passes with empty value if second argument is false string', async () => expect(await rules.required({ value: '' }, 'false')).toBe(true))
-
-  it('passes with FileUpload', async () => expect(await rules.required({ value: new FileUpload({ files: [{ name: 'j.png' }] }) })).toBe(true))
-
-  it('fails with empty FileUpload', async () => expect(await rules.required({ value: new FileUpload({ files: [] }) })).toBe(false))
 })
 
 /**
