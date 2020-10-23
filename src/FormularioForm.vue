@@ -31,7 +31,9 @@ export default class FormularioForm extends Vue {
     @Model('input', { default: () => ({}) })
     public readonly formularioValue!: Record<string, any>
 
+    // Errors record, describing state validation errors of whole form
     @Prop({ default: () => ({}) }) readonly errors!: Record<string, any>
+    // Form errors only used on FormularioForm default slot
     @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
     @Provide()
@@ -42,6 +44,7 @@ export default class FormularioForm extends Vue {
     registry: Registry = new Registry(this)
 
     private errorObserverRegistry = new ErrorObserverRegistry()
+    // Local error messages are temporal, they wiped each resetValidation call
     private localFormErrors: string[] = []
     private localFieldErrors: Record<string, string[]> = {}
 
