@@ -148,22 +148,24 @@ export default class FormularioForm extends Vue {
         const keys = Array.from(new Set([...Object.keys(values), ...Object.keys(this.proxy)]))
         let proxyHasChanges = false
         keys.forEach(field => {
-            if (this.registry.hasNested(field)) {
-                this.registry.getNested(field).forEach((registryField, registryKey) => {
-                    const $input = this.registry.get(registryKey) as FormularioInput
-                    const oldValue = getNested(this.proxy, registryKey)
-                    const newValue = getNested(values, registryKey)
-
-                    if (!shallowEqualObjects(newValue, oldValue)) {
-                        this.setFieldValue(registryKey, newValue, false)
-                        proxyHasChanges = true
-                    }
-
-                    if (!shallowEqualObjects(newValue, $input.proxy)) {
-                        $input.context.model = newValue
-                    }
-                })
+            if (!this.registry.hasNested(field)) {
+                return
             }
+
+            this.registry.getNested(field).forEach((registryField, registryKey) => {
+                const $input = this.registry.get(registryKey) as FormularioInput
+                const oldValue = getNested(this.proxy, registryKey)
+                const newValue = getNested(values, registryKey)
+
+                if (!shallowEqualObjects(newValue, oldValue)) {
+                    this.setFieldValue(registryKey, newValue, false)
+                    proxyHasChanges = true
+                }
+
+                if (!shallowEqualObjects(newValue, $input.proxy)) {
+                    $input.context.model = newValue
+                }
+            })
         })
 
         this.initProxy()
