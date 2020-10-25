@@ -89,7 +89,7 @@ export default class FormularioInput extends Vue {
     get context (): Record<string, any> {
         return Object.defineProperty({
             name: this.fullQualifiedName,
-            validate: this.performValidation.bind(this),
+            runValidation: this.runValidation.bind(this),
             violations: this.violations,
             errors: this.mergedErrors,
             // @TODO: Deprecated, will be removed in next versions, use context.violations & context.errors separately
@@ -141,7 +141,7 @@ export default class FormularioInput extends Vue {
             this.context.model = newValue
         }
         if (this.errorBehavior === VALIDATION_BEHAVIOR.LIVE) {
-            this.performValidation()
+            this.runValidation()
         } else {
             this.violations = []
         }
@@ -163,7 +163,7 @@ export default class FormularioInput extends Vue {
             this.addErrorObserver({ callback: this.setErrors, type: 'input', field: this.fullQualifiedName })
         }
         if (this.errorBehavior === VALIDATION_BEHAVIOR.LIVE) {
-            this.performValidation()
+            this.runValidation()
         }
     }
 
@@ -189,7 +189,7 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    performValidation (): Promise<void> {
+    runValidation (): Promise<void> {
         this.pendingValidation = this.validate().then(violations => {
             const validationChanged = !shallowEqualObjects(violations, this.violations)
             this.violations = violations
@@ -210,17 +210,15 @@ export default class FormularioInput extends Vue {
     }
 
     validate (): Promise<Violation[]> {
-        return validate(
-            processConstraints(
-                this.validation,
-                this.$formulario.getRules(this.normalizedValidationRules),
-                this.$formulario.getMessages(this, this.normalizedValidationMessages),
-            ), {
-                value: this.context.model,
-                name: this.context.name,
-                formValues: this.getFormValues(),
-            }
-        )
+        return validate(processConstraints(
+            this.validation,
+            this.$formulario.getRules(this.normalizedValidationRules),
+            this.$formulario.getMessages(this, this.normalizedValidationMessages),
+        ), {
+            value: this.context.model,
+            name: this.context.name,
+            formValues: this.getFormValues(),
+        })
     }
 
     hasValidationErrors (): Promise<boolean> {

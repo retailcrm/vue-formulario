@@ -298,7 +298,7 @@ describe('FormularioForm', () => {
             slots: {
                 default: `
                     <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
-                        <input v-model="context.model" type="text" @blur="context.validate()">
+                        <input v-model="context.model" type="text" @blur="context.runValidation()">
                     </FormularioInput>
                     <FormularioInput name="bar" validation="required" />
                 `,
@@ -321,7 +321,7 @@ describe('FormularioForm', () => {
         const wrapper = mount(FormularioForm, {
             slots: { default: `
                 <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
-                    <input v-model="context.model" type="text" @blur="context.validate()">
+                    <input v-model="context.model" type="text" @blur="context.runValidation()">
                 </FormularioInput>
                 <FormularioInput name="bar" validation="required" />
             ` }

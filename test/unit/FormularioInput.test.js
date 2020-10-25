@@ -245,7 +245,7 @@ describe('FormularioInput', () => {
             scopedSlots: {
                 default: `
                     <div>
-                        <input v-model="props.context.model" @blur="props.context.validate()">
+                        <input v-model="props.context.model" @blur="props.context.runValidation()">
                         <span v-if="props.context.formShouldShowErrors" v-for="error in props.context.allErrors">{{ error.message }}</span>
                     </div>
                 `

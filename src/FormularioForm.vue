@@ -195,13 +195,12 @@ export default class FormularioForm extends Vue {
 
     hasValidationErrors (): Promise<boolean> {
         return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], input: FormularioInput) => {
-            resolvers.push(input.performValidation() && input.hasValidationErrors())
+            resolvers.push(input.runValidation() && input.hasValidationErrors())
             return resolvers
         }, [])).then(results => results.some(hasErrors => hasErrors))
     }
 
     setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {
-        // given an object of errors, apply them to this form
         this.localFormErrors = formErrors || []
         this.localFieldErrors = inputErrors || {}
     }
