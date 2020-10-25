@@ -6,15 +6,8 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import {
-    Component,
-    Model,
-    Prop,
-    Provide,
-    Watch,
-} from 'vue-property-decorator'
-import { cloneDeep, getNested, has, setNested, shallowEqualObjects } from '@/libs/utils'
-import merge from '@/utils/merge'
+import { Component, Model, Prop, Provide, Watch } from 'vue-property-decorator'
+import { clone, getNested, has, merge, setNested, shallowEqualObjects } from '@/utils'
 import Registry from '@/form/registry'
 import FormularioInput from '@/FormularioInput.vue'
 
@@ -41,12 +34,21 @@ export default class FormularioForm extends Vue {
 
     public proxy: Record<string, any> = {}
 
-    registry: Registry = new Registry(this)
+    private registry: Registry = new Registry(this)
 
     private errorObserverRegistry = new ErrorObserverRegistry()
     // Local error messages are temporal, they wiped each resetValidation call
     private localFormErrors: string[] = []
     private localFieldErrors: Record<string, string[]> = {}
+
+    get initialValues (): Record<string, any> {
+        if (this.hasModel && typeof this.formularioValue === 'object') {
+            // If there is a v-model on the form/group, use those values as first priority
+            return { ...this.formularioValue } // @todo - use a deep clone to detach reference types
+        }
+
+        return {}
+    }
 
     get mergedFormErrors (): string[] {
         return [...this.formErrors, ...this.localFormErrors]
@@ -62,15 +64,6 @@ export default class FormularioForm extends Vue {
 
     get hasInitialValue (): boolean {
         return this.formularioValue && typeof this.formularioValue === 'object'
-    }
-
-    get initialValues (): Record<string, any> {
-        if (this.hasModel && typeof this.formularioValue === 'object') {
-            // If there is a v-model on the form/group, use those values as first priority
-            return { ...this.formularioValue } // @todo - use a deep clone to detach reference types
-        }
-
-        return {}
     }
 
     @Watch('formularioValue', { deep: true })
@@ -101,7 +94,7 @@ export default class FormularioForm extends Vue {
 
     onFormSubmit (): Promise<void> {
         return this.hasValidationErrors()
-            .then(hasErrors => hasErrors ? undefined : cloneDeep(this.proxy))
+            .then(hasErrors => hasErrors ? undefined : clone(this.proxy))
             .then(data => {
                 if (typeof data !== 'undefined') {
                     this.$emit('submit', data)
@@ -193,16 +186,16 @@ export default class FormularioForm extends Vue {
         }
     }
 
+    setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {
+        this.localFormErrors = formErrors || []
+        this.localFieldErrors = inputErrors || {}
+    }
+
     hasValidationErrors (): Promise<boolean> {
         return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], input: FormularioInput) => {
             resolvers.push(input.runValidation() && input.hasValidationErrors())
             return resolvers
         }, [])).then(results => results.some(hasErrors => hasErrors))
-    }
-
-    setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {
-        this.localFormErrors = formErrors || []
-        this.localFieldErrors = inputErrors || {}
     }
 
     resetValidation (): void {

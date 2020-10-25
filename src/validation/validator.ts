@@ -1,4 +1,4 @@
-import { has, snakeToCamel } from '@/libs/utils'
+import { has, snakeToCamel } from '@/utils'
 
 export interface Validator {
     (context: ValidationContext): Promise<Violation|null>;
@@ -59,7 +59,7 @@ export function parseModifier (ruleName: string): [string, string|null] {
     return [snakeToCamel(ruleName), null]
 }
 
-export function processArrayConstraint (
+export function processSingleArrayConstraint (
     constraint: any[],
     rules: Record<string, CheckRuleFn>,
     messages: Record<string, CreateMessageFn>
@@ -93,7 +93,7 @@ export function processArrayConstraint (
     throw new Error(`[Formulario] Can't create validator for constraint: ${JSON.stringify(constraint)}`)
 }
 
-export function processStringConstraint (
+export function processSingleStringConstraint (
     constraint: string,
     rules: Record<string, CheckRuleFn>,
     messages: Record<string, CreateMessageFn>
@@ -117,12 +117,8 @@ export function processStringConstraint (
     throw new Error(`[Formulario] Can't create validator for constraint: ${constraint}`)
 }
 
-/**
- * Given a string or function, parse it and return an array in the format
- * [fn, [...arguments]]
- */
-export function processConstraint (
-    constraint: any,
+export function processSingleConstraint (
+    constraint: string|Validator|[Validator|string, ...any[]],
     rules: Record<string, CheckRuleFn>,
     messages: Record<string, CreateMessageFn>
 ): [Validator, string|null, string|null] {
@@ -131,11 +127,11 @@ export function processConstraint (
     }
 
     if (Array.isArray(constraint) && constraint.length) {
-        return processArrayConstraint(constraint, rules, messages)
+        return processSingleArrayConstraint(constraint, rules, messages)
     }
 
     if (typeof constraint === 'string') {
-        return processStringConstraint(constraint, rules, messages)
+        return processSingleStringConstraint(constraint, rules, messages)
     }
 
     return [(): Promise<Violation|null> => Promise.resolve(null), null, null]
@@ -152,7 +148,7 @@ export function processConstraints (
     if (!Array.isArray(constraints)) {
         return []
     }
-    return constraints.map(constraint => processConstraint(constraint, rules, messages))
+    return constraints.map(constraint => processSingleConstraint(constraint, rules, messages))
 }
 
 export function enlarge (groups: ValidatorGroup[]): ValidatorGroup[] {

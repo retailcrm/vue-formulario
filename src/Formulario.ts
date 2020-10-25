@@ -5,8 +5,8 @@ import messages from '@/validation/messages'
 import merge from '@/utils/merge'
 
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioInput from '@/FormularioInput.vue'
 import FormularioGrouping from '@/FormularioGrouping.vue'
+import FormularioInput from '@/FormularioInput.vue'
 
 import {
     ValidationContext,

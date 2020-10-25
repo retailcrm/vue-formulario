@@ -1,6 +1,5 @@
 import rules from '@/validation/rules.ts'
 
-
 /**
  * Accepted rule
  */

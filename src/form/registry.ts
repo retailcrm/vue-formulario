@@ -1,4 +1,4 @@
-import { shallowEqualObjects, has, getNested } from '@/libs/utils'
+import { shallowEqualObjects, has, getNested } from '@/utils'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 
@@ -83,15 +83,6 @@ export default class Registry {
     /**
      * Map over the registry (recursively).
      */
-    map (mapper: Function): Record<string, any> {
-        const value = {}
-        this.registry.forEach((component, field) => Object.assign(value, { [field]: mapper(component, field) }))
-        return value
-    }
-
-    /**
-     * Map over the registry (recursively).
-     */
     forEach (callback: Function): void {
         this.registry.forEach((component, field) => {
             callback(component, field)
@@ -136,11 +127,6 @@ export default class Registry {
             // form has no value or a different value, so use the field value
             // @ts-ignore
             this.ctx.setFieldValue(field, component.proxy)
-        }
-        // @ts-ignore
-        if (this.ctx.childrenShouldShowErrors) {
-            // @ts-ignore
-            component.formShouldShowErrors = true
         }
     }
 

@@ -1,5 +1,5 @@
 import isUrl from 'is-url'
-import { shallowEqualObjects, regexForFormat, has } from '@/libs/utils'
+import { shallowEqualObjects, regexForFormat, has } from '@/utils'
 import { ValidationContext } from '@/validation/validator'
 
 interface DateValidationContext extends ValidationContext {

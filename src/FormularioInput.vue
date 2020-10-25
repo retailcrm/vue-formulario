@@ -13,7 +13,7 @@ import {
     Prop,
     Watch,
 } from 'vue-property-decorator'
-import { arrayify, has, shallowEqualObjects, snakeToCamel } from './libs/utils'
+import { arrayify, has, shallowEqualObjects, snakeToCamel } from './utils'
 import {
     CheckRuleFn,
     CreateMessageFn,
