@@ -298,7 +298,7 @@ describe('FormularioForm', () => {
             slots: {
                 default: `
                     <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
-                        <input v-model="context.model" type="text" @blur="context.blurHandler">
+                        <input v-model="context.model" type="text" @blur="context.validate()">
                     </FormularioInput>
                     <FormularioInput name="bar" validation="required" />
                 `,
@@ -313,7 +313,7 @@ describe('FormularioForm', () => {
         expect(wrapper.emitted('validation').length).toBe(1)
         expect(wrapper.emitted('validation')[0][0]).toEqual({
             name: 'foo',
-            errors: [],
+            violations: [],
         })
     })
 
@@ -321,7 +321,7 @@ describe('FormularioForm', () => {
         const wrapper = mount(FormularioForm, {
             slots: { default: `
                 <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
-                    <input v-model="context.model" type="text" @blur="context.blurHandler">
+                    <input v-model="context.model" type="text" @blur="context.validate()">
                 </FormularioInput>
                 <FormularioInput name="bar" validation="required" />
             ` }
@@ -335,7 +335,7 @@ describe('FormularioForm', () => {
         expect(wrapper.emitted('validation').length).toBe(1)
         expect(wrapper.emitted('validation')[0][0]).toEqual({
             name: 'foo',
-            errors: [ expect.any(Object) ], // @TODO: Check object structure
+            violations: [ expect.any(Object) ], // @TODO: Check object structure
         })
     })
 
@@ -399,6 +399,6 @@ describe('FormularioForm', () => {
 
         await flushPromises()
         expect(Object.keys(wrapper.vm.$refs.form.mergedFieldErrors).length).toBe(0)
-        expect(wrapper.vm.values).toEqual({})
+        expect(wrapper.vm['values']).toEqual({})
     })
 })

@@ -49,16 +49,6 @@ export function snakeToCamel (string: string | any): string | any {
 }
 
 /**
- * Return the rule name with the applicable modifier as an array.
- */
-function parseModifier (ruleName: any): [string|any, string|null] {
-    if (typeof ruleName === 'string' && /^[\^]/.test(ruleName.charAt(0))) {
-        return [snakeToCamel(ruleName.substr(1)), ruleName.charAt(0)]
-    }
-    return [snakeToCamel(ruleName), null]
-}
-
-/**
  * Converts to array.
  * If given parameter is not string, object ot array, result will be an empty array.
  * @param {*} item
@@ -77,58 +67,6 @@ export function arrayify (item: any): any[] {
         return Object.values(item)
     }
     return []
-}
-
-/**
- * Given a string or function, parse it and return an array in the format
- * [fn, [...arguments]]
- */
-function parseRule (rule: any, rules: Record<string, any>) {
-    if (typeof rule === 'function') {
-        return [rule, []]
-    }
-
-    if (Array.isArray(rule) && rule.length) {
-        rule = rule.slice() // light clone
-        const [ruleName, modifier] = parseModifier(rule.shift())
-        if (typeof ruleName === 'string' && Object.prototype.hasOwnProperty.call(rules, ruleName)) {
-            return [rules[ruleName], rule, ruleName, modifier]
-        }
-        if (typeof ruleName === 'function') {
-            return [ruleName, rule, ruleName, modifier]
-        }
-    }
-
-    if (typeof rule === 'string') {
-        const segments = rule.split(':')
-        const [ruleName, modifier] = parseModifier(segments.shift())
-
-        if (Object.prototype.hasOwnProperty.call(rules, ruleName)) {
-            return [rules[ruleName], segments.length ? segments.join(':').split(',') : [], ruleName, modifier]
-        } else {
-            throw new Error(`Unknown validation rule ${rule}`)
-        }
-    }
-
-    return false
-}
-
-/**
- * Given an array or string return an array of callables.
- * @param {array|string} validation
- * @param {array} rules and array of functions
- * @return {array} an array of functions
- */
-export function parseRules (validation: any[]|string, rules: any): any[] {
-    if (typeof validation === 'string') {
-        return parseRules(validation.split('|').filter(f => f.length), rules)
-    }
-    if (!Array.isArray(validation)) {
-        return []
-    }
-    return validation.map(rule => {
-        return parseRule(rule, rules)
-    }).filter(f => !!f)
 }
 
 /**
@@ -196,20 +134,6 @@ export function cloneDeep (value: any): any {
     }
 
     return copy
-}
-
-/**
- * Given a locale string, parse the options.
- * @param {string} locale
- */
-export function parseLocale (locale: string): string[] {
-    const segments = locale.split('-')
-    return segments.reduce((options: string[], segment: string) => {
-        if (options.length) {
-            options.unshift(`${options[0]}-${segment}`)
-        }
-        return options.length ? options : [segment]
-    }, [])
 }
 
 /**

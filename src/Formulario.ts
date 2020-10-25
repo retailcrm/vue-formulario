@@ -1,6 +1,5 @@
 import { VueConstructor } from 'vue'
 
-import { has } from '@/libs/utils'
 import rules from '@/validation/rules'
 import messages from '@/validation/messages'
 import merge from '@/utils/merge'
@@ -11,12 +10,13 @@ import FormularioGrouping from '@/FormularioGrouping.vue'
 
 import {
     ValidationContext,
-    ValidationRule,
-} from '@/validation/types'
+    CheckRuleFn,
+    CreateMessageFn,
+} from '@/validation/validator'
 
 interface FormularioOptions {
     rules?: any;
-    validationMessages?: any;
+    validationMessages?: Record<string, Function>;
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -24,15 +24,12 @@ interface FormularioOptions {
  * The base formulario library.
  */
 export default class Formulario {
-    public options: FormularioOptions
-    public idRegistry: { [name: string]: number }
+    public rules: Record<string, CheckRuleFn> = {}
+    public messages: Record<string, Function> = {}
 
     constructor () {
-        this.options = {
-            rules,
-            validationMessages: messages,
-        }
-        this.idRegistry = {}
+        this.rules = rules
+        this.messages = messages
     }
 
     /**
@@ -48,46 +45,34 @@ export default class Formulario {
     }
 
     /**
-     * Produce a deterministically generated id based on the sequence by which it
-     * was requested. This should be *theoretically* the same SSR as client side.
-     * However, SSR and deterministic ids can be very challenging, so this
-     * implementation is open to community review.
-     */
-    nextId (vm: Vue): string {
-        const path = vm.$route && vm.$route.path ? vm.$route.path : false
-        const pathPrefix = path ? vm.$route.path.replace(/[/\\.\s]/g, '-') : 'global'
-        if (!has(this.idRegistry, pathPrefix)) {
-            this.idRegistry[pathPrefix] = 0
-        }
-        return `formulario-${pathPrefix}-${++this.idRegistry[pathPrefix]}`
-    }
-
-    /**
      * Given a set of options, apply them to the pre-existing options.
      */
     extend (extendWith: FormularioOptions): Formulario {
         if (typeof extendWith === 'object') {
-            this.options = merge(this.options, extendWith)
+            this.rules = merge(this.rules, extendWith.rules || {})
+            this.messages = merge(this.messages, extendWith.validationMessages || {})
             return this
         }
-        throw new Error(`VueFormulario extend() should be passed an object (was ${typeof extendWith})`)
+        throw new Error(`[Formulario]: Formulario.extend() should be passed an object (was ${typeof extendWith})`)
     }
 
     /**
      * Get validation rules by merging any passed in with global rules.
      */
-    rules (rules: Record<string, ValidationRule> = {}): () => Record<string, ValidationRule> {
-        return { ...this.options.rules, ...rules }
+    getRules (extendWith: Record<string, CheckRuleFn> = {}): Record<string, CheckRuleFn> {
+        return merge(this.rules, extendWith)
     }
 
-    /**
-     * Get the validation message for a particular error.
-     */
-    validationMessage (rule: string, context: ValidationContext, vm: Vue): string {
-        if (has(this.options.validationMessages, rule)) {
-            return this.options.validationMessages[rule](vm, context)
-        } else {
-            return this.options.validationMessages.default(vm, context)
+    getMessages (vm: Vue, extendWith: Record<string, Function>): Record<string, CreateMessageFn> {
+        const raw = merge(this.messages || {}, extendWith)
+        const messages: Record<string, CreateMessageFn> = {}
+
+        for (const name in raw) {
+            messages[name] = (context: ValidationContext, ...args: any[]): string => {
+                return typeof raw[name] === 'string' ? raw[name] : raw[name](vm, context, ...args)
+            }
         }
+
+        return messages
     }
 }

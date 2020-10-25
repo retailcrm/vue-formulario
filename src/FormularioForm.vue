@@ -24,7 +24,7 @@ import {
     ErrorObserverRegistry,
 } from '@/validation/ErrorObserver'
 
-import { ValidationErrorBag } from '@/validation/types'
+import { Violation } from '@/validation/validator'
 
 @Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
@@ -112,8 +112,8 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide()
-    onFormularioFieldValidation (errorBag: ValidationErrorBag): void {
-        this.$emit('validation', errorBag)
+    onFormularioFieldValidation (payload: { name: string; violations: Violation[]}): void {
+        this.$emit('validation', payload)
     }
 
     @Provide()

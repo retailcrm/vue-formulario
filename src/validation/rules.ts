@@ -1,19 +1,23 @@
 import isUrl from 'is-url'
 import { shallowEqualObjects, regexForFormat, has } from '@/libs/utils'
-import { ValidatableData } from '@/validation/types'
+import { ValidationContext } from '@/validation/validator'
+
+interface DateValidationContext extends ValidationContext {
+    value: Date|string;
+}
 
 export default {
     /**
      * Rule: the value must be "yes", "on", "1", or true
      */
-    accepted ({ value }: ValidatableData): Promise<boolean> {
+    accepted ({ value }: ValidationContext): Promise<boolean> {
         return Promise.resolve(['yes', 'on', '1', 1, true, 'true'].includes(value))
     },
 
     /**
      * Rule: checks if a value is after a given date. Defaults to current time
      */
-    after ({ value }: { value: Date|string }, compare: string | false = false): Promise<boolean> {
+    after ({ value }: DateValidationContext, compare: string | false = false): Promise<boolean> {
         const timestamp = compare !== false ? Date.parse(compare) : Date.now()
         const fieldValue = value instanceof Date ? value.getTime() : Date.parse(value)
         return Promise.resolve(isNaN(fieldValue) ? false : (fieldValue > timestamp))
@@ -23,12 +27,12 @@ export default {
      * Rule: checks if the value is only alpha
      */
     alpha ({ value }: { value: string }, set = 'default'): Promise<boolean> {
-        const sets = {
+        const sets: Record<string, RegExp> = {
             default: /^[a-zA-ZÀ-ÖØ-öø-ÿ]+$/,
             latin: /^[a-zA-Z]+$/
         }
         const selectedSet = has(sets, set) ? set : 'default'
-        // @ts-ignore
+
         return Promise.resolve(sets[selectedSet].test(value))
     },
 
@@ -36,19 +40,19 @@ export default {
      * Rule: checks if the value is alpha numeric
      */
     alphanumeric ({ value }: { value: string }, set = 'default'): Promise<boolean> {
-        const sets = {
+        const sets: Record<string, RegExp> = {
             default: /^[a-zA-Z0-9À-ÖØ-öø-ÿ]+$/,
             latin: /^[a-zA-Z0-9]+$/
         }
         const selectedSet = has(sets, set) ? set : 'default'
-        // @ts-ignore
+
         return Promise.resolve(sets[selectedSet].test(value))
     },
 
     /**
      * Rule: checks if a value is after a given date. Defaults to current time
      */
-    before ({ value }: { value: Date|string }, compare: string|false = false): Promise<boolean> {
+    before ({ value }: DateValidationContext, compare: string|false = false): Promise<boolean> {
         const timestamp = compare !== false ? Date.parse(compare) : Date.now()
         const fieldValue = value instanceof Date ? value.getTime() : Date.parse(value)
         return Promise.resolve(isNaN(fieldValue) ? false : (fieldValue < timestamp))
@@ -80,13 +84,13 @@ export default {
      * Confirm that the value of one field is the same as another, mostly used
      * for password confirmations.
      */
-    confirm ({ value, getFormValues, name }: ValidatableData, field?: string): Promise<boolean> {
+    confirm ({ value, formValues, name }: ValidationContext, field?: string): Promise<boolean> {
         return Promise.resolve(((): boolean => {
             let confirmationFieldName = field
             if (!confirmationFieldName) {
                 confirmationFieldName = /_confirm$/.test(name) ? name.substr(0, name.length - 8) : `${name}_confirm`
             }
-            return getFormValues()[confirmationFieldName] === value
+            return formValues[confirmationFieldName] === value
         })())
     },
 
@@ -151,27 +155,6 @@ export default {
     },
 
     /**
-     * Check the minimum value of a particular.
-     */
-    min ({ value }: { value: any }, minimum: number | any = 1, force?: string): Promise<boolean> {
-        return Promise.resolve(((): boolean => {
-            if (Array.isArray(value)) {
-                minimum = !isNaN(minimum) ? Number(minimum) : minimum
-                return value.length >= minimum
-            }
-            if ((!isNaN(value) && force !== 'length') || force === 'value') {
-                value = !isNaN(value) ? Number(value) : value
-                return value >= minimum
-            }
-            if (typeof value === 'string' || (force === 'length')) {
-                value = !isNaN(value) ? value.toString() : value
-                return value.length >= minimum
-            }
-            return false
-        })())
-    },
-
-    /**
      * Check the maximum value of a particular.
      */
     max ({ value }: { value: any }, maximum: string | number = 10, force?: string): Promise<boolean> {
@@ -187,6 +170,27 @@ export default {
             if (typeof value === 'string' || (force === 'length')) {
                 value = !isNaN(value) ? value.toString() : value
                 return value.length <= maximum
+            }
+            return false
+        })())
+    },
+
+    /**
+     * Check the minimum value of a particular.
+     */
+    min ({ value }: { value: any }, minimum: number | any = 1, force?: string): Promise<boolean> {
+        return Promise.resolve(((): boolean => {
+            if (Array.isArray(value)) {
+                minimum = !isNaN(minimum) ? Number(minimum) : minimum
+                return value.length >= minimum
+            }
+            if ((!isNaN(value) && force !== 'length') || force === 'value') {
+                value = !isNaN(value) ? Number(value) : value
+                return value >= minimum
+            }
+            if (typeof value === 'string' || (force === 'length')) {
+                value = !isNaN(value) ? value.toString() : value
+                return value.length >= minimum
             }
             return false
         })())

@@ -178,15 +178,17 @@ describe('FormularioInput', () => {
                 validation: 'required',
                 errorBehavior: 'live',
                 value: '',
-                name: 'testinput',
+                name: 'fieldName',
             }
         })
         await flushPromises()
-        const errorObject = wrapper.emitted('validation')[0][0]
-        expect(errorObject).toEqual({
-            name: 'testinput',
-            errors: [{
+
+        expect(wrapper.emitted('validation')).toBeTruthy()
+        expect(wrapper.emitted('validation')[0][0]).toEqual({
+            name: 'fieldName',
+            violations: [{
                 rule: expect.stringContaining('required'),
+                args: expect.any(Array),
                 context: expect.any(Object),
                 message: expect.any(String),
             }],
@@ -243,7 +245,7 @@ describe('FormularioInput', () => {
             scopedSlots: {
                 default: `
                     <div>
-                        <input v-model="props.context.model" @blur="props.context.blurHandler">
+                        <input v-model="props.context.model" @blur="props.context.validate()">
                         <span v-if="props.context.formShouldShowErrors" v-for="error in props.context.allErrors">{{ error.message }}</span>
                     </div>
                 `
