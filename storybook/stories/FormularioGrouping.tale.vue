@@ -17,7 +17,7 @@
                 >
 
                 <div
-                    v-for="(error, index) in context.allErrors"
+                    v-for="(error, index) in context.violations"
                     :key="index"
                     class="text-danger"
                 >
@@ -42,7 +42,7 @@
                 >
 
                 <div
-                    v-for="(error, index) in context.allErrors"
+                    v-for="(error, index) in context.violations"
                     :key="index"
                     class="text-danger"
                 >
