@@ -115,8 +115,7 @@ export default class Registry {
             return
         }
         this.registry.set(field, component)
-        const hasModel = has(component.$options.propsData || {}, 'formularioValue')
-        const hasValue = has(component.$options.propsData || {}, 'value')
+        const hasModel = has(component.$options.propsData || {}, 'value')
         if (
             !hasModel &&
             // @ts-ignore
@@ -129,7 +128,7 @@ export default class Registry {
             // @ts-ignore
             component.context.model = getNested(this.ctx.initialValues, field)
         } else if (
-            (hasModel || hasValue) &&
+            hasModel &&
             // @ts-ignore
             !shallowEqualObjects(component.proxy, getNested(this.ctx.initialValues, field))
         ) {

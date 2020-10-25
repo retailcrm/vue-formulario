@@ -53,7 +53,7 @@ describe('FormularioGrouping', () => {
                 `
             }
         })
-        expect(wrapper.find('input[type="text"]').element.value).toBe('Group text')
+        expect(wrapper.find('input[type="text"]').element['value']).toBe('Group text')
     })
 
     it('Data reactive with grouped fields', async () => {

@@ -1,10 +1,6 @@
 <template>
     <div class="formulario-input">
-        <slot
-            :id="id"
-            :context="context"
-            :violations="validationErrors"
-        />
+        <slot :context="context" />
     </div>
 </template>
 
@@ -33,6 +29,7 @@ import {
 const ERROR_BEHAVIOR = {
     BLUR: 'blur',
     LIVE: 'live',
+    NONE: 'none',
     SUBMIT: 'submit',
 }
 
@@ -47,50 +44,81 @@ export default class FormularioInput extends Vue {
     @Inject({ default: undefined }) removeErrorObserver!: Function|undefined
     @Inject({ default: '' }) path!: string
 
-    @Model('input', { default: '' }) formularioValue: any
+    @Model('input', { default: '' }) value!: any
 
-    @Prop({ default: null }) id!: string|number|null
-    @Prop({ required: true }) name!: string
-    @Prop({ default: false }) value!: any
+    @Prop({
+        required: true,
+        validator: (name: any): boolean => typeof name === 'string' && name.length > 0,
+    }) name!: string
+
     @Prop({ default: '' }) validation!: string|any[]
     @Prop({ default: () => ({}) }) validationRules!: Record<string, ValidationRule>
     @Prop({ default: () => ({}) }) validationMessages!: Record<string, any>
     @Prop({ default: () => [] }) errors!: string[]
     @Prop({
         default: ERROR_BEHAVIOR.BLUR,
-        validator: behavior => [ERROR_BEHAVIOR.BLUR, ERROR_BEHAVIOR.LIVE, ERROR_BEHAVIOR.SUBMIT].includes(behavior)
+        validator: behavior => [
+            ERROR_BEHAVIOR.BLUR,
+            ERROR_BEHAVIOR.LIVE,
+            ERROR_BEHAVIOR.NONE,
+            ERROR_BEHAVIOR.SUBMIT,
+        ].includes(behavior)
     }) errorBehavior!: string
 
-    @Prop({ default: false }) disableErrors!: boolean
+    @Prop({ default: false }) errorsDisabled!: boolean
 
-    defaultId: string = this.$formulario.nextId(this)
-    proxy: Record<string, any> = this.getInitialValue()
+    proxy: any = this.getInitialValue()
     localErrors: string[] = []
-    validationErrors: ValidationError[] = []
+    violations: ValidationError[] = []
     pendingValidation: Promise<any> = Promise.resolve()
+
+    get model (): any {
+        const model = this.hasModel ? 'value' : 'proxy'
+        if (this[model] === undefined) {
+            return ''
+        }
+        return this[model]
+    }
+
+    set model (value: any) {
+        if (!shallowEqualObjects(value, this.proxy)) {
+            this.proxy = value
+        }
+
+        this.$emit('input', value)
+
+        if (typeof this.formularioSetter === 'function') {
+            this.formularioSetter(this.context.name, value)
+        }
+    }
 
     get context (): Record<string, any> {
         return Object.defineProperty({
-            id: this.id || this.defaultId,
-            name: this.nameOrFallback,
+            name: this.fullQualifiedName,
+            validate: this.performValidation.bind(this),
+            violations: this.violations,
+            errors: this.mergedErrors,
+            // @TODO: Deprecated
+            allErrors: [
+                ...this.mergedErrors.map(message => ({ message })),
+                ...arrayify(this.violations)
+            ],
             blurHandler: this.blurHandler.bind(this),
-            errors: this.explicitErrors,
-            allErrors: this.allErrors,
             performValidation: this.performValidation.bind(this),
-            validationErrors: this.validationErrors,
-            value: this.value,
         }, 'model', {
-            get: this.modelGetter.bind(this),
-            set: this.modelSetter.bind(this),
+            get: () => this.model,
+            set: (value: any) => {
+                this.model = value
+            },
         })
     }
 
     get parsedValidationRules (): Record<string, ValidationRule> {
-        const parsedValidationRules: Record<string, ValidationRule> = {}
+        const rules: Record<string, ValidationRule> = {}
         Object.keys(this.validationRules).forEach(key => {
-            parsedValidationRules[snakeToCamel(key)] = this.validationRules[key]
+            rules[snakeToCamel(key)] = this.validationRules[key]
         })
-        return parsedValidationRules
+        return rules
     }
 
     get messages (): Record<string, any> {
@@ -104,32 +132,14 @@ export default class FormularioInput extends Vue {
     /**
      * Return the element’s name, or select a fallback.
      */
-    get nameOrFallback (): string {
+    get fullQualifiedName (): string {
         return this.path !== '' ? `${this.path}.${this.name}` : this.name
-    }
-
-    /**
-     * Does this computed property have errors
-     */
-    get hasErrors (): boolean {
-        return this.allErrors.length > 0
-    }
-
-    /**
-     * The merged errors computed property.
-     * Each error is an object with fields message (translated message), rule (rule name) and context
-     */
-    get allErrors (): ValidationError[] {
-        return [
-            ...this.explicitErrors.map(message => ({ message })),
-            ...arrayify(this.validationErrors)
-        ]
     }
 
     /**
      * These are errors we that have been explicitly passed to us.
      */
-    get explicitErrors (): string[] {
+    get mergedErrors (): string[] {
         return [...arrayify(this.errors), ...this.localErrors]
     }
 
@@ -137,35 +147,35 @@ export default class FormularioInput extends Vue {
      * Determines if this formulario element is v-modeled or not.
      */
     get hasModel (): boolean {
-        return has(this.$options.propsData || {}, 'formularioValue')
+        return has(this.$options.propsData || {}, 'value')
     }
 
     @Watch('proxy')
-    onProxyChanged (newValue: Record<string, any>, oldValue: Record<string, any>): void {
-        if (this.errorBehavior === ERROR_BEHAVIOR.LIVE) {
-            this.performValidation()
-        } else {
-            this.validationErrors = []
-        }
+    onProxyChanged (newValue: any, oldValue: any): void {
         if (!this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
             this.context.model = newValue
         }
+        if (this.errorBehavior === ERROR_BEHAVIOR.LIVE) {
+            this.performValidation()
+        } else {
+            this.violations = []
+        }
     }
 
-    @Watch('formularioValue')
-    onFormularioValueChanged (newValue: Record<string, any>, oldValue: Record<string, any>): void {
+    @Watch('value')
+    onValueChanged (newValue: any, oldValue: any): void {
         if (this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
             this.context.model = newValue
         }
     }
 
     created (): void {
-        this.applyInitialValue()
-        if (this.formularioRegister && typeof this.formularioRegister === 'function') {
-            this.formularioRegister(this.nameOrFallback, this)
+        this.initProxy()
+        if (typeof this.formularioRegister === 'function') {
+            this.formularioRegister(this.fullQualifiedName, this)
         }
-        if (!this.disableErrors && typeof this.addErrorObserver === 'function') {
-            this.addErrorObserver({ callback: this.setErrors, type: 'input', field: this.nameOrFallback })
+        if (typeof this.addErrorObserver === 'function' && !this.errorsDisabled) {
+            this.addErrorObserver({ callback: this.setErrors, type: 'input', field: this.fullQualifiedName })
         }
         if (this.errorBehavior === ERROR_BEHAVIOR.LIVE) {
             this.performValidation()
@@ -174,35 +184,11 @@ export default class FormularioInput extends Vue {
 
     // noinspection JSUnusedGlobalSymbols
     beforeDestroy (): void {
-        if (!this.disableErrors && typeof this.removeErrorObserver === 'function') {
+        if (!this.errorsDisabled && typeof this.removeErrorObserver === 'function') {
             this.removeErrorObserver(this.setErrors)
         }
         if (typeof this.formularioDeregister === 'function') {
-            this.formularioDeregister(this.nameOrFallback)
-        }
-    }
-
-    /**
-     * Get the value from a model.
-     */
-    modelGetter (): any {
-        const model = this.hasModel ? 'formularioValue' : 'proxy'
-        if (this[model] === undefined) {
-            return ''
-        }
-        return this[model]
-    }
-
-    /**
-     * Set the value from a model.
-     */
-    modelSetter (value: any): void {
-        if (!shallowEqualObjects(value, this.proxy)) {
-            this.proxy = value
-        }
-        this.$emit('input', value)
-        if (this.context.name && typeof this.formularioSetter === 'function') {
-            this.formularioSetter(this.context.name, value)
+            this.formularioDeregister(this.fullQualifiedName)
         }
     }
 
@@ -217,15 +203,10 @@ export default class FormularioInput extends Vue {
     }
 
     getInitialValue (): any {
-        if (has(this.$options.propsData as Record<string, any>, 'value')) {
-            return this.value
-        } else if (has(this.$options.propsData as Record<string, any>, 'formularioValue')) {
-            return this.formularioValue
-        }
-        return ''
+        return has(this.$options.propsData || {}, 'value') ? this.value : ''
     }
 
-    applyInitialValue (): void {
+    initProxy (): void {
         // This should only be run immediately on created and ensures that the
         // proxy and the model are both the same before any additional registration.
         if (!shallowEqualObjects(this.context.model, this.proxy)) {
@@ -277,12 +258,12 @@ export default class FormularioInput extends Vue {
     }
 
     didValidate (violations: ValidationError[]): void {
-        const validationChanged = !shallowEqualObjects(violations, this.validationErrors)
-        this.validationErrors = violations
+        const validationChanged = !shallowEqualObjects(violations, this.violations)
+        this.violations = violations
         if (validationChanged) {
             const errorBag = {
                 name: this.context.name,
-                errors: this.validationErrors,
+                errors: this.violations,
             }
             this.$emit('validation', errorBag)
             if (this.onFormularioFieldValidation && typeof this.onFormularioFieldValidation === 'function') {
@@ -324,7 +305,7 @@ export default class FormularioInput extends Vue {
     hasValidationErrors (): Promise<boolean> {
         return new Promise(resolve => {
             this.$nextTick(() => {
-                this.pendingValidation.then(() => resolve(!!this.validationErrors.length))
+                this.pendingValidation.then(() => resolve(this.violations.length > 0))
             })
         })
     }
@@ -335,7 +316,7 @@ export default class FormularioInput extends Vue {
 
     resetValidation (): void {
         this.localErrors = []
-        this.validationErrors = []
+        this.violations = []
     }
 }
 </script>

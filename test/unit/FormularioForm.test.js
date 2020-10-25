@@ -88,7 +88,7 @@ describe('FormularioForm', () => {
             propsData: { formularioValue: { test: 'has initial value' } },
             slots: {
                 default: `
-                    <FormularioInput v-slot="{ context }" formulario-value="123" name="test" >
+                    <FormularioInput v-slot="{ context }" name="test" value="123">
                         <input v-model="context.model" type="text">
                     </FormularioInput>
                 `
@@ -164,30 +164,39 @@ describe('FormularioForm', () => {
     it('Updates calls setFieldValue on form when a field contains a populated v-model on registration', () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
-                formularioValue: { test: '123' }
+                formularioValue: { test: 'Initial' }
             },
             slots: {
-                default: '<FormularioInput name="test" formulario-value="override-data" />'
-            }
+                default: '<FormularioInput name="test" value="Overrides" />'
+            },
         })
-        expect(wrapper.emitted().input[wrapper.emitted().input.length - 1]).toEqual([{ test: 'override-data' }])
+
+        const emitted = wrapper.emitted('input')
+
+        expect(emitted).toBeTruthy()
+        expect(emitted[emitted.length - 1]).toEqual([{ test: 'Overrides' }])
     })
 
     it('updates an inputs value when the form v-model is modified', async () => {
         const wrapper = mount({
-            data: () => ({ formValues: { test: 'abcd' } }),
+            data: () => ({ values: { test: 'abcd' } }),
             template: `
-                <FormularioForm v-model="formValues">
+                <FormularioForm v-model="values">
                     <FormularioInput v-slot="{ context }" name="test" >
                         <input v-model="context.model" type="text">
                     </FormularioInput>
                 </FormularioForm>
             `
         })
+
+        wrapper.vm.values = { test: '1234' }
+
         await flushPromises()
-        wrapper.vm.formValues = { test: '1234' }
-        await flushPromises()
-        expect(wrapper.find('input[type="text"]').element['value']).toBe('1234')
+
+        const input = wrapper.find('input[type="text"]')
+
+        expect(input).toBeTruthy()
+        expect(input.element['value']).toBe('1234')
     })
 
     it('Resolves hasValidationErrors to true', async () => {

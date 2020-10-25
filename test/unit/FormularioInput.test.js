@@ -19,17 +19,17 @@ Vue.use(Formulario, {
 })
 
 describe('FormularioInput', () => {
-    it('allows custom field-rule level validation strings', async () => {
+    it('Allows custom field-rule level validation strings', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
-                validationMessages: {in: 'the value was different than expected'},
+                validationMessages: { in: 'the value was different than expected' },
                 errorBehavior: 'live',
-                value: 'other value'
+                value: 'other value',
             },
             scopedSlots: {
-                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
+                default: `<div><span v-for="violation in props.context.violations">{{ violation.message }}</span></div>`
             },
         })
         await flushPromises()
@@ -52,30 +52,33 @@ describe('FormularioInput', () => {
         expect(wrapper.find('span').exists()).toBe(false)
     })
 
-    it('no validation on value change when errorBehavior is not live', async () => {
+    it('No validation on value change when errorBehavior is not live', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
                 validationMessages: {in: 'the value was different than expected'},
                 errorBehavior: 'submit',
-                value: 'other value'
+                value: 'Initial'
             },
             scopedSlots: {
                 default: `<div>
                     <input type="text" v-model="props.context.model">
-                    <span v-for="error in props.context.allErrors">{{ error.message }}</span>
+                    <span v-for="error in props.context.violations">{{ error.message }}</span>
                 </div>`
             }
         })
+
         await flushPromises()
+
         expect(wrapper.find('span').exists()).toBe(false)
 
-        const input = wrapper.find('input[type="text"]')
-        input.element.value = 'test'
-        input.trigger('input')
+        wrapper.find('input[type="text"]').element['value'] = 'Test'
+        wrapper.find('input[type="text"]').trigger('change')
+
         await flushPromises()
-        expect(wrapper.find('input[type="text"]').element.value).toBe('test')
+
+        expect(wrapper.find('input[type="text"]').element['value']).toBe('Test')
         expect(wrapper.find('span').exists()).toBe(false)
     })
 
@@ -156,7 +159,7 @@ describe('FormularioInput', () => {
         expect(wrapper.find('span').text()).toBe('failed the foobar check')
     })
 
-    it('uses global custom validation rules', async () => {
+    it('Uses global custom validation rules', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
                 name: 'test',
@@ -169,7 +172,7 @@ describe('FormularioInput', () => {
         expect(globalRule.mock.calls.length).toBe(1)
     })
 
-    it('emits correct validation event', async () => {
+    it('Emits correct validation event', async () => {
         const wrapper = mount(FormularioInput, {
             propsData: {
                 validation: 'required',
@@ -195,7 +198,7 @@ describe('FormularioInput', () => {
             propsData: { name: 'test', validation: 'bail|required|in:xyz', errorBehavior: 'live' }
         })
         await flushPromises();
-        expect(wrapper.vm.context.validationErrors.length).toBe(1);
+        expect(wrapper.vm.context.violations.length).toBe(1);
     })
 
     it('can show multiple validation errors if they occur before the bail rule', async () => {
@@ -203,7 +206,7 @@ describe('FormularioInput', () => {
             propsData: { name: 'test', validation: 'required|in:xyz|bail', errorBehavior: 'live' }
         })
         await flushPromises();
-        expect(wrapper.vm.context.validationErrors.length).toBe(2);
+        expect(wrapper.vm.context.violations.length).toBe(2);
     })
 
     it('can avoid bail behavior by using modifier', async () => {
@@ -211,7 +214,7 @@ describe('FormularioInput', () => {
             propsData: { name: 'test', validation: '^required|in:xyz|min:10,length', errorBehavior: 'live', value: '123' }
         })
         await flushPromises();
-        expect(wrapper.vm.context.validationErrors.length).toBe(2);
+        expect(wrapper.vm.context.violations.length).toBe(2);
     })
 
     it('prevents later error messages when modified rule fails', async () => {
@@ -219,7 +222,7 @@ describe('FormularioInput', () => {
             propsData: { name: 'test', validation: '^required|in:xyz|min:10,length', errorBehavior: 'live' }
         })
         await flushPromises();
-        expect(wrapper.vm.context.validationErrors.length).toBe(1);
+        expect(wrapper.vm.context.violations.length).toBe(1);
     })
 
     it('can bail in the middle of the rule set with a modifier', async () => {
@@ -227,7 +230,7 @@ describe('FormularioInput', () => {
             propsData: { name: 'test', validation: 'required|^in:xyz|min:10,length', errorBehavior: 'live' }
         })
         await flushPromises();
-        expect(wrapper.vm.context.validationErrors.length).toBe(2);
+        expect(wrapper.vm.context.violations.length).toBe(2);
     })
 
     it('does not show errors on blur when set error-behavior is submit', async () => {
