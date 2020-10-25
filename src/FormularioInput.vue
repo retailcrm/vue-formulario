@@ -63,7 +63,7 @@ export default class FormularioInput extends Vue {
 
     private localErrors: string[] = []
     private violations: Violation[] = []
-    private pendingValidation: Promise<any> = Promise.resolve()
+    private validationRun: Promise<any> = Promise.resolve()
 
     get fullQualifiedName (): string {
         return this.path !== '' ? `${this.path}.${this.name}` : this.name
@@ -193,7 +193,7 @@ export default class FormularioInput extends Vue {
     }
 
     runValidation (): Promise<void> {
-        this.pendingValidation = this.validate().then(violations => {
+        this.validationRun = this.validate().then(violations => {
             const validationChanged = !shallowEqualObjects(violations, this.violations)
             this.violations = violations
             if (validationChanged) {
@@ -209,7 +209,7 @@ export default class FormularioInput extends Vue {
 
             return this.violations
         })
-        return this.pendingValidation
+        return this.validationRun
     }
 
     validate (): Promise<Violation[]> {
@@ -227,7 +227,7 @@ export default class FormularioInput extends Vue {
     hasValidationErrors (): Promise<boolean> {
         return new Promise(resolve => {
             this.$nextTick(() => {
-                this.pendingValidation.then(() => resolve(this.violations.length > 0))
+                this.validationRun.then(() => resolve(this.violations.length > 0))
             })
         })
     }
