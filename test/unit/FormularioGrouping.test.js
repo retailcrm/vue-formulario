@@ -86,7 +86,7 @@ describe('FormularioGrouping', () => {
                 default: `
                     <FormularioGrouping name="group">
                         <FormularioInput ref="input" name="text" v-slot="{ context }">
-                            <span v-for="error in context.allErrors">{{ error }}</span>
+                            <span v-for="error in context.errors">{{ error }}</span>
                         </FormularioInput>
                     </FormularioGrouping>
                 `,

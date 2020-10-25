@@ -251,7 +251,7 @@ describe('FormularioForm', () => {
             slots: {
                 default: `
                     <FormularioInput v-slot="{ context }" name="fieldWithErrors">
-                        <span v-for="error in context.allErrors">{{ error.message }}</span>
+                        <span v-for="error in context.errors">{{ error }}</span>
                     </FormularioInput>
                 `
             }

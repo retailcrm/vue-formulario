@@ -108,7 +108,7 @@ describe('FormularioInput', () => {
                 value: 'other value'
             },
             scopedSlots: {
-                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
+                default: `<div><span v-for="error in props.context.violations">{{ error.message }}</span></div>`
             }
         })
         await flushPromises()
@@ -126,7 +126,7 @@ describe('FormularioInput', () => {
                 value: 'bar'
             },
             scopedSlots: {
-                default: `<div><span v-for="error in props.context.allErrors">{{ error.message }}</span></div>`
+                default: `<div><span v-for="error in props.context.violations">{{ error.message }}</span></div>`
             }
         })
         await flushPromises()
@@ -205,7 +205,7 @@ describe('FormularioInput', () => {
                 name: 'test',
                 validation: 'required|in:xyz|bail',
                 validationBehavior: 'live',
-            }
+            },
         })
         await flushPromises();
         expect(wrapper.vm.context.violations.length).toBe(2);
@@ -248,45 +248,18 @@ describe('FormularioInput', () => {
         expect(wrapper.vm.context.violations.length).toBe(2);
     })
 
-    it('Does not show errors on blur when set validation-behavior is submit', async () => {
-        const wrapper = mount(FormularioInput, {
-            propsData: {
-                name: 'test',
-                validation: 'required',
-                validationBehavior: 'submit',
-            },
-            scopedSlots: {
-                default: `
-                    <div>
-                        <input v-model="props.context.model" @blur="props.context.runValidation()">
-                        <span v-if="props.context.formShouldShowErrors" v-for="error in props.context.allErrors">{{ error.message }}</span>
-                    </div>
-                `
-            }
-        })
-
-        expect(wrapper.find('span').exists()).toBe(false)
-
-        wrapper.find('input').trigger('input')
-        wrapper.find('input').trigger('blur')
-
-        await flushPromises()
-
-        expect(wrapper.find('span').exists()).toBe(false)
-    })
-
     it('Displays errors when validation-behavior is submit and form is submitted', async () => {
         const wrapper = mount(FormularioForm, {
             propsData: { name: 'test' },
             slots: {
                 default: `
                     <FormularioInput
-                        v-slot="inputProps"
+                        v-slot="{ context }"
                         name="testinput"
                         validation="required"
                         validation-behavior="submit"
                     >
-                        <span v-for="error in inputProps.context.allErrors">{{ error.message }}</span>
+                        <span v-for="error in context.violations">{{ error.message }}</span>
                     </FormularioInput>
                 `
             }
