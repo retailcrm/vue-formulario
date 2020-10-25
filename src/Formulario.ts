@@ -16,7 +16,7 @@ import {
 
 interface FormularioOptions {
     rules?: any;
-    validationMessages?: Record<string, Function>;
+    messages?: Record<string, Function>;
 }
 
 // noinspection JSUnusedGlobalSymbols
@@ -50,7 +50,7 @@ export default class Formulario {
     extend (extendWith: FormularioOptions): Formulario {
         if (typeof extendWith === 'object') {
             this.rules = merge(this.rules, extendWith.rules || {})
-            this.messages = merge(this.messages, extendWith.validationMessages || {})
+            this.messages = merge(this.messages, extendWith.messages || {})
             return this
         }
         throw new Error(`[Formulario]: Formulario.extend() should be passed an object (was ${typeof extendWith})`)
@@ -63,6 +63,9 @@ export default class Formulario {
         return merge(this.rules, extendWith)
     }
 
+    /**
+     * Get validation messages by merging any passed in with global messages.
+     */
     getMessages (vm: Vue, extendWith: Record<string, Function>): Record<string, CreateMessageFn> {
         const raw = merge(this.messages || {}, extendWith)
         const messages: Record<string, CreateMessageFn> = {}

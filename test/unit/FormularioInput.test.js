@@ -10,7 +10,7 @@ const globalRule = jest.fn(() => { return false })
 
 Vue.use(Formulario, {
     rules: { globalRule },
-    validationMessages: {
+    messages: {
         required: () => 'required',
         'in': () => 'in',
         min: () => 'min',

@@ -5,7 +5,7 @@ import Formulario from '@/index.ts'
 import FormularioForm from '@/FormularioForm.vue'
 
 Vue.use(Formulario, {
-    validationMessages: {
+    messages: {
         required: () => 'required',
         'in': () => 'in',
         min: () => 'min',
