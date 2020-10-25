@@ -49,18 +49,21 @@ export default class FormularioInput extends Vue {
     @Prop({ default: '' }) validation!: string|any[]
     @Prop({ default: () => ({}) }) validationRules!: Record<string, CheckRuleFn>
     @Prop({ default: () => ({}) }) validationMessages!: Record<string, CreateMessageFn|string>
-    @Prop({ default: () => [] }) errors!: string[]
     @Prop({
         default: VALIDATION_BEHAVIOR.DEMAND,
         validator: behavior => Object.values(VALIDATION_BEHAVIOR).includes(behavior)
-    }) errorBehavior!: string
+    }) validationBehavior!: string
 
+    @Prop({ default: () => [] }) errors!: string[]
+
+    // Affects only observing & setting of local errors
     @Prop({ default: false }) errorsDisabled!: boolean
 
-    proxy: any = this.getInitialValue()
-    localErrors: string[] = []
-    violations: Violation[] = []
-    pendingValidation: Promise<any> = Promise.resolve()
+    public proxy: any = this.getInitialValue()
+
+    private localErrors: string[] = []
+    private violations: Violation[] = []
+    private pendingValidation: Promise<any> = Promise.resolve()
 
     get fullQualifiedName (): string {
         return this.path !== '' ? `${this.path}.${this.name}` : this.name
@@ -140,7 +143,7 @@ export default class FormularioInput extends Vue {
         if (!this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
             this.context.model = newValue
         }
-        if (this.errorBehavior === VALIDATION_BEHAVIOR.LIVE) {
+        if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
         } else {
             this.violations = []
@@ -162,7 +165,7 @@ export default class FormularioInput extends Vue {
         if (typeof this.addErrorObserver === 'function' && !this.errorsDisabled) {
             this.addErrorObserver({ callback: this.setErrors, type: 'input', field: this.fullQualifiedName })
         }
-        if (this.errorBehavior === VALIDATION_BEHAVIOR.LIVE) {
+        if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
         }
     }
