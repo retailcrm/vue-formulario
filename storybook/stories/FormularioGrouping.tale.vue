@@ -17,11 +17,11 @@
                 >
 
                 <div
-                    v-for="(error, index) in context.violations"
+                    v-for="(error, index) in context.allErrors"
                     :key="index"
                     class="text-danger"
                 >
-                    {{ error.message }}
+                    {{ error }}
                 </div>
             </FormularioInput>
 
@@ -42,11 +42,11 @@
                 >
 
                 <div
-                    v-for="(error, index) in context.violations"
+                    v-for="(error, index) in context.allErrors"
                     :key="index"
                     class="text-danger"
                 >
-                    {{ error.message }}
+                    {{ error }}
                 </div>
             </FormularioInput>
         </FormularioGrouping>
