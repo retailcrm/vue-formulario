@@ -54,8 +54,6 @@ export default class FormularioInput extends Vue {
         validator: behavior => Object.values(VALIDATION_BEHAVIOR).includes(behavior)
     }) validationBehavior!: string
 
-    @Prop({ default: () => [] }) errors!: string[]
-
     // Affects only observing & setting of local errors
     @Prop({ default: false }) errorsDisabled!: boolean
 
@@ -94,11 +92,10 @@ export default class FormularioInput extends Vue {
             name: this.fullQualifiedName,
             runValidation: this.runValidation.bind(this),
             violations: this.violations,
-            errors: this.mergedErrors,
-            // @TODO: Deprecated, will be removed in next versions, use context.violations & context.errors separately
+            errors: this.localErrors,
             allErrors: [
-                ...this.mergedErrors.map(message => ({ rule: null, args: [], context: null, message })),
-                ...arrayify(this.violations)
+                ...this.localErrors.map(message => ({ rule: null, args: [], context: null, message })),
+                ...arrayify(this.violations),
             ],
         }, 'model', {
             get: () => this.model,
@@ -122,13 +119,6 @@ export default class FormularioInput extends Vue {
             messages[snakeToCamel(key)] = this.validationMessages[key]
         })
         return messages
-    }
-
-    /**
-     * These are errors we that have been explicitly passed to us.
-     */
-    get mergedErrors (): string[] {
-        return [...arrayify(this.errors), ...this.localErrors]
     }
 
     /**
