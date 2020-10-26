@@ -93,10 +93,7 @@ export default class FormularioInput extends Vue {
             runValidation: this.runValidation.bind(this),
             violations: this.violations,
             errors: this.localErrors,
-            allErrors: [
-                ...this.localErrors.map(message => ({ rule: null, args: [], context: null, message })),
-                ...arrayify(this.violations),
-            ],
+            allErrors: [...this.localErrors, ...this.violations.map(v => v.message)],
         }, 'model', {
             get: () => this.model,
             set: (value: any) => {
