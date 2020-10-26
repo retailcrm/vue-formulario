@@ -9,13 +9,13 @@ import FormularioInput from '@/FormularioInput.vue'
 const globalRule = jest.fn(() => { return false })
 
 Vue.use(Formulario, {
-    rules: { globalRule },
-    messages: {
+    validationRules: { globalRule },
+    validationMessages: {
         required: () => 'required',
         'in': () => 'in',
         min: () => 'min',
         globalRule: () => 'globalRule',
-    }
+    },
 })
 
 describe('FormularioInput', () => {
