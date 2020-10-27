@@ -8,15 +8,16 @@
             }"
             class="mb-3"
             name="number"
-            validation="number|required"
+            validation="required"
         >
-            <label for="text-field">Text field (number|required)</label>
+            <label for="text-field">Text field (required)</label>
             <input
                 id="text-field"
                 v-model="context.model"
                 type="text"
                 class="form-control"
                 style="max-width: 250px;"
+                @blur="context.runValidation()"
             >
 
             <div
@@ -24,7 +25,7 @@
                 :key="index"
                 class="text-danger"
             >
-                {{ error.message }}
+                {{ error }}
             </div>
         </FormularioInput>
 
@@ -42,6 +43,7 @@
                 type="text"
                 class="form-control"
                 style="max-width: 250px;"
+                @blur="context.runValidation()"
             >
 
             <div
