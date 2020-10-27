@@ -1,6 +1,5 @@
 import rules from '@/validation/rules.ts'
 
-
 /**
  * Accepted rule
  */
@@ -143,29 +142,29 @@ describe('between', () => {
  * Confirm
  */
 describe('confirm', () => {
-  it('passes when the values are the same strings', async () => expect(await rules.confirm(
-    { value: 'abc', name: 'password', getFormValues: () => ({ password_confirm: 'abc' }) }
+  it('Passes when the values are the same strings', async () => expect(await rules.confirm(
+    { value: 'abc', name: 'password', formValues: { password_confirm: 'abc' } }
   )).toBe(true))
 
-  it('passes when the values are the same integers', async () => expect(await rules.confirm(
-    { value: 4422132, name: 'xyz', getFormValues: () => ({ xyz_confirm: 4422132 }) }
+  it('Passes when the values are the same integers', async () => expect(await rules.confirm(
+    { value: 4422132, name: 'xyz', formValues: { xyz_confirm: 4422132 } }
   )).toBe(true))
 
-  it('passes when using a custom field', async () => expect(await rules.confirm(
-    { value: 4422132, name: 'name', getFormValues: () => ({ other_field: 4422132 }) },
+  it('Passes when using a custom field', async () => expect(await rules.confirm(
+    { value: 4422132, name: 'name', formValues: { other_field: 4422132 } },
     'other_field'
   )).toBe(true))
 
-  it('passes when using a field ends in _confirm', async () => expect(await rules.confirm(
-    { value: '$ecret', name: 'password_confirm', getFormValues: () => ({ password: '$ecret' }) }
+  it('Passes when using a field ends in _confirm', async () => expect(await rules.confirm(
+    { value: '$ecret', name: 'password_confirm', formValues: { password: '$ecret' } }
   )).toBe(true))
 
-  it('fails when using different strings', async () => expect(await rules.confirm(
-    { value: 'Justin', name: 'name', getFormValues: () => ({ name_confirm: 'Daniel' }) },
+  it('Fails when using different strings', async () => expect(await rules.confirm(
+    { value: 'Justin', name: 'name', formValues: { name_confirm: 'Daniel' } },
   )).toBe(false))
 
-  it('fails when the types are different', async () => expect(await rules.confirm(
-    { value: '1234', name: 'num', getFormValues: () => ({ num_confirm: 1234 }) },
+  it('Fails when the types are different', async () => expect(await rules.confirm(
+    { value: '1234', name: 'num', formValues: { num_confirm: 1234 } },
   )).toBe(false))
 })
 

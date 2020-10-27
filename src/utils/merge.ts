@@ -1,5 +1,5 @@
 import isPlainObject from 'is-plain-object'
-import { has } from '@/libs/utils.ts'
+import has from '@/utils/has.ts'
 
 /**
  * Create a new object by copying properties of base and mergeWith.

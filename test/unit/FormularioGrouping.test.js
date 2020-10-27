@@ -53,7 +53,7 @@ describe('FormularioGrouping', () => {
                 `
             }
         })
-        expect(wrapper.find('input[type="text"]').element.value).toBe('Group text')
+        expect(wrapper.find('input[type="text"]').element['value']).toBe('Group text')
     })
 
     it('Data reactive with grouped fields', async () => {
@@ -86,7 +86,7 @@ describe('FormularioGrouping', () => {
                 default: `
                     <FormularioGrouping name="group">
                         <FormularioInput ref="input" name="text" v-slot="{ context }">
-                            <span v-for="error in context.allErrors">{{ error }}</span>
+                            <span v-for="error in context.errors">{{ error }}</span>
                         </FormularioInput>
                     </FormularioGrouping>
                 `,

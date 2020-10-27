@@ -1,4 +1,4 @@
-import { has } from '@/libs/utils'
+import { has } from '@/utils'
 
 export interface ErrorHandler {
     (errors: Record<string, any> | any[]): void;

@@ -1,19 +1,5 @@
-import { ValidationContext } from '@/validation/types'
+import { ValidationContext } from '@/validation/validator'
 
-/**
- * This is an object of functions that each produce valid responses. There's no
- * need for these to be 1-1 with english, feel free to change the wording or
- * use/not use any of the variables available in the object or the
- * arguments for the message to make the most sense in your language and culture.
- *
- * The validation context object includes the following properties:
- * {
- *   args        // Array of rule arguments: between:5,10 (args are ['5', '10'])
- *   name:       // The validation name to be used
- *   value:      // The value of the field (do not mutate!),
- *   formValues: // If wrapped in a FormulateForm, the value of other form fields.
- * }
- */
 export default {
     /**
      * The default render method for error messages.
@@ -32,8 +18,8 @@ export default {
     /**
      * The date is not after.
      */
-    after (vm: Vue, context: ValidationContext): string {
-        if (Array.isArray(context.args) && context.args.length) {
+    after (vm: Vue, context: ValidationContext, compare: string | false = false): string {
+        if (typeof compare === 'string' && compare.length) {
             return vm.$t('validation.after.compare', context)
         }
 
@@ -50,15 +36,15 @@ export default {
     /**
      * Rule: checks if the value is alpha numeric
      */
-    alphanumeric (vm: Vue, context: Record<string, any>): string {
+    alphanumeric (vm: Vue, context: ValidationContext): string {
         return vm.$t('validation.alphanumeric', context)
     },
 
     /**
      * The date is not before.
      */
-    before (vm: Vue, context: ValidationContext): string {
-        if (Array.isArray(context.args) && context.args.length) {
+    before (vm: Vue, context: ValidationContext, compare: string|false = false): string {
+        if (typeof compare === 'string' && compare.length) {
             return vm.$t('validation.before.compare', context)
         }
 
@@ -68,14 +54,14 @@ export default {
     /**
      * The value is not between two numbers or lengths
      */
-    between (vm: Vue, context: ValidationContext): string {
-        const force = Array.isArray(context.args) && context.args[2] ? context.args[2] : false
+    between (vm: Vue, context: ValidationContext, from: number|any = 0, to: number|any = 10, force?: string): string {
+        const data = { ...context, from, to }
 
         if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
-            return vm.$t('validation.between.force', context)
+            return vm.$t('validation.between.force', data)
         }
 
-        return vm.$t('validation.between.default', context)
+        return vm.$t('validation.between.default', data)
     },
 
     /**
@@ -88,8 +74,8 @@ export default {
     /**
      * Is not a valid date.
      */
-    date (vm: Vue, context: ValidationContext): string {
-        if (Array.isArray(context.args) && context.args.length) {
+    date (vm: Vue, context: ValidationContext, format: string | false = false): string {
+        if (typeof format === 'string' && format.length) {
             return vm.$t('validation.date.format', context)
         }
 
@@ -131,45 +117,30 @@ export default {
     /**
      * The maximum value allowed.
      */
-    max (vm: Vue, context: ValidationContext): string {
-        const maximum = context.args[0] as number
-
+    max (vm: Vue, context: ValidationContext, maximum: string | number = 10, force?: string): string {
         if (Array.isArray(context.value)) {
             return vm.$tc('validation.max.array', maximum, context)
         }
-        const force = Array.isArray(context.args) && context.args[1] ? context.args[1] : false
+
         if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
             return vm.$tc('validation.max.force', maximum, context)
         }
+
         return vm.$tc('validation.max.default', maximum, context)
-    },
-
-    /**
-     * The (field-level) error message for mime errors.
-     */
-    mime (vm: Vue, context: ValidationContext): string {
-        const types = context.args[0]
-
-        if (types) {
-            return vm.$t('validation.mime.default', context)
-        } else {
-            return vm.$t('validation.mime.no_formats_allowed', context)
-        }
     },
 
     /**
      * The maximum value allowed.
      */
-    min (vm: Vue, context: ValidationContext): string {
-        const minimum = context.args[0] as number
-
+    min (vm: Vue, context: ValidationContext, minimum: number | any = 1, force?: string): string {
         if (Array.isArray(context.value)) {
             return vm.$tc('validation.min.array', minimum, context)
         }
-        const force = Array.isArray(context.args) && context.args[1] ? context.args[1] : false
+
         if ((!isNaN(context.value) && force !== 'length') || force === 'value') {
             return vm.$tc('validation.min.force', minimum, context)
         }
+
         return vm.$tc('validation.min.default', minimum, context)
     },
 

@@ -21,7 +21,7 @@
                     :key="index"
                     class="text-danger"
                 >
-                    {{ error.message }}
+                    {{ error }}
                 </div>
             </FormularioInput>
 
@@ -46,7 +46,7 @@
                     :key="index"
                     class="text-danger"
                 >
-                    {{ error.message }}
+                    {{ error }}
                 </div>
             </FormularioInput>
         </FormularioGrouping>
