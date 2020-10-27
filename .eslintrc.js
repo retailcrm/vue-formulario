@@ -57,6 +57,11 @@ module.exports = {
         files: ['*.js', '*.tale.vue'],
         rules: {
             '@typescript-eslint/explicit-function-return-type': 'off',
+        },
+    }, {
+        files: ['*.config.js'],
+        rules: {
+            '@typescript-eslint/camelcase': 'off',
         }
     }],
 }
