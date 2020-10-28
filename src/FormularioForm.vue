@@ -126,7 +126,7 @@ export default class FormularioForm extends Vue {
 
     @Provide('formularioRegister')
     register (field: string, component: FormularioInput): void {
-        this.registry.register(field, component)
+        this.registry.add(field, component)
     }
 
     @Provide('formularioDeregister')
@@ -154,7 +154,7 @@ export default class FormularioForm extends Vue {
                 const newValue = getNested(values, registryKey)
 
                 if (!shallowEqualObjects(newValue, oldValue)) {
-                    this.setFieldValue(registryKey, newValue, false)
+                    this.setFieldValue(registryKey, newValue)
                     proxyHasChanges = true
                 }
 
@@ -171,8 +171,7 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    @Provide('formularioSetter')
-    setFieldValue (field: string, value: any, emit = true): void {
+    setFieldValue (field: string, value: any): void {
         if (value === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [field]: value, ...proxy } = this.proxy
@@ -180,10 +179,12 @@ export default class FormularioForm extends Vue {
         } else {
             setNested(this.proxy, field, value)
         }
+    }
 
-        if (emit) {
-            this.$emit('input', Object.assign({}, this.proxy))
-        }
+    @Provide('formularioSetter')
+    setFieldValueAndEmit (field: string, value: any): void {
+        this.setFieldValue(field, value)
+        this.$emit('input', { ...this.proxy })
     }
 
     setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {

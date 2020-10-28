@@ -69,10 +69,7 @@ export default class FormularioInput extends Vue {
 
     get model (): any {
         const model = this.hasModel ? 'value' : 'proxy'
-        if (this[model] === undefined) {
-            return ''
-        }
-        return this[model]
+        return this[model] !== undefined ? this[model] : ''
     }
 
     set model (value: any) {
