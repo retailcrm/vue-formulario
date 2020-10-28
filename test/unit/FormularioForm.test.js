@@ -48,7 +48,7 @@ describe('FormularioForm', () => {
                 `
             }
         })
-        expect(wrapper.vm.registry.keys()).toEqual(['sub1', 'sub2'])
+        expect(wrapper.vm['registry'].keys()).toEqual(['sub1', 'sub2'])
     })
 
     it('Removes subcomponents from the registry', async () => {
@@ -62,10 +62,10 @@ describe('FormularioForm', () => {
             `
         })
         await flushPromises()
-        expect(wrapper.findComponent(FormularioForm).vm.registry.keys()).toEqual(['sub1', 'sub2'])
+        expect(wrapper.findComponent(FormularioForm).vm['registry'].keys()).toEqual(['sub1', 'sub2'])
         wrapper.setData({ active: false })
         await flushPromises()
-        expect(wrapper.findComponent(FormularioForm).vm.registry.keys()).toEqual(['sub2'])
+        expect(wrapper.findComponent(FormularioForm).vm['registry'].keys()).toEqual(['sub2'])
     })
 
     it('Getting nested fields from registry', async () => {
@@ -347,10 +347,21 @@ describe('FormularioForm', () => {
     it('Emits correct validation event on entry', async () => {
         const wrapper = mount(FormularioForm, {
             slots: { default: `
-                <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
-                    <input v-model="context.model" type="text" @blur="context.runValidation()">
+                <FormularioInput
+                    v-slot="{ context }"
+                    name="firstField"
+                    validation="required|in:foo"
+                >
+                    <input
+                        v-model="context.model"
+                        type="text"
+                        @blur="context.runValidation()"
+                    >
                 </FormularioInput>
-                <FormularioInput name="bar" validation="required" />
+                <FormularioInput
+                    name="secondField"
+                    validation="required"
+                />
             ` }
         })
         wrapper.find('input[type="text"]').setValue('bar')
@@ -361,37 +372,21 @@ describe('FormularioForm', () => {
         expect(wrapper.emitted('validation')).toBeTruthy()
         expect(wrapper.emitted('validation').length).toBe(1)
         expect(wrapper.emitted('validation')[0][0]).toEqual({
-            name: 'foo',
-            violations: [ expect.any(Object) ], // @TODO: Check object structure
+            name: 'firstField',
+            violations: [ {
+                rule: expect.any(String),
+                args: ['foo'],
+                context: {
+                    value: 'bar',
+                    formValues: expect.any(Object),
+                    name: 'firstField',
+                },
+                message: expect.any(String),
+            } ],
         })
     })
 
-    return
-
-    it('Removes field data when that field is de-registered', async () => {
-        const wrapper = mount({
-            data: () => ({ values: {} }),
-            template: `
-                <FormularioForm v-model="values">
-                    <FormularioInput v-slot="{ context }" name="foo">
-                        <input v-model="context.model" type="text" value="abc123">
-                    </FormularioInput>
-                    <FormularioInput v-if="values.foo !== 'bar'" name="bar" value="1" />
-                </FormularioForm>
-            `,
-        })
-
-        await flushPromises()
-
-        wrapper.find('input[type="text"]').setValue('bar')
-
-        await flushPromises()
-
-        expect(wrapper.findComponent(FormularioForm).vm.proxy).toEqual({ foo: 'bar' })
-        expect(wrapper.vm['values']).toEqual({ foo: 'bar' })
-    })
-
-    it('Allows resetting a form, hiding validation and clearing inputs.', async () => {
+    it('Allows resetting a form, wiping validation.', async () => {
         const wrapper = mount({
             data: () => ({ values: {} }),
             template: `
@@ -411,6 +406,7 @@ describe('FormularioForm', () => {
         })
 
         const password = wrapper.find('input[type="password"]')
+
         password.setValue('foo')
         password.trigger('blur')
 
@@ -422,10 +418,9 @@ describe('FormularioForm', () => {
         // First make sure we caught the errors
         expect(Object.keys(wrapper.vm.$refs.form.mergedFieldErrors).length).toBe(1)
         wrapper.vm.$refs.form.resetValidation()
-        wrapper.vm.$refs.form.setValues({ })
 
         await flushPromises()
+
         expect(Object.keys(wrapper.vm.$refs.form.mergedFieldErrors).length).toBe(0)
-        expect(wrapper.vm['values']).toEqual({})
     })
 })
