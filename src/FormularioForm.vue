@@ -78,7 +78,7 @@ export default class FormularioForm extends Vue {
         this.errorObserverRegistry.filter(o => o.type === 'form').observe(errors)
     }
 
-    @Watch('mergedFieldErrors', { immediate: true })
+    @Watch('mergedFieldErrors', { deep: true, immediate: true })
     onMergedFieldErrorsChanged (errors: Record<string, string[]>): void {
         this.errorObserverRegistry.filter(o => o.type === 'input').observe(errors)
     }
