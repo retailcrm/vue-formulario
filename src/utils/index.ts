@@ -52,6 +52,9 @@ export function setNested (obj: Record<string, any>, field: string, value: any):
                 subProxy = subProxy[matches[2]]
             }
         } else {
+            if (subProxy === undefined) {
+                break
+            }
             if (i === fieldParts.length - 1) {
                 subProxy[fieldPart] = value
                 break
