@@ -72,7 +72,14 @@ export default class Registry {
         const result = new Map()
 
         for (const i of this.registry.keys()) {
-            if (i === key || i.includes(key + '.')) {
+            const objectKey = key + '.'
+            const arrayKey = key + '['
+
+            if (
+                i === key ||
+                i.substring(0, objectKey.length) === objectKey ||
+                i.substring(0, arrayKey.length) === arrayKey
+            ) {
                 result.set(i, this.registry.get(i))
             }
         }
