@@ -1,12 +1,6 @@
-import { VueConstructor } from 'vue'
-
 import merge from '@/utils/merge'
 import validationRules from '@/validation/rules'
 import validationMessages from '@/validation/messages'
-
-import FormularioForm from '@/FormularioForm.vue'
-import FormularioGrouping from '@/FormularioGrouping.vue'
-import FormularioInput from '@/FormularioInput.vue'
 
 import {
     ValidationContext,
@@ -14,7 +8,7 @@ import {
     CreateMessageFn,
 } from '@/validation/validator'
 
-interface FormularioOptions {
+export interface FormularioOptions {
     validationRules?: any;
     validationMessages?: Record<string, Function>;
 }
@@ -27,19 +21,9 @@ export default class Formulario {
     public validationRules: Record<string, CheckRuleFn> = {}
     public validationMessages: Record<string, Function> = {}
 
-    constructor () {
+    constructor (options?: FormularioOptions) {
         this.validationRules = validationRules
         this.validationMessages = validationMessages
-    }
-
-    /**
-     * Install vue formulario, and register it’s components.
-     */
-    install (Vue: VueConstructor, options?: FormularioOptions): void {
-        Vue.prototype.$formulario = this
-        Vue.component('FormularioForm', FormularioForm)
-        Vue.component('FormularioGrouping', FormularioGrouping)
-        Vue.component('FormularioInput', FormularioInput)
 
         this.extend(options || {})
     }
