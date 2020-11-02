@@ -8,3 +8,4 @@ coverage
 *.sublime-workspace
 *.dev.tale.vue
 *.dev.stories.js
+storybook-static
