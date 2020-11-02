@@ -12,6 +12,9 @@ Vue.mixin({
     methods: {
         $t (text) {
             return text
+        },
+        $tc (text) {
+            return text
         }
     }
 })
