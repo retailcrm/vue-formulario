@@ -1,8 +1,11 @@
 import isUrl from 'is-url'
 import { has, regexForFormat, shallowEqualObjects } from '@/utils'
-import { ValidationContext } from '@/validation/validator'
+import {
+    ValidationContext,
+    ValidationRuleFn,
+} from '@/validation/validator'
 
-export default {
+const rules: Record<string, ValidationRuleFn> = {
     /**
      * Rule: the value must be "yes", "on", "1", or true
      */
@@ -257,3 +260,5 @@ export default {
         return true
     },
 }
+
+export default rules

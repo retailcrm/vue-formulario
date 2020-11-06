@@ -121,7 +121,7 @@ export function processSingleStringConstraint (
 }
 
 export function processSingleConstraint (
-    constraint: string|Validator|[Validator|string, ...any[]],
+    constraint: Validator|string|[Validator|string, ...any[]],
     rules: Record<string, ValidationRuleFn>,
     messages: Record<string, ValidationMessageFn>
 ): [Validator, string|null, string|null] {
