@@ -15,8 +15,8 @@ import {
 } from 'vue-property-decorator'
 import { arrayify, has, shallowEqualObjects, snakeToCamel } from './utils'
 import {
-    CheckRuleFn,
-    CreateMessageFn,
+    ValidationRuleFn,
+    ValidationMessageI18NFn,
     processConstraints,
     validate,
     Violation,
@@ -47,8 +47,8 @@ export default class FormularioInput extends Vue {
     }) name!: string
 
     @Prop({ default: '' }) validation!: string|any[]
-    @Prop({ default: () => ({}) }) validationRules!: Record<string, CheckRuleFn>
-    @Prop({ default: () => ({}) }) validationMessages!: Record<string, CreateMessageFn|string>
+    @Prop({ default: () => ({}) }) validationRules!: Record<string, ValidationRuleFn>
+    @Prop({ default: () => ({}) }) validationMessages!: Record<string, ValidationMessageI18NFn|string>
     @Prop({
         default: VALIDATION_BEHAVIOR.DEMAND,
         validator: behavior => Object.values(VALIDATION_BEHAVIOR).includes(behavior)
@@ -99,16 +99,16 @@ export default class FormularioInput extends Vue {
         })
     }
 
-    get normalizedValidationRules (): Record<string, CheckRuleFn> {
-        const rules: Record<string, CheckRuleFn> = {}
+    get normalizedValidationRules (): Record<string, ValidationRuleFn> {
+        const rules: Record<string, ValidationRuleFn> = {}
         Object.keys(this.validationRules).forEach(key => {
             rules[snakeToCamel(key)] = this.validationRules[key]
         })
         return rules
     }
 
-    get normalizedValidationMessages (): Record<string, any> {
-        const messages: Record<string, any> = {}
+    get normalizedValidationMessages (): Record<string, ValidationMessageI18NFn|string> {
+        const messages: Record<string, ValidationMessageI18NFn|string> = {}
         Object.keys(this.validationMessages).forEach((key) => {
             messages[snakeToCamel(key)] = this.validationMessages[key]
         })

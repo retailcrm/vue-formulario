@@ -4,8 +4,9 @@ import validationMessages from '@/validation/messages'
 
 import {
     ValidationContext,
-    CheckRuleFn,
-    CreateMessageFn,
+    ValidationRuleFn,
+    ValidationMessageFn,
+    ValidationMessageI18NFn,
 } from '@/validation/validator'
 
 export interface FormularioOptions {
@@ -18,7 +19,7 @@ export interface FormularioOptions {
  * The base formulario library.
  */
 export default class Formulario {
-    public validationRules: Record<string, CheckRuleFn> = {}
+    public validationRules: Record<string, ValidationRuleFn> = {}
     public validationMessages: Record<string, Function> = {}
 
     constructor (options?: FormularioOptions) {
@@ -43,16 +44,16 @@ export default class Formulario {
     /**
      * Get validation rules by merging any passed in with global rules.
      */
-    getRules (extendWith: Record<string, CheckRuleFn> = {}): Record<string, CheckRuleFn> {
+    getRules (extendWith: Record<string, ValidationRuleFn> = {}): Record<string, ValidationRuleFn> {
         return merge(this.validationRules, extendWith)
     }
 
     /**
      * Get validation messages by merging any passed in with global messages.
      */
-    getMessages (vm: Vue, extendWith: Record<string, Function>): Record<string, CreateMessageFn> {
+    getMessages (vm: Vue, extendWith: Record<string, ValidationMessageI18NFn|string>): Record<string, ValidationMessageFn> {
         const raw = merge(this.validationMessages || {}, extendWith)
-        const messages: Record<string, CreateMessageFn> = {}
+        const messages: Record<string, ValidationMessageFn> = {}
 
         for (const name in raw) {
             messages[name] = (context: ValidationContext, ...args: any[]): string => {

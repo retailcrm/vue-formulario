@@ -29,7 +29,7 @@ export default {
     /**
      * The value is not a letter.
      */
-    alpha (vm: Vue, context: Record<string, any>): string {
+    alpha (vm: Vue, context: ValidationContext): string {
         return vm.$t('validation.alpha', context)
     },
 
@@ -175,7 +175,7 @@ export default {
     /**
      * Value is not a url.
      */
-    url (vm: Vue, context: Record<string, any>): string {
+    url (vm: Vue, context: ValidationContext): string {
         return vm.$t('validation.url.default', context)
     }
 }
