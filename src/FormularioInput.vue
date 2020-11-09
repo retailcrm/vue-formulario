@@ -109,7 +109,7 @@ export default class FormularioInput extends Vue {
 
     get normalizedValidationMessages (): Record<string, ValidationMessageI18NFn|string> {
         const messages: Record<string, ValidationMessageI18NFn|string> = {}
-        Object.keys(this.validationMessages).forEach((key) => {
+        Object.keys(this.validationMessages).forEach(key => {
             messages[snakeToCamel(key)] = this.validationMessages[key]
         })
         return messages
