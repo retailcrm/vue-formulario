@@ -1,86 +1,90 @@
 ## What is Vue Formulario?
 
-Vue Formulario is a library, based on <a href="https://vueformulate.com">Vue Formulate</a>, that handles the core logic for working with forms and gives full control on the form presentation.
+Vue Formulario is a library, based on <a href="https://vueformulate.com">Vue Formulate</a>, that handles the core logic
+for working with forms and gives full control on the form presentation.
 
 ## Examples
 
-Every form control have to rendered inside FormularioInput component. This component provides `id` and `context` in v-slot props. Control should use `context.model` as v-model and `context.blurHandler` as handler for `blur` event (it is necessary for validation when property `errorBehavior` is `blur`). Errors object list for field can be accessed through `context.allErrors`. Each error is an object with fields message (translated message), rule (rule name) and context.
+Every form control have to rendered inside FormularioInput component. This component provides `id` and `context` in
+v-slot props. Control should use `context.model` as v-model and `context.runValidation` as handler for `blur` event
+(it is necessary for validation when property `validationBehavior` is `demand`). Errors list for a field can be
+accessed through `context.allErrors`.
 
 The example below creates the authorization form from data:
 ```json
-    {
-        "username": "",
-        "password": "",
-        "options": {
-            "anonym": false,
-            "tags": ["test"]
-        },
+{
+    "username": "",
+    "password": "",
+    "options": {
+        "anonymous": false,
+        "tags": ["test"]
     }
+}
 ```
 
 ```html
-    <FormularioForm
-        v-model="formData"
-        name="formName"
+<FormularioForm
+    v-model="formData"
+    name="formName"
+>
+    <FormularioInput
+        v-slot="{ context }"
+        name="username"
+        validation="required|email"
+        validation-behavior="live"
     >
-        <FormularioInput
-            v-slot="vSlot"
-            name="username"
-            validation="required|email"
-            error-behavior="live"
+        <input
+            v-model="context.model"
+            type="text"
+            @blur="context.runValidation"
         >
-            <input
-                v-model="vSlot.context.model"
-                type="text"
-                @blur="vSlot.context.blurHandler"
+        <div v-if="context.allErrors.length > 0">
+            <span
+                v-for="(error, index) in context.allErrors"
+                :key="index"
             >
-            <div v-if="vSlot.context.showValidationErrors">
-                <span
-                    v-for="(error, index) in vSlot.context.allErrors"
-                    :key="index"
+                {{ error }}
+            </span>
+        </div>
+    </FormularioInput>
+
+    <FormularioInput
+        v-slot="{ context }"
+        name="password"
+        validation="required|min:4,length"
+    >
+        <input
+            v-model="context.model"
+            type="password"
+        >
+    </FormularioInput>
+
+    <FormularioGrouping name="options">
+        <FormularioInput
+            v-slot="{ context }"
+            name="anonymous"
+        >
+            <div>
+                <input
+                    id="options-anonymous"
+                    v-model="context.model"
+                    type="checkbox"
                 >
-                    {{ error.message }}
-                </span>
+                <label for="options-anonymous">As anonymous</label>
             </div>
         </FormularioInput>
+    </FormularioGrouping>
 
-        <FormularioInput
-            v-slot="vSlot"
-            name="password"
-            validation="required|min:4,length"
+    <FormularioInput
+        v-slot="{ context }"
+        name="options.tags[0]"
+    >
+        <input
+            v-model="context.model"
+            type="text"
         >
-            <input
-                v-model="vSlot.context.model"
-                type="password"
-            >
-        </FormularioInput>
-
-        <FormularioGrouping name="options">
-            <FormularioInput
-                v-slot="vSlot"
-                name="anonym"
-            >
-                <div>
-                    <input
-                        :id="vSlot.id"
-                        v-model="vSlot.context.model"
-                        type="checkbox"
-                    >
-                    <label :for="vSlot.id">As anonym</label>
-                </div>
-            </FormularioInput>
-        </FormularioGrouping>
-
-        <FormularioInput
-            v-slot="vSlot"
-            name="options.tags[0]"
-        >
-            <input
-                v-model="vSlot.context.model"
-                type="text"
-            >
-        </FormularioInput>
-    </FormularioForm>
+    </FormularioInput>
+</FormularioForm>
 ```
 
 ## License
