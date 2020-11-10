@@ -10,8 +10,8 @@ import {
 } from '@/validation/validator'
 
 export interface FormularioOptions {
-    validationRules?: any;
-    validationMessages?: Record<string, Function>;
+    validationRules?: Record<string, ValidationRuleFn>;
+    validationMessages?: Record<string, ValidationMessageI18NFn|string>;
 }
 
 /**
