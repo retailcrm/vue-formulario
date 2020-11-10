@@ -14,7 +14,6 @@ export interface FormularioOptions {
     validationMessages?: Record<string, Function>;
 }
 
-// noinspection JSUnusedGlobalSymbols
 /**
  * The base formulario library.
  */
