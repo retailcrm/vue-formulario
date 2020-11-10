@@ -28,24 +28,21 @@ export default class Registry {
         if (this.registry.has(field)) {
             return
         }
+
         this.registry.set(field, component)
+
+        // @ts-ignore
+        const value = getNested(this.ctx.initialValues, field)
         const hasModel = has(component.$options.propsData || {}, 'value')
-        if (
-            !hasModel &&
-            // @ts-ignore
-            this.ctx.hasInitialValue &&
-            // @ts-ignore
-            getNested(this.ctx.initialValues, field) !== undefined
-        ) {
+
+        // @ts-ignore
+        if (!hasModel && this.ctx.hasInitialValue && value !== undefined) {
             // In the case that the form is carrying an initial value and the
             // element is not, set it directly.
             // @ts-ignore
-            component.context.model = getNested(this.ctx.initialValues, field)
-        } else if (
-            hasModel &&
+            component.context.model = value
             // @ts-ignore
-            !shallowEqualObjects(component.proxy, getNested(this.ctx.initialValues, field))
-        ) {
+        } else if (hasModel && !shallowEqualObjects(component.proxy, value)) {
             // In this case, the field is v-modeled or has an initial value and the
             // form has no value or a different value, so use the field value
             // @ts-ignore
