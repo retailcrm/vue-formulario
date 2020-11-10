@@ -19,7 +19,7 @@ export interface FormularioOptions {
  */
 export default class Formulario {
     public validationRules: Record<string, ValidationRuleFn> = {}
-    public validationMessages: Record<string, Function> = {}
+    public validationMessages: Record<string, ValidationMessageI18NFn|string> = {}
 
     constructor (options?: FormularioOptions) {
         this.validationRules = validationRules
