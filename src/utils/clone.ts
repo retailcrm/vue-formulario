@@ -14,7 +14,13 @@ export default function clone (value: any): any {
 
     for (const key in value) {
         if (has(value, key)) {
-            copy[key] = isScalar(value[key]) ? value[key] : clone(value[key])
+            if (isScalar(value[key])) {
+                copy[key] = value[key]
+            } else if (value instanceof Date) {
+                copy[key] = new Date(copy[key])
+            } else {
+                copy[key] = clone(value[key])
+            }
         }
     }
 

@@ -20,10 +20,34 @@ export default class Registry {
     }
 
     /**
-     * Add an item to the registry.
+     * Fully register a component.
+     * @param {string} field name of the field.
+     * @param {FormularioForm} component the actual component instance.
      */
-    add (name: string, component: FormularioInput): void {
-        this.registry.set(name, component)
+    add (field: string, component: FormularioInput): void {
+        if (this.registry.has(field)) {
+            return
+        }
+
+        this.registry.set(field, component)
+
+        // @ts-ignore
+        const value = getNested(this.ctx.initialValues, field)
+        const hasModel = has(component.$options.propsData || {}, 'value')
+
+        // @ts-ignore
+        if (!hasModel && this.ctx.hasInitialValue && value !== undefined) {
+            // In the case that the form is carrying an initial value and the
+            // element is not, set it directly.
+            // @ts-ignore
+            component.context.model = value
+            // @ts-ignore
+        } else if (hasModel && !shallowEqualObjects(component.proxy, value)) {
+            // In this case, the field is v-modeled or has an initial value and the
+            // form has no value or a different value, so use the field value
+            // @ts-ignore
+            this.ctx.setFieldValueAndEmit(field, component.proxy)
+        }
     }
 
     /**
@@ -101,40 +125,6 @@ export default class Registry {
      */
     keys (): string[] {
         return Array.from(this.registry.keys())
-    }
-
-    /**
-     * Fully register a component.
-     * @param {string} field name of the field.
-     * @param {FormularioForm} component the actual component instance.
-     */
-    register (field: string, component: FormularioInput): void {
-        if (this.registry.has(field)) {
-            return
-        }
-        this.registry.set(field, component)
-        const hasModel = has(component.$options.propsData || {}, 'value')
-        if (
-            !hasModel &&
-            // @ts-ignore
-            this.ctx.hasInitialValue &&
-            // @ts-ignore
-            getNested(this.ctx.initialValues, field) !== undefined
-        ) {
-            // In the case that the form is carrying an initial value and the
-            // element is not, set it directly.
-            // @ts-ignore
-            component.context.model = getNested(this.ctx.initialValues, field)
-        } else if (
-            hasModel &&
-            // @ts-ignore
-            !shallowEqualObjects(component.proxy, getNested(this.ctx.initialValues, field))
-        ) {
-            // In this case, the field is v-modeled or has an initial value and the
-            // form has no value or a different value, so use the field value
-            // @ts-ignore
-            this.ctx.setFieldValue(field, component.proxy)
-        }
     }
 
     /**

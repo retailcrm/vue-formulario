@@ -1,45 +1,29 @@
-import { VueConstructor } from 'vue'
-
 import merge from '@/utils/merge'
 import validationRules from '@/validation/rules'
 import validationMessages from '@/validation/messages'
 
-import FormularioForm from '@/FormularioForm.vue'
-import FormularioGrouping from '@/FormularioGrouping.vue'
-import FormularioInput from '@/FormularioInput.vue'
-
 import {
     ValidationContext,
-    CheckRuleFn,
-    CreateMessageFn,
+    ValidationRuleFn,
+    ValidationMessageFn,
+    ValidationMessageI18NFn,
 } from '@/validation/validator'
 
-interface FormularioOptions {
-    validationRules?: any;
-    validationMessages?: Record<string, Function>;
+export interface FormularioOptions {
+    validationRules?: Record<string, ValidationRuleFn>;
+    validationMessages?: Record<string, ValidationMessageI18NFn|string>;
 }
 
-// noinspection JSUnusedGlobalSymbols
 /**
  * The base formulario library.
  */
 export default class Formulario {
-    public validationRules: Record<string, CheckRuleFn> = {}
-    public validationMessages: Record<string, Function> = {}
+    public validationRules: Record<string, ValidationRuleFn> = {}
+    public validationMessages: Record<string, ValidationMessageI18NFn|string> = {}
 
-    constructor () {
+    constructor (options?: FormularioOptions) {
         this.validationRules = validationRules
         this.validationMessages = validationMessages
-    }
-
-    /**
-     * Install vue formulario, and register it’s components.
-     */
-    install (Vue: VueConstructor, options?: FormularioOptions): void {
-        Vue.prototype.$formulario = this
-        Vue.component('FormularioForm', FormularioForm)
-        Vue.component('FormularioGrouping', FormularioGrouping)
-        Vue.component('FormularioInput', FormularioInput)
 
         this.extend(options || {})
     }
@@ -59,16 +43,16 @@ export default class Formulario {
     /**
      * Get validation rules by merging any passed in with global rules.
      */
-    getRules (extendWith: Record<string, CheckRuleFn> = {}): Record<string, CheckRuleFn> {
+    getRules (extendWith: Record<string, ValidationRuleFn> = {}): Record<string, ValidationRuleFn> {
         return merge(this.validationRules, extendWith)
     }
 
     /**
      * Get validation messages by merging any passed in with global messages.
      */
-    getMessages (vm: Vue, extendWith: Record<string, Function>): Record<string, CreateMessageFn> {
+    getMessages (vm: Vue, extendWith: Record<string, ValidationMessageI18NFn|string>): Record<string, ValidationMessageFn> {
         const raw = merge(this.validationMessages || {}, extendWith)
-        const messages: Record<string, CreateMessageFn> = {}
+        const messages: Record<string, ValidationMessageFn> = {}
 
         for (const name in raw) {
             messages[name] = (context: ValidationContext, ...args: any[]): string => {

@@ -11,12 +11,16 @@ export interface Violation {
     message: string;
 }
 
-export interface CheckRuleFn {
+export interface ValidationRuleFn {
     (context: ValidationContext, ...args: any[]): Promise<boolean>|boolean;
 }
 
-export interface CreateMessageFn {
+export interface ValidationMessageFn {
     (context: ValidationContext, ...args: any[]): string;
+}
+
+export interface ValidationMessageI18NFn {
+    (vm: Vue, context: ValidationContext, ...args: any[]): string;
 }
 
 export interface ValidationContext {
@@ -34,21 +38,20 @@ export type ValidatorGroup = {
 }
 
 export function createValidator (
-    ruleFn: CheckRuleFn,
+    ruleFn: ValidationRuleFn,
     ruleName: string|null,
     ruleArgs: any[],
-    messageFn: CreateMessageFn
+    messageFn: ValidationMessageFn
 ): Validator {
     return (context: ValidationContext): Promise<Violation|null> => {
-        return Promise.resolve(ruleFn(context, ...ruleArgs))
-            .then(valid => {
-                return !valid ? {
-                    rule: ruleName,
-                    args: ruleArgs,
-                    context,
-                    message: messageFn(context, ...ruleArgs),
-                } : null
-            })
+        return Promise.resolve(ruleFn(context, ...ruleArgs)).then(valid => {
+            return !valid ? {
+                rule: ruleName,
+                args: ruleArgs,
+                context,
+                message: messageFn(context, ...ruleArgs),
+            } : null
+        })
     }
 }
 
@@ -61,8 +64,8 @@ export function parseModifier (ruleName: string): [string, string|null] {
 
 export function processSingleArrayConstraint (
     constraint: any[],
-    rules: Record<string, CheckRuleFn>,
-    messages: Record<string, CreateMessageFn>
+    rules: Record<string, ValidationRuleFn>,
+    messages: Record<string, ValidationMessageFn>
 ): [Validator, string|null, string|null] {
     const args = constraint.slice()
     const first = args.shift()
@@ -95,8 +98,8 @@ export function processSingleArrayConstraint (
 
 export function processSingleStringConstraint (
     constraint: string,
-    rules: Record<string, CheckRuleFn>,
-    messages: Record<string, CreateMessageFn>
+    rules: Record<string, ValidationRuleFn>,
+    messages: Record<string, ValidationMessageFn>
 ): [Validator, string|null, string|null] {
     const args = constraint.split(':')
     const [name, modifier] = parseModifier(args.shift() || '')
@@ -118,9 +121,9 @@ export function processSingleStringConstraint (
 }
 
 export function processSingleConstraint (
-    constraint: string|Validator|[Validator|string, ...any[]],
-    rules: Record<string, CheckRuleFn>,
-    messages: Record<string, CreateMessageFn>
+    constraint: Validator|string|[Validator|string, ...any[]],
+    rules: Record<string, ValidationRuleFn>,
+    messages: Record<string, ValidationMessageFn>
 ): [Validator, string|null, string|null] {
     if (typeof constraint === 'function') {
         return [constraint, null, null]
@@ -139,8 +142,8 @@ export function processSingleConstraint (
 
 export function processConstraints (
     constraints: string|any[],
-    rules: Record<string, CheckRuleFn>,
-    messages: Record<string, CreateMessageFn>
+    rules: Record<string, ValidationRuleFn>,
+    messages: Record<string, ValidationMessageFn>
 ): [Validator, string|null, string|null][] {
     if (typeof constraints === 'string') {
         return processConstraints(constraints.split('|').filter(f => f.length), rules, messages)

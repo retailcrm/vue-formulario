@@ -5,8 +5,8 @@ import { storiesOf } from '@storybook/vue'
 import Vue from 'vue'
 import VueFormulario from '../../dist/formulario.esm'
 
-import FormularioGroupingTale from './FormularioGrouping.tale'
-import FormularioInputTale from './FormularioInput.tale'
+import ExampleAddressList from './ExampleAddressList.tale'
+import FormularioGrouping from './FormularioGrouping.tale'
 
 Vue.mixin({
     methods: {
@@ -20,6 +20,6 @@ Vue.mixin({
 })
 Vue.use(VueFormulario)
 
-storiesOf('FormularioInput', module)
-    .add('Default', () => FormularioInputTale)
-    .add('Grouping', () => FormularioGroupingTale)
+storiesOf('Examples', module)
+    .add('Address list', () => ExampleAddressList)
+    .add('FormularioGrouping', () => FormularioGrouping)
