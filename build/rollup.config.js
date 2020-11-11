@@ -27,6 +27,6 @@ export default {
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),
         autoExternal(),
-        terser(),
+        // terser(),
     ]
 }
