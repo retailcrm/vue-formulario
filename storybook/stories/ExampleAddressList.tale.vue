@@ -42,7 +42,7 @@
                         v-slot="{ context }"
                         class="col col-auto px-2 mb-3"
                         name="building"
-                        validation="^required|number"
+                        validation="^required|alphanumeric"
                     >
                         <label for="address-building">Building <span class="text-danger">*</span></label>
                         <input
@@ -61,6 +61,16 @@
                             {{ error }}
                         </div>
                     </FormularioInput>
+
+                    <div class="remove-btn-wrapper">
+                        <button
+                            class="btn btn-danger"
+                            type="button"
+                            @click="removeAddress(addressIndex)"
+                        >
+                            Remove
+                        </button>
+                    </div>
                 </FormularioGrouping>
             </FormularioGrouping>
 
@@ -91,14 +101,18 @@ export default {
 
     data: () => ({
         values: {
-            addressList: [],
+            addressList: [{
+                street: 'Baker Street',
+                building: '221b',
+            }],
         },
     }),
 
     created () {
         this.$formulario.extend({
             validationMessages: {
-                number: () => 'Value is not a number',
+                alphanumeric: () => 'Value must be alphanumeric',
+                number: () => 'Value must be a number',
                 required: () => 'Value is required',
             },
         })
@@ -111,6 +125,10 @@ export default {
                 building: '',
             })
         },
+
+        removeAddress (index) {
+            this.values.addressList.splice(index, 1)
+        },
     },
 }
 </script>
@@ -118,5 +136,9 @@ export default {
 <style>
 .field {
     max-width: 250px;
+}
+
+.remove-btn-wrapper {
+    padding-top: 32px;
 }
 </style>
