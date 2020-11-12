@@ -757,9 +757,13 @@ class ErrorObserverRegistry {
                 observer.callback(errors);
             }
             else if (observer.field &&
-                !Array.isArray(errors) &&
-                has(errors, observer.field)) {
-                observer.callback(errors[observer.field]);
+                !Array.isArray(errors)) {
+                if (has(errors, observer.field)) {
+                    observer.callback(errors[observer.field]);
+                }
+                else {
+                    observer.callback([]);
+                }
             }
         });
     }
