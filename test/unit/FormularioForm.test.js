@@ -423,4 +423,32 @@ describe('FormularioForm', () => {
 
         expect(Object.keys(wrapper.vm.$refs.form.mergedFieldErrors).length).toBe(0)
     })
+
+    it('Local errors resetted when errors prop cleared', async () => {
+        const wrapper = mount({
+            data: () => ({ values: {}, errors: { input: ['failure'] } }),
+            template: `
+                <FormularioForm
+                    v-model="values"
+                    :errors="errors"
+                    ref="form"
+                >
+                    <FormularioInput
+                        v-slot="{ context }"
+                        name="input"
+                        ref="form"
+                    >
+                        <span v-for="error in context.allErrors">{{ error.message }}</span>
+                    </FormularioInput>
+                </FormularioForm>
+            `
+        })
+
+        await flushPromises()
+        expect(wrapper.find('span').exists()).toBe(true)
+
+        wrapper.vm.errors = {}
+        await flushPromises()
+        expect(wrapper.find('span').exists()).toBe(false)
+    })
 })

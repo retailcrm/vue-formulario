@@ -45,10 +45,13 @@ export class ErrorObserverRegistry {
                 observer.callback(errors)
             } else if (
                 observer.field &&
-                !Array.isArray(errors) &&
-                has(errors, observer.field)
+                !Array.isArray(errors)
             ) {
-                observer.callback(errors[observer.field])
+                if (has(errors, observer.field)) {
+                    observer.callback(errors[observer.field])
+                } else {
+                    observer.callback([])
+                }
             }
         })
     }
