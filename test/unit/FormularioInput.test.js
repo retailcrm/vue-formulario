@@ -275,4 +275,76 @@ describe('FormularioInput', () => {
 
         expect(wrapper.find('span').exists()).toBe(true)
     })
+
+    it('Model getter for input', async () => {
+        const wrapper = mount({
+            data: () => ({ values: { test: 'abcd' } }),
+            template: `
+                <FormularioForm v-model="values">
+                    <FormularioInput v-slot="{ context }" :model-get-converter="onGet" name="test" >
+                        <span>{{ context.model }}</span>
+                    </FormularioInput>
+                </FormularioForm>
+            `,
+            methods: {
+                onGet(source) {
+                    if (!(source instanceof Date)) {
+                        return 'invalid date'
+                    }
+
+                    return source.getDate()
+                }
+            }
+        })
+
+        await flushPromises()
+        expect(wrapper.find('span').text()).toBe('invalid date')
+
+        wrapper.vm.values = { test: new Date('1995-12-17') }
+        await flushPromises()
+        expect(wrapper.find('span').text()).toBe('17')
+    })
+
+    it('Model setter for input', async () => {
+        const wrapper = mount({
+            data: () => ({ values: { test: 'abcd' } }),
+            template: `
+                <FormularioForm v-model="values">
+                    <FormularioInput v-slot="{ context }" :model-get-converter="onGet" :model-set-converter="onSet" name="test" >
+                        <input type="text" v-model="context.model">
+                    </FormularioInput>
+                </FormularioForm>
+            `,
+            methods: {
+                onGet(source) {
+                    if (!(source instanceof Date)) {
+                        return source
+                    }
+
+                    return source.getDate()
+                },
+                onSet(source) {
+                    if (source instanceof Date) {
+                        return source
+                    }
+                    if (isNaN(source)) {
+                        return undefined
+                    }
+
+                    let result = new Date('2001-05-01')
+                    result.setDate(source)
+
+                    return result
+                }
+            }
+        })
+
+        await flushPromises()
+        expect(wrapper.vm.values.test).toBe(undefined)
+
+        wrapper.find('input[type="text"]').element['value'] = '12'
+        wrapper.find('input[type="text"]').trigger('input')
+        await flushPromises()
+        expect(wrapper.vm.values.test.toISOString()).toBe((new Date('2001-05-12')).toISOString())
+    })
 })
