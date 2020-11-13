@@ -1324,9 +1324,10 @@
         }
         get model() {
             const model = this.hasModel ? 'value' : 'proxy';
-            return this[model] !== undefined ? this[model] : '';
+            return this.modelGetConverter(this[model]);
         }
         set model(value) {
+            value = this.modelSetConverter(value, this.proxy);
             if (!shallowEqualObjects(value, this.proxy)) {
                 this.proxy = value;
             }
@@ -1507,6 +1508,12 @@
     __decorate([
         vuePropertyDecorator.Prop({ default: false })
     ], FormularioInput.prototype, "errorsDisabled", void 0);
+    __decorate([
+        vuePropertyDecorator.Prop({ default: () => (value) => value })
+    ], FormularioInput.prototype, "modelGetConverter", void 0);
+    __decorate([
+        vuePropertyDecorator.Prop({ default: () => (value) => value })
+    ], FormularioInput.prototype, "modelSetConverter", void 0);
     __decorate([
         vuePropertyDecorator.Watch('proxy')
     ], FormularioInput.prototype, "onProxyChanged", null);

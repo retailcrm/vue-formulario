@@ -1319,9 +1319,10 @@ let FormularioInput = class FormularioInput extends Vue {
     }
     get model() {
         const model = this.hasModel ? 'value' : 'proxy';
-        return this[model] !== undefined ? this[model] : '';
+        return this.modelGetConverter(this[model]);
     }
     set model(value) {
+        value = this.modelSetConverter(value, this.proxy);
         if (!shallowEqualObjects(value, this.proxy)) {
             this.proxy = value;
         }
@@ -1502,6 +1503,12 @@ __decorate([
 __decorate([
     Prop({ default: false })
 ], FormularioInput.prototype, "errorsDisabled", void 0);
+__decorate([
+    Prop({ default: () => (value) => value })
+], FormularioInput.prototype, "modelGetConverter", void 0);
+__decorate([
+    Prop({ default: () => (value) => value })
+], FormularioInput.prototype, "modelSetConverter", void 0);
 __decorate([
     Watch('proxy')
 ], FormularioInput.prototype, "onProxyChanged", null);
