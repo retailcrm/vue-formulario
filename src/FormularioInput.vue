@@ -57,6 +57,9 @@ export default class FormularioInput extends Vue {
     // Affects only observing & setting of local errors
     @Prop({ default: false }) errorsDisabled!: boolean
 
+    @Prop({ default: () => value => value }) modelGetConverter!: Function
+    @Prop({ default: () => value => value }) modelSetConverter!: Function
+
     public proxy: any = this.getInitialValue()
 
     private localErrors: string[] = []
@@ -69,10 +72,12 @@ export default class FormularioInput extends Vue {
 
     get model (): any {
         const model = this.hasModel ? 'value' : 'proxy'
-        return this[model] !== undefined ? this[model] : ''
+        return this.modelGetConverter(this[model])
     }
 
     set model (value: any) {
+        value = this.modelSetConverter(value, this.proxy)
+
         if (!shallowEqualObjects(value, this.proxy)) {
             this.proxy = value
         }
