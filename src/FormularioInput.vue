@@ -28,6 +28,16 @@ const VALIDATION_BEHAVIOR = {
     SUBMIT: 'submit',
 }
 
+interface ModelGetConverter {
+    <U, T>(value: U|Empty): U|T|Empty;
+}
+
+interface ModelSetConverter {
+    <T, U>(curr: U|T, prev: U|Empty): U|T;
+}
+
+type Empty = null | undefined
+
 @Component({ name: 'FormularioInput', inheritAttrs: false })
 export default class FormularioInput extends Vue {
     @Inject({ default: undefined }) formularioSetter!: Function|undefined
@@ -57,8 +67,8 @@ export default class FormularioInput extends Vue {
     // Affects only observing & setting of local errors
     @Prop({ default: false }) errorsDisabled!: boolean
 
-    @Prop({ default: () => value => value }) modelGetConverter!: Function
-    @Prop({ default: () => value => value }) modelSetConverter!: Function
+    @Prop({ default: () => <U, T>(value: U|Empty): U|T|Empty => value }) modelGetConverter!: ModelGetConverter
+    @Prop({ default: () => <T, U>(value: U|T): U|T => value }) modelSetConverter!: ModelSetConverter
 
     public proxy: any = this.getInitialValue()
 
