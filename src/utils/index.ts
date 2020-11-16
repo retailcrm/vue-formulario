@@ -39,6 +39,10 @@ export function setNested (obj: Record<string, any>, field: string, value: any):
         const fieldPart = fieldParts[i]
         const matches = fieldPart.match(/(.+)\[(\d+)\]$/)
 
+        if (subProxy === undefined) {
+            break
+        }
+
         if (matches) {
             if (subProxy[matches[1]] === undefined) {
                 subProxy[matches[1]] = []
@@ -52,9 +56,6 @@ export function setNested (obj: Record<string, any>, field: string, value: any):
                 subProxy = subProxy[matches[2]]
             }
         } else {
-            if (subProxy === undefined) {
-                break
-            }
             if (i === fieldParts.length - 1) {
                 subProxy[fieldPart] = value
                 break
