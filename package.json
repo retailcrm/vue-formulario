@@ -1,6 +1,6 @@
 {
     "name": "@retailcrm/vue-formulario",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "author": "RetailDriverLLC <integration@retailcrm.ru>",
     "scripts": {
         "build": "npm run build:esm & npm run build:umd & npm run build:iife & wait && echo \"Build complete:\nesm: $(gzip -c dist/formulario.esm.js | wc -c)b gzip\numd: $(gzip -c dist/formulario.umd.js | wc -c)b gzip\nmin: $(gzip -c dist/formulario.min.js | wc -c)b gzip\"",

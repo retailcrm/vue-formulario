@@ -193,6 +193,9 @@ function setNested(obj, field, value) {
     for (let i = 0; i < fieldParts.length; i++) {
         const fieldPart = fieldParts[i];
         const matches = fieldPart.match(/(.+)\[(\d+)\]$/);
+        if (subProxy === undefined) {
+            break;
+        }
         if (matches) {
             if (subProxy[matches[1]] === undefined) {
                 subProxy[matches[1]] = [];
