@@ -22,7 +22,7 @@ import {
     shallowEquals,
 } from '@/utils'
 
-import FormularioFormRegistry from '@/FormularioFormRegistry'
+import PathRegistry from '@/PathRegistry'
 
 import FormularioField from '@/FormularioField.vue'
 
@@ -45,7 +45,7 @@ export default class FormularioForm extends Vue {
 
     public proxy: Record<string, unknown> = {}
 
-    private registry: FormularioFormRegistry = new FormularioFormRegistry(this)
+    private registry: PathRegistry<FormularioField> = new PathRegistry()
 
     // Local error messages are temporal, they wiped each resetValidation call
     private localFormErrors: string[] = []
@@ -85,13 +85,13 @@ export default class FormularioForm extends Vue {
 
     @Watch('mergedFieldErrors', { deep: true, immediate: true })
     onMergedFieldErrorsChange (errors: Record<string, string[]>): void {
-        this.registry.forEach((vm, path) => {
-            vm.setErrors(errors[path] || [])
+        this.registry.forEach((field, path) => {
+            field.setErrors(errors[path] || [])
         })
     }
 
     created (): void {
-        this.initProxy()
+        this.syncProxy()
     }
 
     @Provide('__FormularioForm_getValue')
@@ -112,58 +112,77 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('__FormularioForm_emitValidation')
-    onFormularioFieldValidation (payload: ValidationEventPayload): void {
+    private emitValidation (payload: ValidationEventPayload): void {
         this.$emit('validation', payload)
     }
 
     @Provide('__FormularioForm_register')
-    private register (field: string, vm: FormularioField): void {
-        this.registry.add(field, vm)
+    private register (path: string, field: FormularioField): void {
+        this.registry.add(path, field)
 
-        if (has(this.mergedFieldErrors, field)) {
-            vm.setErrors(this.mergedFieldErrors[field] || [])
+        const value = getNested(this.initialValues, path)
+
+        if (!field.hasModel && this.hasInitialValue && value !== undefined) {
+            // In the case that the form is carrying an initial value and the
+            // element is not, set it directly.
+            // @ts-ignore
+            field.context.model = value
+        } else if (field.hasModel && !shallowEquals(field.proxy, value)) {
+            // In this case, the field is v-modeled or has an initial value and the
+            // form has no value or a different value, so use the field value
+            this.setFieldValueAndEmit(path, field.proxy)
+        }
+
+        if (has(this.mergedFieldErrors, path)) {
+            field.setErrors(this.mergedFieldErrors[path] || [])
         }
     }
 
     @Provide('__FormularioForm_unregister')
-    private unregister (field: string): void {
-        if (this.registry.has(field)) {
-            this.registry.remove(field)
+    private unregister (path: string): void {
+        if (this.registry.has(path)) {
+            this.registry.remove(path)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [path]: _, ...newProxy } = this.proxy
+            this.proxy = newProxy
         }
     }
 
-    initProxy (): void {
+    syncProxy (): void {
         if (this.hasInitialValue) {
             this.proxy = this.initialValues
         }
     }
 
-    setValues (values: Record<string, unknown>): void {
-        const keys = Array.from(new Set([...Object.keys(values), ...Object.keys(this.proxy)]))
+    setValues (state: Record<string, unknown>): void {
+        const paths = Array.from(new Set([
+            ...Object.keys(state),
+            ...Object.keys(this.proxy),
+        ]))
+
         let proxyHasChanges = false
-        keys.forEach(field => {
-            if (!this.registry.hasNested(field)) {
+
+        paths.forEach(path => {
+            if (!this.registry.hasSubset(path)) {
                 return
             }
 
-            this.registry.getNested(field).forEach((_, fqn) => {
-                const $field = this.registry.get(fqn) as FormularioField
-
-                const oldValue = getNested(this.proxy, fqn)
-                const newValue = getNested(values, fqn)
+            this.registry.getSubset(path).forEach((field, path) => {
+                const oldValue = getNested(this.proxy, path)
+                const newValue = getNested(state, path)
 
                 if (!shallowEquals(newValue, oldValue)) {
-                    this.setFieldValue(fqn, newValue)
+                    this.setFieldValue(path, newValue)
                     proxyHasChanges = true
                 }
 
-                if (!shallowEquals(newValue, $field.proxy)) {
-                    $field.context.model = newValue
+                if (!shallowEquals(newValue, field.proxy)) {
+                    field.context.model = newValue
                 }
             })
         })
 
-        this.initProxy()
+        this.syncProxy()
 
         if (proxyHasChanges) {
             this.$emit('input', { ...this.proxy })

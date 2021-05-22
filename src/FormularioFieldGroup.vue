@@ -24,7 +24,7 @@ export default class FormularioFieldGroup extends Vue {
     readonly isArrayItem!: boolean
 
     @Provide('__Formulario_path')
-    get groupPath (): string {
+    get fullPath (): string {
         if (this.isArrayItem) {
             return `${this.__Formulario_path}[${this.name}]`
         }
@@ -33,7 +33,7 @@ export default class FormularioFieldGroup extends Vue {
             return this.name
         }
 
-        return `${this.path}.${this.name}`
+        return `${this.__Formulario_path}.${this.name}`
     }
 }
 </script>

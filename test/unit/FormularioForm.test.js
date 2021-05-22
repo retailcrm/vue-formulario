@@ -38,63 +38,6 @@ describe('FormularioForm', () => {
         expect(spy).toHaveBeenCalled()
     })
 
-    it('Adds subcomponents to the registry', () => {
-        const wrapper = mount(FormularioForm, {
-            propsData: { state: {} },
-            slots: {
-                default: `
-                    <FormularioField name="sub1" />
-                    <FormularioField name="sub2" />
-                `
-            }
-        })
-        expect(wrapper.vm['registry'].keys()).toEqual(['sub1', 'sub2'])
-    })
-
-    it('Removes subcomponents from the registry', async () => {
-        const wrapper = mount({
-            data: () => ({ active: true }),
-            template: `
-                <FormularioForm>
-                    <FormularioField v-if="active" name="sub1" />
-                    <FormularioField name="sub2" />
-                </FormularioForm>
-            `
-        })
-        await flushPromises()
-        expect(wrapper.findComponent(FormularioForm).vm['registry'].keys()).toEqual(['sub1', 'sub2'])
-        wrapper.setData({ active: false })
-        await flushPromises()
-        expect(wrapper.findComponent(FormularioForm).vm['registry'].keys()).toEqual(['sub2'])
-    })
-
-    it('Getting nested fields from registry', async () => {
-        const wrapper = mount({
-            data: () => ({ active: true, nested: { groups: { value: 'value' } }, groups: [{ name: 'group1' }, { name: 'group2' }] }),
-            template: `
-                <FormularioForm>
-                    <FormularioField name="sub1" />
-                    <FormularioField name="sub2" />
-                    <FormularioField name="nested.groups.value" />
-                    <FormularioField name="groups">
-                        <FormularioFieldGroup :name="'groups[' + index + ']'" v-for="(_, index) in groups" :key="index">
-                            <FormularioField name="name" />
-                        </FormularioFieldGroup>
-                    </FormularioField>
-                </FormularioForm>
-            `
-        })
-        await flushPromises()
-        expect(Array.from(wrapper.findComponent(FormularioForm).vm.registry.getNested('sub1').keys())).toEqual(['sub1'])
-        expect(Array.from(wrapper.findComponent(FormularioForm).vm.registry.getNested('groups').keys()))
-            .toEqual(['groups', 'groups[0].name', 'groups[1].name'])
-
-        wrapper.setData({ active: true, groups: [{ name: 'group1' }] })
-        await flushPromises()
-        expect(Array.from(wrapper.findComponent(FormularioForm).vm.registry.getNested('groups').keys()))
-            .toEqual(['groups', 'groups[0].name'])
-    })
-
     it('Can set a field’s initial value', async () => {
         const wrapper = mount(FormularioForm, {
             propsData: { state: { test: 'Has initial value' } },

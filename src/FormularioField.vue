@@ -73,7 +73,7 @@ export default class FormularioField extends Vue {
         validator: behavior => Object.values(VALIDATION_BEHAVIOR).includes(behavior)
     }) validationBehavior!: string
 
-    // Affects only observing & setting of local errors
+    // Affects only setting of local errors
     @Prop({ default: false }) errorsDisabled!: boolean
 
     @Prop({ default: () => <U, T>(value: U|Empty): U|T|Empty => value }) modelGetConverter!: ModelGetConverter
@@ -87,8 +87,15 @@ export default class FormularioField extends Vue {
 
     private validationRun: Promise<Violation[]> = Promise.resolve([])
 
-    public get fullQualifiedName (): string {
+    public get fullPath (): string {
         return this.__Formulario_path !== '' ? `${this.__Formulario_path}.${this.name}` : this.name
+    }
+
+    /**
+     * Determines if this formulario element is v-modeled or not.
+     */
+    get hasModel (): boolean {
+        return has(this.$options.propsData || {}, 'value')
     }
 
     private get model (): unknown {
@@ -112,7 +119,7 @@ export default class FormularioField extends Vue {
 
     private get context (): FormularioFieldContext<unknown> {
         return Object.defineProperty({
-            name: this.fullQualifiedName,
+            name: this.fullPath,
             runValidation: this.runValidation.bind(this),
             violations: this.violations,
             errors: this.localErrors,
@@ -141,13 +148,6 @@ export default class FormularioField extends Vue {
         return messages
     }
 
-    /**
-     * Determines if this formulario element is v-modeled or not.
-     */
-    private get hasModel (): boolean {
-        return has(this.$options.propsData || {}, 'value')
-    }
-
     @Watch('proxy')
     private onProxyChange (newValue: unknown, oldValue: unknown): void {
         if (!this.hasModel && !shallowEquals(newValue, oldValue)) {
@@ -170,7 +170,7 @@ export default class FormularioField extends Vue {
     created (): void {
         this.initProxy()
         if (typeof this.__FormularioForm_register === 'function') {
-            this.__FormularioForm_register(this.fullQualifiedName, this)
+            this.__FormularioForm_register(this.fullPath, this)
         }
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
@@ -179,7 +179,7 @@ export default class FormularioField extends Vue {
 
     beforeDestroy (): void {
         if (typeof this.__FormularioForm_unregister === 'function') {
-            this.__FormularioForm_unregister(this.fullQualifiedName)
+            this.__FormularioForm_unregister(this.fullPath)
         }
     }
 
