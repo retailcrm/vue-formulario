@@ -95,8 +95,8 @@ export default {
 
     components: {
         FormularioField,
-        FormularioForm,
         FormularioFieldGroup,
+        FormularioForm,
     },
 
     data: () => ({
