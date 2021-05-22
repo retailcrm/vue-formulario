@@ -1,6 +1,6 @@
 import { shallowEqualObjects, has, getNested } from '@/utils'
+import FormularioField from '@/FormularioField.vue'
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioInput from '@/FormularioInput.vue'
 
 /**
  * Component registry with inherent depth to handle complex nesting. This is
@@ -8,7 +8,7 @@ import FormularioInput from '@/FormularioInput.vue'
  */
 export default class Registry {
     private ctx: FormularioForm
-    private registry: Map<string, FormularioInput>
+    private registry: Map<string, FormularioField>
 
     /**
      * Create a new registry of components.
@@ -24,7 +24,7 @@ export default class Registry {
      * @param {string} field name of the field.
      * @param {FormularioForm} component the actual component instance.
      */
-    add (field: string, component: FormularioInput): void {
+    add (field: string, component: FormularioField): void {
         if (this.registry.has(field)) {
             return
         }
@@ -85,14 +85,14 @@ export default class Registry {
     /**
      * Get a particular registry value.
      */
-    get (key: string): FormularioInput | undefined {
+    get (key: string): FormularioField | undefined {
         return this.registry.get(key)
     }
 
     /**
      * Get registry value for key or nested to given key
      */
-    getNested (key: string): Map<string, FormularioInput> {
+    getNested (key: string): Map<string, FormularioField> {
         const result = new Map()
 
         for (const i of this.registry.keys()) {

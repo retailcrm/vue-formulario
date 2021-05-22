@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 
 import Formulario from '@/index.ts'
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioInput from '@/FormularioInput.vue'
+import FormularioField from '@/FormularioField.vue'
 
 const globalRule = jest.fn(() => false)
 
@@ -18,9 +18,9 @@ Vue.use(Formulario, {
     },
 })
 
-describe('FormularioInput', () => {
+describe('FormularioField', () => {
     it('Allows custom field-rule level validation strings', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 value: 'other value',
@@ -37,7 +37,7 @@ describe('FormularioInput', () => {
     })
 
     it('No validation on created when validationBehavior is not live', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
@@ -53,7 +53,7 @@ describe('FormularioInput', () => {
     })
 
     it('No validation on value change when validationBehavior is "submit"', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
@@ -83,7 +83,7 @@ describe('FormularioInput', () => {
     })
 
     it('Allows custom field-rule level validation functions', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
@@ -100,7 +100,7 @@ describe('FormularioInput', () => {
     })
 
     it('No validation on created when validationBehavior is default', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'required|in:abcdef',
@@ -116,7 +116,7 @@ describe('FormularioInput', () => {
     })
 
     it('Uses custom async validation rules on defined on the field', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'required|foobar',
@@ -134,7 +134,7 @@ describe('FormularioInput', () => {
     })
 
     it('Uses custom sync validation rules on defined on the field', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 value: 'bar',
@@ -152,7 +152,7 @@ describe('FormularioInput', () => {
     })
 
     it('Uses global custom validation rules', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 value: 'bar',
@@ -165,7 +165,7 @@ describe('FormularioInput', () => {
     })
 
     it('Emits correct validation event', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'fieldName',
                 value: '',
@@ -188,7 +188,7 @@ describe('FormularioInput', () => {
     })
 
     it('Can bail on validation when encountering the bail rule', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'bail|required|in:xyz',
@@ -200,7 +200,7 @@ describe('FormularioInput', () => {
     })
 
     it('Can show multiple validation errors if they occur before the bail rule', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'required|in:xyz|bail',
@@ -212,7 +212,7 @@ describe('FormularioInput', () => {
     })
 
     it('Can avoid bail behavior by using modifier', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 value: '123',
@@ -225,7 +225,7 @@ describe('FormularioInput', () => {
     })
 
     it('Prevents later error messages when modified rule fails', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: '^required|in:xyz|min:10,length',
@@ -237,7 +237,7 @@ describe('FormularioInput', () => {
     })
 
     it('can bail in the middle of the rule set with a modifier', async () => {
-        const wrapper = mount(FormularioInput, {
+        const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'test',
                 validation: 'required|^in:xyz|min:10,length',
@@ -253,14 +253,14 @@ describe('FormularioInput', () => {
             propsData: { name: 'test' },
             slots: {
                 default: `
-                    <FormularioInput
+                    <FormularioField
                         v-slot="{ context }"
                         name="testinput"
                         validation="required"
                         validation-behavior="submit"
                     >
                         <span v-for="error in context.violations">{{ error.message }}</span>
-                    </FormularioInput>
+                    </FormularioField>
                 `
             }
         })
@@ -281,9 +281,9 @@ describe('FormularioInput', () => {
             data: () => ({ values: { test: 'abcd' } }),
             template: `
                 <FormularioForm v-model="values">
-                    <FormularioInput v-slot="{ context }" :model-get-converter="onGet" name="test" >
+                    <FormularioField v-slot="{ context }" :model-get-converter="onGet" name="test" >
                         <span>{{ context.model }}</span>
-                    </FormularioInput>
+                    </FormularioField>
                 </FormularioForm>
             `,
             methods: {
@@ -310,9 +310,9 @@ describe('FormularioInput', () => {
             data: () => ({ values: { test: 'abcd' } }),
             template: `
                 <FormularioForm v-model="values">
-                    <FormularioInput v-slot="{ context }" :model-get-converter="onGet" :model-set-converter="onSet" name="test" >
+                    <FormularioField v-slot="{ context }" :model-get-converter="onGet" :model-set-converter="onSet" name="test" >
                         <input type="text" v-model="context.model">
-                    </FormularioInput>
+                    </FormularioField>
                 </FormularioForm>
             `,
             methods: {

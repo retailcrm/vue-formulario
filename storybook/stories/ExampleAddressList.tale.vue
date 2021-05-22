@@ -2,19 +2,19 @@
     <FormularioForm v-model="values">
         <h1>Address list</h1>
 
-        <FormularioInput
+        <FormularioField
             v-slot="addressList"
             name="addressList"
         >
-            <FormularioGrouping name="addressList">
-                <FormularioGrouping
+            <FormularioFieldGroup name="addressList">
+                <FormularioFieldGroup
                     v-for="(address, addressIndex) in addressList.context.model"
                     :key="'address-' + addressIndex"
                     :name="addressIndex"
                     :is-array-item="true"
                     class="row mx-n2"
                 >
-                    <FormularioInput
+                    <FormularioField
                         v-slot="{ context }"
                         class="col col-auto px-2 mb-3"
                         name="street"
@@ -36,9 +36,9 @@
                         >
                             {{ error }}
                         </div>
-                    </FormularioInput>
+                    </FormularioField>
 
-                    <FormularioInput
+                    <FormularioField
                         v-slot="{ context }"
                         class="col col-auto px-2 mb-3"
                         name="building"
@@ -60,7 +60,7 @@
                         >
                             {{ error }}
                         </div>
-                    </FormularioInput>
+                    </FormularioField>
 
                     <div class="remove-btn-wrapper">
                         <button
@@ -71,8 +71,8 @@
                             Remove
                         </button>
                     </div>
-                </FormularioGrouping>
-            </FormularioGrouping>
+                </FormularioFieldGroup>
+            </FormularioFieldGroup>
 
             <button
                 class="btn btn-primary"
@@ -81,22 +81,22 @@
             >
                 Add address
             </button>
-        </FormularioInput>
+        </FormularioField>
     </FormularioForm>
 </template>
 
 <script>
+import FormularioField from '@/FormularioField'
+import FormularioFieldGroup from '@/FormularioFieldGroup'
 import FormularioForm from '@/FormularioForm'
-import FormularioGrouping from '@/FormularioGrouping'
-import FormularioInput from '@/FormularioInput'
 
 export default {
     name: 'ExampleAddressListTale',
 
     components: {
+        FormularioField,
         FormularioForm,
-        FormularioGrouping,
-        FormularioInput,
+        FormularioFieldGroup,
     },
 
     data: () => ({

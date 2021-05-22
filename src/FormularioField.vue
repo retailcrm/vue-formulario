@@ -50,8 +50,8 @@ interface ModelSetConverter {
 
 type Empty = null | undefined
 
-@Component({ name: 'FormularioInput', inheritAttrs: false })
-export default class FormularioInput extends Vue {
+@Component({ name: 'FormularioField', inheritAttrs: false })
+export default class FormularioField extends Vue {
     @Inject({ default: undefined }) formularioSetter!: Function|undefined
     @Inject({ default: () => (): void => {} }) onFormularioFieldValidation!: Function
     @Inject({ default: undefined }) formularioRegister!: Function|undefined

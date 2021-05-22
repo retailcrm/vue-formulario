@@ -13,8 +13,8 @@ import {
     Provide,
 } from 'vue-property-decorator'
 
-@Component({ name: 'FormularioGrouping' })
-export default class FormularioGrouping extends Vue {
+@Component({ name: 'FormularioFieldGroup' })
+export default class FormularioFieldGroup extends Vue {
     @Inject({ default: '' }) path!: string
 
     @Prop({ required: true })

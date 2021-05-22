@@ -9,7 +9,7 @@ import Vue from 'vue'
 import { Component, Model, Prop, Provide, Watch } from 'vue-property-decorator'
 import { clone, getNested, has, merge, setNested, shallowEqualObjects } from '@/utils'
 import Registry from '@/form/registry'
-import FormularioInput from '@/FormularioInput.vue'
+import FormularioField from '@/FormularioField.vue'
 
 import {
     ErrorHandler,
@@ -125,7 +125,7 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('formularioRegister')
-    register (field: string, component: FormularioInput): void {
+    register (field: string, component: FormularioField): void {
         this.registry.add(field, component)
     }
 
@@ -149,7 +149,7 @@ export default class FormularioForm extends Vue {
             }
 
             this.registry.getNested(field).forEach((registryField, registryKey) => {
-                const $input = this.registry.get(registryKey) as FormularioInput
+                const $input = this.registry.get(registryKey) as FormularioField
                 const oldValue = getNested(this.proxy, registryKey)
                 const newValue = getNested(values, registryKey)
 
@@ -193,8 +193,8 @@ export default class FormularioForm extends Vue {
     }
 
     hasValidationErrors (): Promise<boolean> {
-        return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], input: FormularioInput) => {
-            resolvers.push(input.runValidation() && input.hasValidationErrors())
+        return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], field: FormularioField) => {
+            resolvers.push(field.runValidation() && field.hasValidationErrors())
             return resolvers
         }, [])).then(results => results.some(hasErrors => hasErrors))
     }
@@ -202,8 +202,8 @@ export default class FormularioForm extends Vue {
     resetValidation (): void {
         this.localFormErrors = []
         this.localFieldErrors = {}
-        this.registry.forEach((input: FormularioInput) => {
-            input.resetValidation()
+        this.registry.forEach((field: FormularioField) => {
+            field.resetValidation()
         })
     }
 }

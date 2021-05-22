@@ -1,22 +1,24 @@
 import Vue from 'vue'
+
 import { mount } from '@vue/test-utils'
 import flushPromises from 'flush-promises'
+
 import Formulario from '@/index.ts'
+import FormularioFieldGroup from '@/FormularioFieldGroup.vue'
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioGrouping from '@/FormularioGrouping.vue'
 
 Vue.use(Formulario)
 
-describe('FormularioGrouping', () => {
+describe('FormularioFieldGroup', () => {
     it('Grouped fields to be set', async () => {
         const wrapper = mount(FormularioForm, {
             slots: {
                 default: `
-                    <FormularioGrouping name="group">
-                        <FormularioInput name="text" v-slot="{ context }">
+                    <FormularioFieldGroup name="group">
+                        <FormularioField name="text" v-slot="{ context }">
                             <input type="text" v-model="context.model">
-                        </FormularioInput>
-                    </FormularioGrouping>
+                        </FormularioField>
+                    </FormularioFieldGroup>
                 `
             }
         })
@@ -31,8 +33,7 @@ describe('FormularioGrouping', () => {
         const emitted = wrapper.emitted()
 
         expect(emitted['submit']).toBeTruthy()
-        expect(emitted['submit'].length).toBe(1)
-        expect(emitted['submit'][0]).toEqual([{ group: { text: 'test' } }])
+        expect(emitted['submit']).toEqual([[{ group: { text: 'test' } }]])
     })
 
     it('Grouped fields to be got', async () => {
@@ -45,11 +46,11 @@ describe('FormularioGrouping', () => {
             },
             slots: {
                 default: `
-                    <FormularioGrouping name="group">
-                        <FormularioInput name="text" v-slot="{ context }">
+                    <FormularioFieldGroup name="group">
+                        <FormularioField name="text" v-slot="{ context }">
                             <input type="text" v-model="context.model">
-                        </FormularioInput>
-                    </FormularioGrouping>
+                        </FormularioField>
+                    </FormularioFieldGroup>
                 `
             }
         })
@@ -61,12 +62,12 @@ describe('FormularioGrouping', () => {
             data: () => ({ values: {} }),
             template: `
                 <FormularioForm name="form" v-model="values">
-                    <FormularioGrouping name="group">
-                        <FormularioInput name="text" v-slot="{ context }">
+                    <FormularioFieldGroup name="group">
+                        <FormularioField name="text" v-slot="{ context }">
                             <input type="text" v-model="context.model">
                             <span>{{ values.group.text }}</span>
-                        </FormularioInput>
-                    </FormularioGrouping>
+                        </FormularioField>
+                    </FormularioFieldGroup>
                 </FormularioForm>
             `
         })
@@ -85,9 +86,9 @@ describe('FormularioGrouping', () => {
             slots: {
                 default: `
                     <FormularioGrouping name="group">
-                        <FormularioInput ref="input" name="text" v-slot="{ context }">
+                        <FormularioField ref="input" name="text" v-slot="{ context }">
                             <span v-for="error in context.errors">{{ error }}</span>
-                        </FormularioInput>
+                        </FormularioField>
                     </FormularioGrouping>
                 `,
             },

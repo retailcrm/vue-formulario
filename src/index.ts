@@ -1,14 +1,21 @@
-import Formulario, { FormularioOptions } from '@/Formulario.ts'
 import { VueConstructor } from 'vue'
+
+import Formulario, { FormularioOptions } from '@/Formulario.ts'
+
+import FormularioField from '@/FormularioField.vue'
+import FormularioFieldGroup from '@/FormularioFieldGroup.vue'
 import FormularioForm from '@/FormularioForm.vue'
-import FormularioGrouping from '@/FormularioGrouping.vue'
-import FormularioInput from '@/FormularioInput.vue'
 
 export default {
     install (Vue: VueConstructor, options?: FormularioOptions): void {
+        Vue.component('FormularioField', FormularioField)
+        Vue.component('FormularioFieldGroup', FormularioFieldGroup)
         Vue.component('FormularioForm', FormularioForm)
-        Vue.component('FormularioGrouping', FormularioGrouping)
-        Vue.component('FormularioInput', FormularioInput)
+
+        // @deprecated Use FormularioField instead
+        Vue.component('FormularioInput', FormularioField)
+        // @deprecated Use FormularioFieldGroup instead
+        Vue.component('FormularioGrouping', FormularioFieldGroup)
 
         Vue.mixin({
             beforeCreate () {

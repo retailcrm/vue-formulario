@@ -6,7 +6,7 @@ export interface ErrorHandler {
 
 export interface ErrorObserver {
     callback: ErrorHandler;
-    type: 'form' | 'input';
+    type: 'form' | 'field';
     field?: string;
 }
 
