@@ -31,7 +31,7 @@ const VALIDATION_BEHAVIOR = {
     SUBMIT: 'submit',
 }
 
-type Context<U> = {
+type FormularioFieldContext<U> = {
     model: U;
     name: string;
     runValidation(): Promise<Violation[]>;
@@ -52,14 +52,14 @@ type Empty = null | undefined
 
 @Component({ name: 'FormularioField', inheritAttrs: false })
 export default class FormularioField extends Vue {
+    @Inject({ default: '' }) __Formulario_path!: string
     @Inject({ default: undefined }) __FormularioForm_set!: Function|undefined
     @Inject({ default: () => (): void => {} }) __FormularioForm_emitValidation!: Function
     @Inject({ default: undefined }) __FormularioForm_register!: Function|undefined
     @Inject({ default: undefined }) __FormularioForm_unregister!: Function|undefined
-    @Inject({ default: () => (): Record<string, unknown> => ({}) }) __FormularioForm_getValue!: () => Record<string, unknown>
-    @Inject({ default: undefined }) __FormularioForm_addErrorObserver!: Function|undefined
-    @Inject({ default: undefined }) __FormularioForm_removeErrorObserver!: Function|undefined
-    @Inject({ default: '' }) path!: string
+
+    @Inject({ default: () => (): Record<string, unknown> => ({}) })
+    __FormularioForm_getValue!: () => Record<string, unknown>
 
     @Model('input', { default: '' }) value!: unknown
 
@@ -90,8 +90,8 @@ export default class FormularioField extends Vue {
 
     private validationRun: Promise<Violation[]> = Promise.resolve([])
 
-    private get fullQualifiedName (): string {
-        return this.path !== '' ? `${this.path}.${this.name}` : this.name
+    public get fullQualifiedName (): string {
+        return this.__Formulario_path !== '' ? `${this.__Formulario_path}.${this.name}` : this.name
     }
 
     private get model (): unknown {
@@ -113,7 +113,7 @@ export default class FormularioField extends Vue {
         }
     }
 
-    private get context (): Context<unknown> {
+    private get context (): FormularioFieldContext<unknown> {
         return Object.defineProperty({
             name: this.fullQualifiedName,
             runValidation: this.runValidation.bind(this),
@@ -175,18 +175,12 @@ export default class FormularioField extends Vue {
         if (typeof this.__FormularioForm_register === 'function') {
             this.__FormularioForm_register(this.fullQualifiedName, this)
         }
-        if (typeof this.__FormularioForm_addErrorObserver === 'function' && !this.errorsDisabled) {
-            this.__FormularioForm_addErrorObserver({ callback: this.setErrors, type: 'field', field: this.fullQualifiedName })
-        }
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
         }
     }
 
     beforeDestroy (): void {
-        if (!this.errorsDisabled && typeof this.__FormularioForm_removeErrorObserver === 'function') {
-            this.__FormularioForm_removeErrorObserver(this.setErrors)
-        }
         if (typeof this.__FormularioForm_unregister === 'function') {
             this.__FormularioForm_unregister(this.fullQualifiedName)
         }
@@ -245,10 +239,18 @@ export default class FormularioField extends Vue {
         })
     }
 
+    /**
+     * @internal
+     */
     setErrors (errors: string[]): void {
-        this.localErrors = arrayify(errors)
+        if (!this.errorsDisabled) {
+            this.localErrors = arrayify(errors)
+        }
     }
 
+    /**
+     * @internal
+     */
     resetValidation (): void {
         this.localErrors = []
         this.violations = []

@@ -115,7 +115,7 @@ export default class FormularioFormRegistry {
     /**
      * Iterate over the registry.
      */
-    forEach (callback: Function): void {
+    forEach (callback: (component: FormularioField, field: string) => void): void {
         this.registry.forEach((component, field) => {
             callback(component, field)
         })

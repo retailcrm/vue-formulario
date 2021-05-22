@@ -26,12 +26,6 @@ import FormularioFormRegistry from '@/FormularioFormRegistry'
 
 import FormularioField from '@/FormularioField.vue'
 
-import {
-    ErrorHandler,
-    ErrorObserver,
-    ErrorObserverRegistry,
-} from '@/validation/ErrorObserver'
-
 import { Violation } from '@/validation/validator'
 
 type ValidationEventPayload = {
@@ -49,14 +43,10 @@ export default class FormularioForm extends Vue {
     // Form errors only used on FormularioForm default slot
     @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
-    @Provide()
-    public path = ''
-
     public proxy: Record<string, unknown> = {}
 
     private registry: FormularioFormRegistry = new FormularioFormRegistry(this)
 
-    private errorObserverRegistry = new ErrorObserverRegistry()
     // Local error messages are temporal, they wiped each resetValidation call
     private localFormErrors: string[] = []
     private localFieldErrors: Record<string, string[]> = {}
@@ -87,27 +77,24 @@ export default class FormularioForm extends Vue {
     }
 
     @Watch('formularioValue', { deep: true })
-    onFormularioValueChanged (values: Record<string, unknown>): void {
+    onFormularioValueChange (values: Record<string, unknown>): void {
         if (this.hasModel && values && typeof values === 'object') {
             this.setValues(values)
         }
     }
 
-    @Watch('mergedFormErrors')
-    onMergedFormErrorsChanged (errors: string[]): void {
-        this.errorObserverRegistry.filter(o => o.type === 'form').observe(errors)
-    }
-
     @Watch('mergedFieldErrors', { deep: true, immediate: true })
-    onMergedFieldErrorsChanged (errors: Record<string, string[]>): void {
-        this.errorObserverRegistry.filter(o => o.type === 'field').observe(errors)
+    onMergedFieldErrorsChange (errors: Record<string, string[]>): void {
+        this.registry.forEach((vm, path) => {
+            vm.setErrors(errors[path] || [])
+        })
     }
 
     created (): void {
         this.initProxy()
     }
 
-    @Provide()
+    @Provide('__FormularioForm_getValue')
     getFormValues (): Record<string, unknown> {
         return this.proxy
     }
@@ -129,29 +116,20 @@ export default class FormularioForm extends Vue {
         this.$emit('validation', payload)
     }
 
-    @Provide('__FormularioForm_addErrorObserver')
-    addErrorObserver (observer: ErrorObserver): void {
-        this.errorObserverRegistry.add(observer)
-        if (observer.type === 'form') {
-            observer.callback(this.mergedFormErrors)
-        } else if (observer.field && has(this.mergedFieldErrors, observer.field)) {
-            observer.callback(this.mergedFieldErrors[observer.field])
-        }
-    }
-
-    @Provide('__FormularioForm_removeErrorObserver')
-    removeErrorObserver (observer: ErrorHandler): void {
-        this.errorObserverRegistry.remove(observer)
-    }
-
     @Provide('__FormularioForm_register')
-    private register (field: string, component: FormularioField): void {
-        this.registry.add(field, component)
+    private register (field: string, vm: FormularioField): void {
+        this.registry.add(field, vm)
+
+        if (has(this.mergedFieldErrors, field)) {
+            vm.setErrors(this.mergedFieldErrors[field] || [])
+        }
     }
 
     @Provide('__FormularioForm_unregister')
     private unregister (field: string): void {
-        this.registry.remove(field)
+        if (this.registry.has(field)) {
+            this.registry.remove(field)
+        }
     }
 
     initProxy (): void {

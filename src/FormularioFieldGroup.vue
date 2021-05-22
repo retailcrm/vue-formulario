@@ -15,7 +15,7 @@ import {
 
 @Component({ name: 'FormularioFieldGroup' })
 export default class FormularioFieldGroup extends Vue {
-    @Inject({ default: '' }) path!: string
+    @Inject({ default: '' }) __Formulario_path!: string
 
     @Prop({ required: true })
     readonly name!: string
@@ -23,12 +23,13 @@ export default class FormularioFieldGroup extends Vue {
     @Prop({ default: false })
     readonly isArrayItem!: boolean
 
-    @Provide('path') get groupPath (): string {
+    @Provide('__Formulario_path')
+    get groupPath (): string {
         if (this.isArrayItem) {
-            return `${this.path}[${this.name}]`
+            return `${this.__Formulario_path}[${this.name}]`
         }
 
-        if (this.path === '') {
+        if (this.__Formulario_path === '') {
             return this.name
         }
 
