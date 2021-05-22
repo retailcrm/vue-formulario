@@ -16,7 +16,7 @@ import {
     Prop,
     Watch,
 } from 'vue-property-decorator'
-import { arrayify, has, shallowEqualObjects, snakeToCamel } from './utils'
+import { arrayify, has, shallowEquals, snakeToCamel } from './utils'
 import {
     processConstraints,
     validate,
@@ -102,7 +102,7 @@ export default class FormularioField extends Vue {
     private set model (value: unknown) {
         value = this.modelSetConverter(value, this.proxy)
 
-        if (!shallowEqualObjects(value, this.proxy)) {
+        if (!shallowEquals(value, this.proxy)) {
             this.proxy = value
         }
 
@@ -153,7 +153,7 @@ export default class FormularioField extends Vue {
 
     @Watch('proxy')
     private onProxyChange (newValue: unknown, oldValue: unknown): void {
-        if (!this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
+        if (!this.hasModel && !shallowEquals(newValue, oldValue)) {
             this.context.model = newValue
         }
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
@@ -165,7 +165,7 @@ export default class FormularioField extends Vue {
 
     @Watch('value')
     private onValueChange (newValue: unknown, oldValue: unknown): void {
-        if (this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
+        if (this.hasModel && !shallowEquals(newValue, oldValue)) {
             this.context.model = newValue
         }
     }
@@ -199,14 +199,14 @@ export default class FormularioField extends Vue {
     private initProxy (): void {
         // This should only be run immediately on created and ensures that the
         // proxy and the model are both the same before any additional registration.
-        if (!shallowEqualObjects(this.context.model, this.proxy)) {
+        if (!shallowEquals(this.context.model, this.proxy)) {
             this.context.model = this.proxy
         }
     }
 
-    runValidation (): Promise<void> {
+    runValidation (): Promise<Violation[]> {
         this.validationRun = this.validate().then(violations => {
-            const validationChanged = !shallowEqualObjects(violations, this.violations)
+            const validationChanged = !shallowEquals(violations, this.violations)
             this.violations = violations
             if (validationChanged) {
                 const payload = {
@@ -221,6 +221,7 @@ export default class FormularioField extends Vue {
 
             return this.violations
         })
+
         return this.validationRun
     }
 

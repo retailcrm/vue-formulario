@@ -1,4 +1,5 @@
-import { shallowEqualObjects, has, getNested } from '@/utils'
+import { getNested, has, shallowEquals } from '@/utils'
+
 import FormularioField from '@/FormularioField.vue'
 import FormularioForm from '@/FormularioForm.vue'
 
@@ -6,7 +7,7 @@ import FormularioForm from '@/FormularioForm.vue'
  * Component registry with inherent depth to handle complex nesting. This is
  * important for features such as grouped fields.
  */
-export default class Registry {
+export default class FormularioFormRegistry {
     private ctx: FormularioForm
     private registry: Map<string, FormularioField>
 
@@ -42,7 +43,7 @@ export default class Registry {
             // @ts-ignore
             component.context.model = value
             // @ts-ignore
-        } else if (hasModel && !shallowEqualObjects(component.proxy, value)) {
+        } else if (hasModel && !shallowEquals(component.proxy, value)) {
             // In this case, the field is v-modeled or has an initial value and the
             // form has no value or a different value, so use the field value
             // @ts-ignore

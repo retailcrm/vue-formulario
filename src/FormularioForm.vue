@@ -19,10 +19,10 @@ import {
     has,
     merge,
     setNested,
-    shallowEqualObjects,
+    shallowEquals,
 } from '@/utils'
 
-import Registry from '@/form/registry'
+import FormularioFormRegistry from '@/FormularioFormRegistry'
 
 import FormularioField from '@/FormularioField.vue'
 
@@ -54,7 +54,7 @@ export default class FormularioForm extends Vue {
 
     public proxy: Record<string, unknown> = {}
 
-    private registry: Registry = new Registry(this)
+    private registry: FormularioFormRegistry = new FormularioFormRegistry(this)
 
     private errorObserverRegistry = new ErrorObserverRegistry()
     // Local error messages are temporal, they wiped each resetValidation call
@@ -174,12 +174,12 @@ export default class FormularioForm extends Vue {
                 const oldValue = getNested(this.proxy, fqn)
                 const newValue = getNested(values, fqn)
 
-                if (!shallowEqualObjects(newValue, oldValue)) {
+                if (!shallowEquals(newValue, oldValue)) {
                     this.setFieldValue(fqn, newValue)
                     proxyHasChanges = true
                 }
 
-                if (!shallowEqualObjects(newValue, $field.proxy)) {
+                if (!shallowEquals(newValue, $field.proxy)) {
                     $field.context.model = newValue
                 }
             })

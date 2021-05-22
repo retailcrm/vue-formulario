@@ -4,7 +4,7 @@ export { default as has } from './has'
 export { isScalar } from './types'
 export { default as merge } from './merge'
 export { default as regexForFormat } from './regexForFormat'
-export { default as shallowEqualObjects } from './shallowEqualObjects'
+export { default as shallowEquals } from './shallowEquals'
 export { default as snakeToCamel } from './snakeToCamel'
 
 export function getNested (obj: Record<string, any>, field: string): any {
