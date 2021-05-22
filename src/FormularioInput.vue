@@ -1,5 +1,8 @@
 <template>
-    <div class="formulario-input">
+    <div
+        v-bind="$attrs"
+        class="formulario-input"
+    >
         <slot :context="context" />
     </div>
 </template>
@@ -26,6 +29,15 @@ const VALIDATION_BEHAVIOR = {
     DEMAND: 'demand',
     LIVE: 'live',
     SUBMIT: 'submit',
+}
+
+type Context<U> = {
+    model: U;
+    name: string;
+    runValidation(): Promise<Violation[]>;
+    violations: Violation[];
+    errors: string[];
+    allErrors: string[];
 }
 
 interface ModelGetConverter {
@@ -99,7 +111,7 @@ export default class FormularioInput extends Vue {
         }
     }
 
-    get context (): Record<string, any> {
+    get context (): Context<any> {
         return Object.defineProperty({
             name: this.fullQualifiedName,
             runValidation: this.runValidation.bind(this),
