@@ -112,7 +112,7 @@ export default class Registry {
     }
 
     /**
-     * Map over the registry (recursively).
+     * Iterate over the registry.
      */
     forEach (callback: Function): void {
         this.registry.forEach((component, field) => {
