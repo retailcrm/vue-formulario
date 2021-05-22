@@ -1,7 +1,6 @@
 import alias from '@rollup/plugin-alias'
 import autoExternal from 'rollup-plugin-auto-external'
 import commonjs from '@rollup/plugin-commonjs'
-import { terser } from 'rollup-plugin-terser'
 import typescript from 'rollup-plugin-typescript2'
 import vue from 'rollup-plugin-vue'
 
@@ -27,6 +26,5 @@ export default {
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),
         autoExternal(),
-        // terser(),
     ]
 }
