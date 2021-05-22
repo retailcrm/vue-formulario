@@ -85,11 +85,11 @@ describe('FormularioFieldGroup', () => {
             },
             slots: {
                 default: `
-                    <FormularioGrouping name="group">
+                    <FormularioFieldGroup name="group">
                         <FormularioField ref="input" name="text" v-slot="{ context }">
                             <span v-for="error in context.errors">{{ error }}</span>
                         </FormularioField>
-                    </FormularioGrouping>
+                    </FormularioFieldGroup>
                 `,
             },
         })

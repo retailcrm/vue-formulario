@@ -43,8 +43,8 @@ describe('FormularioForm', () => {
             propsData: { formularioValue: {} },
             slots: {
                 default: `
-                    <FormularioInput name="sub1" />
-                    <FormularioInput name="sub2" />
+                    <FormularioField name="sub1" />
+                    <FormularioField name="sub2" />
                 `
             }
         })
@@ -56,8 +56,8 @@ describe('FormularioForm', () => {
             data: () => ({ active: true }),
             template: `
                 <FormularioForm>
-                    <FormularioInput v-if="active" name="sub1" />
-                    <FormularioInput name="sub2" />
+                    <FormularioField v-if="active" name="sub1" />
+                    <FormularioField name="sub2" />
                 </FormularioForm>
             `
         })
@@ -73,14 +73,14 @@ describe('FormularioForm', () => {
             data: () => ({ active: true, nested: { groups: { value: 'value' } }, groups: [{ name: 'group1' }, { name: 'group2' }] }),
             template: `
                 <FormularioForm>
-                    <FormularioInput name="sub1" />
-                    <FormularioInput name="sub2" />
-                    <FormularioInput name="nested.groups.value" />
-                    <FormularioInput name="groups">
-                        <FormularioGrouping :name="'groups[' + index + ']'" v-for="(item, index) in groups" :key="index">
-                            <FormularioInput name="name" />
-                        </FormularioGrouping>
-                    </FormularioInput>
+                    <FormularioField name="sub1" />
+                    <FormularioField name="sub2" />
+                    <FormularioField name="nested.groups.value" />
+                    <FormularioField name="groups">
+                        <FormularioFieldGroup :name="'groups[' + index + ']'" v-for="(_, index) in groups" :key="index">
+                            <FormularioField name="name" />
+                        </FormularioFieldGroup>
+                    </FormularioField>
                 </FormularioForm>
             `
         })
@@ -100,9 +100,9 @@ describe('FormularioForm', () => {
             propsData: { formularioValue: { test: 'Has initial value' } },
             slots: {
                 default: `
-                    <FormularioInput v-slot="{ context }" validation="required|in:bar" name="test" >
+                    <FormularioField v-slot="{ context }" validation="required|in:bar" name="test" >
                         <input v-model="context.model" type="text">
-                    </FormularioInput>
+                    </FormularioField>
                 `
             }
         })
@@ -115,9 +115,9 @@ describe('FormularioForm', () => {
             propsData: { formularioValue: { test: 'has initial value' } },
             slots: {
                 default: `
-                    <FormularioInput v-slot="{ context }" name="test" value="123">
+                    <FormularioField v-slot="{ context }" name="test" value="123">
                         <input v-model="context.model" type="text">
-                    </FormularioInput>
+                    </FormularioField>
                 `
             }
         })
@@ -129,7 +129,7 @@ describe('FormularioForm', () => {
             data: () => ({ values: {} }),
             template: `
                 <FormularioForm v-model="values">
-                    <FormularioInput name="test" value="123" />
+                    <FormularioField name="test" value="123" />
                 </FormularioForm>
             `
         })
@@ -141,9 +141,9 @@ describe('FormularioForm', () => {
             data: () => ({ values: { test: '' } }),
             template: `
                 <FormularioForm v-model="values">
-                    <FormularioInput v-slot="{ context }" name="test" >
+                    <FormularioField v-slot="{ context }" name="test" >
                         <input v-model="context.model" type="text">
-                    </FormularioInput>
+                    </FormularioField>
                 </FormularioForm>
             `
         })
@@ -156,9 +156,9 @@ describe('FormularioForm', () => {
             data: () => ({ formValues: { date: new Date(123) } }),
             template: `
                 <FormularioForm v-model="formValues" ref="form">
-                    <FormularioInput v-slot="{ context }" name="date" >
+                    <FormularioField v-slot="{ context }" name="date" >
                         <span v-if="context.model">{{ context.model.getTime() }}</span>
-                    </FormularioInput>
+                    </FormularioField>
                 </FormularioForm>
             `
         })
@@ -179,7 +179,7 @@ describe('FormularioForm', () => {
             }),
             template: `
                 <FormularioForm v-model="formValues">
-                    <FormularioInput name="test" v-model="fieldValue" />
+                    <FormularioField name="test" v-model="fieldValue" />
                 </FormularioForm>
             `
         })
@@ -194,7 +194,7 @@ describe('FormularioForm', () => {
                 formularioValue: { test: 'Initial' }
             },
             slots: {
-                default: '<FormularioInput name="test" value="Overrides" />'
+                default: '<FormularioField name="test" value="Overrides" />'
             },
         })
 
@@ -209,9 +209,9 @@ describe('FormularioForm', () => {
             data: () => ({ values: { test: 'abcd' } }),
             template: `
                 <FormularioForm v-model="values">
-                    <FormularioInput v-slot="{ context }" name="test" >
+                    <FormularioField v-slot="{ context }" name="test" >
                         <input v-model="context.model" type="text">
-                    </FormularioInput>
+                    </FormularioField>
                 </FormularioForm>
             `
         })
@@ -228,7 +228,7 @@ describe('FormularioForm', () => {
 
     it('Resolves hasValidationErrors to true', async () => {
         const wrapper = mount(FormularioForm, {
-            slots: { default: '<FormularioInput name="fieldName" validation="required" />' }
+            slots: { default: '<FormularioField name="fieldName" validation="required" />' }
         })
         wrapper.find('form').trigger('submit')
         await flushPromises()
@@ -241,7 +241,7 @@ describe('FormularioForm', () => {
 
     it('Resolves submitted form values to an object', async () => {
         const wrapper = mount(FormularioForm, {
-            slots: { default: '<FormularioInput name="fieldName" validation="required" value="Justin" />' }
+            slots: { default: '<FormularioField name="fieldName" validation="required" value="Justin" />' }
         })
         wrapper.find('form').trigger('submit')
         await flushPromises()
@@ -277,9 +277,9 @@ describe('FormularioForm', () => {
             propsData: { errors: { fieldWithErrors: ['This field has an error'] }},
             slots: {
                 default: `
-                    <FormularioInput v-slot="{ context }" name="fieldWithErrors">
+                    <FormularioField v-slot="{ context }" name="fieldWithErrors">
                         <span v-for="error in context.errors">{{ error }}</span>
-                    </FormularioInput>
+                    </FormularioField>
                 `
             }
         })
@@ -324,10 +324,10 @@ describe('FormularioForm', () => {
         const wrapper = mount(FormularioForm, {
             slots: {
                 default: `
-                    <FormularioInput v-slot="{ context }" name="foo" validation="required|in:foo">
+                    <FormularioField v-slot="{ context }" name="foo" validation="required|in:foo">
                         <input v-model="context.model" type="text" @blur="context.runValidation()">
-                    </FormularioInput>
-                    <FormularioInput name="bar" validation="required" />
+                    </FormularioField>
+                    <FormularioField name="bar" validation="required" />
                 `,
             }
         })
@@ -346,7 +346,7 @@ describe('FormularioForm', () => {
     it('Emits correct validation event on entry', async () => {
         const wrapper = mount(FormularioForm, {
             slots: { default: `
-                <FormularioInput
+                <FormularioField
                     v-slot="{ context }"
                     name="firstField"
                     validation="required|in:foo"
@@ -356,8 +356,8 @@ describe('FormularioForm', () => {
                         type="text"
                         @blur="context.runValidation()"
                     >
-                </FormularioInput>
-                <FormularioInput
+                </FormularioField>
+                <FormularioField
                     name="secondField"
                     validation="required"
                 />
@@ -394,12 +394,12 @@ describe('FormularioForm', () => {
                     name="login"
                     ref="form"
                 >
-                    <FormularioInput v-slot="{ context }" name="username" validation="required">
+                    <FormularioField v-slot="{ context }" name="username" validation="required">
                         <input v-model="context.model" type="text">
-                    </FormularioInput>
-                    <FormularioInput v-slot="{ context }" name="password" validation="required|min:4,length">
+                    </FormularioField>
+                    <FormularioField v-slot="{ context }" name="password" validation="required|min:4,length">
                         <input v-model="context.model" type="password">
-                    </FormularioInput>
+                    </FormularioField>
                 </FormularioForm>
             `,
         })
@@ -432,13 +432,13 @@ describe('FormularioForm', () => {
                     :errors="errors"
                     ref="form"
                 >
-                    <FormularioInput
+                    <FormularioField
                         v-slot="{ context }"
                         name="input"
                         ref="form"
                     >
                         <span v-for="error in context.allErrors">{{ error.message }}</span>
-                    </FormularioInput>
+                    </FormularioField>
                 </FormularioForm>
             `
         })
