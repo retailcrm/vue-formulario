@@ -1,7 +1,7 @@
 export { default as arrayify } from './arrayify'
 export { default as clone } from './clone'
 export { default as has } from './has'
-export { default as isScalar } from './isScalar'
+export { isScalar } from './types'
 export { default as merge } from './merge'
 export { default as regexForFormat } from './regexForFormat'
 export { default as shallowEqualObjects } from './shallowEqualObjects'

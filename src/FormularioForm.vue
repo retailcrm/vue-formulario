@@ -6,9 +6,24 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { Component, Model, Prop, Provide, Watch } from 'vue-property-decorator'
-import { clone, getNested, has, merge, setNested, shallowEqualObjects } from '@/utils'
+import {
+    Component,
+    Model,
+    Prop,
+    Provide,
+    Watch,
+} from 'vue-property-decorator'
+import {
+    clone,
+    getNested,
+    has,
+    merge,
+    setNested,
+    shallowEqualObjects,
+} from '@/utils'
+
 import Registry from '@/form/registry'
+
 import FormularioField from '@/FormularioField.vue'
 
 import {
@@ -19,20 +34,25 @@ import {
 
 import { Violation } from '@/validation/validator'
 
+type ValidationEventPayload = {
+    name: string;
+    violations: Violation[];
+}
+
 @Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
     @Model('input', { default: () => ({}) })
-    public readonly formularioValue!: Record<string, any>
+    public readonly formularioValue!: Record<string, unknown>
 
     // Errors record, describing state validation errors of whole form
-    @Prop({ default: () => ({}) }) readonly errors!: Record<string, any>
+    @Prop({ default: () => ({}) }) readonly errors!: Record<string, string[]>
     // Form errors only used on FormularioForm default slot
     @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
     @Provide()
     public path = ''
 
-    public proxy: Record<string, any> = {}
+    public proxy: Record<string, unknown> = {}
 
     private registry: Registry = new Registry(this)
 
@@ -41,7 +61,7 @@ export default class FormularioForm extends Vue {
     private localFormErrors: string[] = []
     private localFieldErrors: Record<string, string[]> = {}
 
-    get initialValues (): Record<string, any> {
+    get initialValues (): Record<string, unknown> {
         if (this.hasModel && typeof this.formularioValue === 'object') {
             // If there is a v-model on the form/group, use those values as first priority
             return { ...this.formularioValue } // @todo - use a deep clone to detach reference types
@@ -67,7 +87,7 @@ export default class FormularioForm extends Vue {
     }
 
     @Watch('formularioValue', { deep: true })
-    onFormularioValueChanged (values: Record<string, any>): void {
+    onFormularioValueChanged (values: Record<string, unknown>): void {
         if (this.hasModel && values && typeof values === 'object') {
             this.setValues(values)
         }
@@ -80,7 +100,7 @@ export default class FormularioForm extends Vue {
 
     @Watch('mergedFieldErrors', { deep: true, immediate: true })
     onMergedFieldErrorsChanged (errors: Record<string, string[]>): void {
-        this.errorObserverRegistry.filter(o => o.type === 'input').observe(errors)
+        this.errorObserverRegistry.filter(o => o.type === 'field').observe(errors)
     }
 
     created (): void {
@@ -88,7 +108,7 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide()
-    getFormValues (): Record<string, any> {
+    getFormValues (): Record<string, unknown> {
         return this.proxy
     }
 
@@ -104,12 +124,12 @@ export default class FormularioForm extends Vue {
             })
     }
 
-    @Provide()
-    onFormularioFieldValidation (payload: { name: string; violations: Violation[]}): void {
+    @Provide('__FormularioForm_emitValidation')
+    onFormularioFieldValidation (payload: ValidationEventPayload): void {
         this.$emit('validation', payload)
     }
 
-    @Provide()
+    @Provide('__FormularioForm_addErrorObserver')
     addErrorObserver (observer: ErrorObserver): void {
         this.errorObserverRegistry.add(observer)
         if (observer.type === 'form') {
@@ -119,18 +139,18 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    @Provide()
+    @Provide('__FormularioForm_removeErrorObserver')
     removeErrorObserver (observer: ErrorHandler): void {
         this.errorObserverRegistry.remove(observer)
     }
 
-    @Provide('formularioRegister')
-    register (field: string, component: FormularioField): void {
+    @Provide('__FormularioForm_register')
+    private register (field: string, component: FormularioField): void {
         this.registry.add(field, component)
     }
 
-    @Provide('formularioDeregister')
-    deregister (field: string): void {
+    @Provide('__FormularioForm_unregister')
+    private unregister (field: string): void {
         this.registry.remove(field)
     }
 
@@ -140,7 +160,7 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    setValues (values: Record<string, any>): void {
+    setValues (values: Record<string, unknown>): void {
         const keys = Array.from(new Set([...Object.keys(values), ...Object.keys(this.proxy)]))
         let proxyHasChanges = false
         keys.forEach(field => {
@@ -148,18 +168,19 @@ export default class FormularioForm extends Vue {
                 return
             }
 
-            this.registry.getNested(field).forEach((registryField, registryKey) => {
-                const $input = this.registry.get(registryKey) as FormularioField
-                const oldValue = getNested(this.proxy, registryKey)
-                const newValue = getNested(values, registryKey)
+            this.registry.getNested(field).forEach((_, fqn) => {
+                const $field = this.registry.get(fqn) as FormularioField
+
+                const oldValue = getNested(this.proxy, fqn)
+                const newValue = getNested(values, fqn)
 
                 if (!shallowEqualObjects(newValue, oldValue)) {
-                    this.setFieldValue(registryKey, newValue)
+                    this.setFieldValue(fqn, newValue)
                     proxyHasChanges = true
                 }
 
-                if (!shallowEqualObjects(newValue, $input.proxy)) {
-                    $input.context.model = newValue
+                if (!shallowEqualObjects(newValue, $field.proxy)) {
+                    $field.context.model = newValue
                 }
             })
         })
@@ -171,7 +192,7 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    setFieldValue (field: string, value: any): void {
+    setFieldValue (field: string, value: unknown): void {
         if (value === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [field]: value, ...proxy } = this.proxy
@@ -181,8 +202,8 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    @Provide('formularioSetter')
-    setFieldValueAndEmit (field: string, value: any): void {
+    @Provide('__FormularioForm_set')
+    setFieldValueAndEmit (field: string, value: unknown): void {
         this.setFieldValue(field, value)
         this.$emit('input', { ...this.proxy })
     }

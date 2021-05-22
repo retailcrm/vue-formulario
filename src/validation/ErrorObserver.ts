@@ -6,9 +6,11 @@ export interface ErrorHandler {
 
 export interface ErrorObserver {
     callback: ErrorHandler;
-    type: 'form' | 'field';
+    type: ErrorObserverType;
     field?: string;
 }
+
+export type ErrorObserverType = 'form' | 'field'
 
 export interface ErrorObserverPredicate {
     (value: ErrorObserver, index: number, array: ErrorObserver[]): unknown;
