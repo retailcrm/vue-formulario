@@ -6,7 +6,7 @@ import Formulario from '@/index.ts'
 import FormularioForm from '@/FormularioForm.vue'
 import FormularioInput from '@/FormularioInput.vue'
 
-const globalRule = jest.fn(() => { return false })
+const globalRule = jest.fn(() => false)
 
 Vue.use(Formulario, {
     validationRules: { globalRule },

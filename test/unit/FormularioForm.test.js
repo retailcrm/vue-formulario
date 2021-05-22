@@ -320,7 +320,7 @@ describe('FormularioForm', () => {
         expect(wrapper.vm.mergedFieldErrors.inputB.length).toBe(2)
     })
 
-    it('Emits correct validation event when no errors', async () => {
+    it('emits correct validation event when no errors', async () => {
         const wrapper = mount(FormularioForm, {
             slots: {
                 default: `
@@ -337,11 +337,10 @@ describe('FormularioForm', () => {
         await flushPromises()
 
         expect(wrapper.emitted('validation')).toBeTruthy()
-        expect(wrapper.emitted('validation').length).toBe(1)
-        expect(wrapper.emitted('validation')[0][0]).toEqual({
+        expect(wrapper.emitted('validation')).toEqual([[{
             name: 'foo',
             violations: [],
-        })
+        }]])
     })
 
     it('Emits correct validation event on entry', async () => {
