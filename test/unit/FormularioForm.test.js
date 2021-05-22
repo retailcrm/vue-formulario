@@ -40,7 +40,7 @@ describe('FormularioForm', () => {
 
     it('Adds subcomponents to the registry', () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formularioValue: {} },
+            propsData: { state: {} },
             slots: {
                 default: `
                     <FormularioField name="sub1" />
@@ -97,7 +97,7 @@ describe('FormularioForm', () => {
 
     it('Can set a field’s initial value', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formularioValue: { test: 'Has initial value' } },
+            propsData: { state: { test: 'Has initial value' } },
             slots: {
                 default: `
                     <FormularioField v-slot="{ context }" validation="required|in:bar" name="test" >
@@ -112,7 +112,7 @@ describe('FormularioForm', () => {
 
     it('Lets individual fields override form initial value', () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { formularioValue: { test: 'has initial value' } },
+            propsData: { state: { test: 'has initial value' } },
             slots: {
                 default: `
                     <FormularioField v-slot="{ context }" name="test" value="123">
@@ -191,7 +191,7 @@ describe('FormularioForm', () => {
     it('Updates calls setFieldValue on form when a field contains a populated v-model on registration', () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
-                formularioValue: { test: 'Initial' }
+                state: { test: 'Initial' },
             },
             slots: {
                 default: '<FormularioField name="test" value="Overrides" />'

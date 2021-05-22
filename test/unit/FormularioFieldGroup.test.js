@@ -39,7 +39,7 @@ describe('FormularioFieldGroup', () => {
     it('Grouped fields to be got', async () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
-                formularioValue: {
+                state: {
                     group: { text: 'Group text' },
                     text: 'Text',
                 },
@@ -80,7 +80,7 @@ describe('FormularioFieldGroup', () => {
     it('Errors are set for grouped fields', async () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
-                formularioValue: {},
+                state: {},
                 errors: { 'group.text': 'Test error' },
             },
             slots: {

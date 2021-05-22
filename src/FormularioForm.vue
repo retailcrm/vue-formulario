@@ -36,7 +36,7 @@ type ValidationEventPayload = {
 @Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
     @Model('input', { default: () => ({}) })
-    public readonly formularioValue!: Record<string, unknown>
+    public readonly state!: Record<string, unknown>
 
     // Errors record, describing state validation errors of whole form
     @Prop({ default: () => ({}) }) readonly errors!: Record<string, string[]>
@@ -52,9 +52,9 @@ export default class FormularioForm extends Vue {
     private localFieldErrors: Record<string, string[]> = {}
 
     get initialValues (): Record<string, unknown> {
-        if (this.hasModel && typeof this.formularioValue === 'object') {
+        if (this.hasModel && typeof this.state === 'object') {
             // If there is a v-model on the form/group, use those values as first priority
-            return { ...this.formularioValue } // @todo - use a deep clone to detach reference types
+            return { ...this.state } // @todo - use a deep clone to detach reference types
         }
 
         return {}
@@ -69,15 +69,15 @@ export default class FormularioForm extends Vue {
     }
 
     get hasModel (): boolean {
-        return has(this.$options.propsData || {}, 'formularioValue')
+        return has(this.$options.propsData || {}, 'state')
     }
 
     get hasInitialValue (): boolean {
-        return this.formularioValue && typeof this.formularioValue === 'object'
+        return this.state && typeof this.state === 'object'
     }
 
-    @Watch('formularioValue', { deep: true })
-    onFormularioValueChange (values: Record<string, unknown>): void {
+    @Watch('state', { deep: true })
+    onStateChange (values: Record<string, unknown>): void {
         if (this.hasModel && values && typeof values === 'object') {
             this.setValues(values)
         }
