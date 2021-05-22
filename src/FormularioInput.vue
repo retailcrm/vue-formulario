@@ -18,10 +18,10 @@ import {
 } from 'vue-property-decorator'
 import { arrayify, has, shallowEqualObjects, snakeToCamel } from './utils'
 import {
-    ValidationRuleFn,
-    ValidationMessageI18NFn,
     processConstraints,
     validate,
+    ValidationRuleFn,
+    ValidationMessageI18NFn,
     Violation,
 } from '@/validation/validator'
 
