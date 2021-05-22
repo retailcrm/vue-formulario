@@ -1,8 +1,5 @@
 <template>
-    <div
-        v-bind="$attrs"
-        class="formulario-input"
-    >
+    <div v-bind="$attrs">
         <slot :context="context" />
     </div>
 </template>
