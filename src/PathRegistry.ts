@@ -59,24 +59,13 @@ export default class PathRegistry<T> {
         return this.registry.keys()
     }
 
-    /**
-     * Iterate over the registry.
-     */
     forEach (callback: (field: T, path: string) => void): void {
         this.registry.forEach((field, path) => {
             callback(field, path)
         })
     }
 
-    /**
-     * Reduce the registry.
-     * @param {function} callback
-     * @param accumulator
-     */
-    reduce<U> (callback: (accumulator: U, item: T, path: string) => U, accumulator: U): U {
-        this.registry.forEach((item, path) => {
-            accumulator = callback(accumulator, item, path)
-        })
-        return accumulator
+    map<U> (mapper: (item: T, path: string) => U): U[] {
+        return Array.from(this.registry.keys()).map(path => mapper(this.get(path) as T, path))
     }
 }

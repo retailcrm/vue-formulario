@@ -28,10 +28,14 @@ import FormularioField from '@/FormularioField.vue'
 
 import { Violation } from '@/validation/validator'
 
+type ErrorsRecord = Record<string, string[]>
+
 type ValidationEventPayload = {
     name: string;
     violations: Violation[];
 }
+
+type ViolationsRecord = Record<string, Violation[]>
 
 @Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
@@ -39,7 +43,7 @@ export default class FormularioForm extends Vue {
     public readonly state!: Record<string, unknown>
 
     // Describes validation errors of whole form
-    @Prop({ default: () => ({}) }) readonly fieldsErrors!: Record<string, string[]>
+    @Prop({ default: () => ({}) }) readonly fieldsErrors!: ErrorsRecord
     // Only used on FormularioForm default slot
     @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
@@ -48,7 +52,7 @@ export default class FormularioForm extends Vue {
     private registry: PathRegistry<FormularioField> = new PathRegistry()
 
     // Local error messages are temporal, they wiped each resetValidation call
-    private localFieldsErrors: Record<string, string[]> = {}
+    private localFieldsErrors: ErrorsRecord = {}
     private localFormErrors: string[] = []
 
     private get hasModel (): boolean {
@@ -75,41 +79,6 @@ export default class FormularioForm extends Vue {
         return [...this.formErrors, ...this.localFormErrors]
     }
 
-    @Watch('state', { deep: true })
-    private onStateChange (values: Record<string, unknown>): void {
-        if (this.hasModel && values && typeof values === 'object') {
-            this.setValues(values)
-        }
-    }
-
-    @Watch('fieldsErrorsComputed', { deep: true, immediate: true })
-    private onFieldsErrorsChange (fieldsErrors: Record<string, string[]>): void {
-        this.registry.forEach((field, path) => {
-            field.setErrors(fieldsErrors[path] || [])
-        })
-    }
-
-    @Provide('__FormularioForm_getValue')
-    private getValue (): Record<string, unknown> {
-        return this.proxy
-    }
-
-    created (): void {
-        this.syncProxy()
-    }
-
-    private onSubmit (): Promise<void> {
-        return this.hasValidationErrors()
-            .then(hasErrors => hasErrors ? undefined : clone(this.proxy))
-            .then(data => {
-                if (typeof data !== 'undefined') {
-                    this.$emit('submit', data)
-                } else {
-                    this.$emit('error')
-                }
-            })
-    }
-
     @Provide('__FormularioForm_register')
     private register (path: string, field: FormularioField): void {
         this.registry.add(path, field)
@@ -117,17 +86,13 @@ export default class FormularioForm extends Vue {
         const value = getNested(this.modelCopy, path)
 
         if (!field.hasModel && this.modelIsDefined && value !== undefined) {
-            // In the case that the form is carrying an initial value and the
-            // element is not, set it directly.
             field.model = value
         } else if (field.hasModel && !shallowEquals(field.proxy, value)) {
-            // In this case, the field is v-modeled or has an initial value and the
-            // form has no value or a different value, so use the field value
             this.setFieldValueAndEmit(path, field.proxy)
         }
 
         if (has(this.fieldsErrorsComputed, path)) {
-            field.setErrors(this.fieldsErrorsComputed[path] || [])
+            field.setErrors(this.fieldsErrorsComputed[path])
         }
     }
 
@@ -141,18 +106,82 @@ export default class FormularioForm extends Vue {
         }
     }
 
+    @Provide('__FormularioForm_getState')
+    private getState (): Record<string, unknown> {
+        return this.proxy
+    }
+
+    @Provide('__FormularioForm_set')
+    private setFieldValueAndEmit (field: string, value: unknown): void {
+        this.setFieldValue(field, value)
+        this.$emit('input', { ...this.proxy })
+    }
+
     @Provide('__FormularioForm_emitValidation')
     private emitValidation (payload: ValidationEventPayload): void {
         this.$emit('validation', payload)
     }
 
-    private syncProxy (): void {
-        if (this.modelIsDefined) {
-            this.proxy = this.modelCopy
+    @Watch('state', { deep: true })
+    private onStateChange (state: Record<string, unknown>): void {
+        if (this.hasModel && state && typeof state === 'object') {
+            this.loadState(state)
         }
     }
 
-    setValues (state: Record<string, unknown>): void {
+    @Watch('fieldsErrorsComputed', { deep: true, immediate: true })
+    private onFieldsErrorsChange (fieldsErrors: Record<string, string[]>): void {
+        this.registry.forEach((field, path) => {
+            field.setErrors(fieldsErrors[path] || [])
+        })
+    }
+
+    public created (): void {
+        this.syncProxy()
+    }
+
+    public runValidation (): Promise<ViolationsRecord> {
+        const violations: ViolationsRecord = {}
+        const runs = this.registry.map((field: FormularioField, path: string) => {
+            return field.runValidation().then(v => { violations[path] = v })
+        })
+
+        return Promise.all(runs).then(() => violations)
+    }
+
+    public hasValidationErrors (): Promise<boolean> {
+        return this.runValidation().then(violations => {
+            return Object.keys(violations).some(path => violations[path].length > 0)
+        })
+    }
+
+    public setErrors ({ fieldsErrors, formErrors }: { fieldsErrors?: ErrorsRecord; formErrors?: string[] }): void {
+        this.localFieldsErrors = fieldsErrors || {}
+        this.localFormErrors = formErrors || []
+    }
+
+    public resetValidation (): void {
+        this.localFieldsErrors = {}
+        this.localFormErrors = []
+        this.registry.forEach((field: FormularioField) => {
+            field.resetValidation()
+        })
+    }
+
+    private onSubmit (): Promise<void> {
+        return this.runValidation()
+            .then(violations => {
+                const hasErrors = Object.keys(violations).some(path => violations[path].length > 0)
+
+                if (!hasErrors) {
+                    this.$emit('submit', clone(this.proxy))
+                } else {
+                    this.$emit('error', violations)
+                }
+            })
+    }
+
+    private loadState (state: Record<string, unknown>): void {
         const paths = Array.from(new Set([
             ...Object.keys(state),
             ...Object.keys(this.proxy),
@@ -187,7 +216,13 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    setFieldValue (field: string, value: unknown): void {
+    private syncProxy (): void {
+        if (this.modelIsDefined) {
+            this.proxy = this.modelCopy
+        }
+    }
+
+    private setFieldValue (field: string, value: unknown): void {
         if (value === undefined) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [field]: value, ...proxy } = this.proxy
@@ -195,32 +230,6 @@ export default class FormularioForm extends Vue {
         } else {
             setNested(this.proxy, field, value)
         }
-    }
-
-    @Provide('__FormularioForm_set')
-    setFieldValueAndEmit (field: string, value: unknown): void {
-        this.setFieldValue(field, value)
-        this.$emit('input', { ...this.proxy })
-    }
-
-    setErrors ({ fieldsErrors, formErrors }: { fieldsErrors?: Record<string, string[]>; formErrors?: string[] }): void {
-        this.localFieldsErrors = fieldsErrors || {}
-        this.localFormErrors = formErrors || []
-    }
-
-    hasValidationErrors (): Promise<boolean> {
-        return Promise.all(this.registry.reduce((resolvers: Promise<boolean>[], field: FormularioField) => {
-            resolvers.push(field.runValidation() && field.hasValidationErrors())
-            return resolvers
-        }, [])).then(results => results.some(hasErrors => hasErrors))
-    }
-
-    resetValidation (): void {
-        this.localFieldsErrors = {}
-        this.localFormErrors = []
-        this.registry.forEach((field: FormularioField) => {
-            field.resetValidation()
-        })
     }
 }
 </script>

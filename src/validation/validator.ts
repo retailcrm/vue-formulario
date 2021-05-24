@@ -5,10 +5,10 @@ export interface Validator {
 }
 
 export interface Violation {
+    message: string;
     rule: string|null;
     args: any[];
     context: ValidationContext|null;
-    message: string;
 }
 
 export interface ValidationRuleFn {

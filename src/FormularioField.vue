@@ -56,7 +56,7 @@ export default class FormularioField extends Vue {
     @Inject({ default: undefined }) __FormularioForm_unregister!: Function|undefined
 
     @Inject({ default: () => (): Record<string, unknown> => ({}) })
-    __FormularioForm_getValue!: () => Record<string, unknown>
+    __FormularioForm_getState!: () => Record<string, unknown>
 
     @Model('input', { default: '' }) value!: unknown
 
@@ -79,7 +79,7 @@ export default class FormularioField extends Vue {
     @Prop({ default: () => <U, T>(value: U|Empty): U|T|Empty => value }) modelGetConverter!: ModelGetConverter
     @Prop({ default: () => <T, U>(value: U|T): U|T => value }) modelSetConverter!: ModelSetConverter
 
-    public proxy: unknown = this.getInitialValue()
+    public proxy: unknown = this.hasModel ? this.value : ''
 
     private localErrors: string[] = []
 
@@ -148,10 +148,17 @@ export default class FormularioField extends Vue {
         return messages
     }
 
+    @Watch('value')
+    private onValueChange (newValue: unknown, oldValue: unknown): void {
+        if (this.hasModel && !shallowEquals(newValue, oldValue)) {
+            this.model = newValue
+        }
+    }
+
     @Watch('proxy')
     private onProxyChange (newValue: unknown, oldValue: unknown): void {
         if (!this.hasModel && !shallowEquals(newValue, oldValue)) {
-            this.context.model = newValue
+            this.model = newValue
         }
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
@@ -160,54 +167,42 @@ export default class FormularioField extends Vue {
         }
     }
 
-    @Watch('value')
-    private onValueChange (newValue: unknown, oldValue: unknown): void {
-        if (this.hasModel && !shallowEquals(newValue, oldValue)) {
-            this.context.model = newValue
+    /**
+     * @internal
+     */
+    public created (): void {
+        if (!shallowEquals(this.model, this.proxy)) {
+            this.model = this.proxy
         }
-    }
 
-    created (): void {
-        this.initProxy()
         if (typeof this.__FormularioForm_register === 'function') {
             this.__FormularioForm_register(this.fullPath, this)
         }
+
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
         }
     }
 
-    beforeDestroy (): void {
+    /**
+     * @internal
+     */
+    public beforeDestroy (): void {
         if (typeof this.__FormularioForm_unregister === 'function') {
             this.__FormularioForm_unregister(this.fullPath)
         }
     }
 
-    private getInitialValue (): unknown {
-        return has(this.$options.propsData || {}, 'value') ? this.value : ''
-    }
-
-    private initProxy (): void {
-        // This should only be run immediately on created and ensures that the
-        // proxy and the model are both the same before any additional registration.
-        if (!shallowEquals(this.context.model, this.proxy)) {
-            this.context.model = this.proxy
-        }
-    }
-
-    runValidation (): Promise<Violation[]> {
+    public runValidation (): Promise<Violation[]> {
         this.validationRun = this.validate().then(violations => {
             const validationChanged = !shallowEquals(violations, this.violations)
             this.violations = violations
+
             if (validationChanged) {
-                const payload = {
-                    name: this.context.name,
+                this.emitValidation({
+                    name: this.fullPath,
                     violations: this.violations,
-                }
-                this.$emit('validation', payload)
-                if (typeof this.__FormularioForm_emitValidation === 'function') {
-                    this.__FormularioForm_emitValidation(payload)
-                }
+                })
             }
 
             return this.violations
@@ -216,7 +211,7 @@ export default class FormularioField extends Vue {
         return this.validationRun
     }
 
-    validate (): Promise<Violation[]> {
+    private validate (): Promise<Violation[]> {
         return validate(processConstraints(
             this.validation,
             this.$formulario.getRules(this.normalizedValidationRules),
@@ -224,11 +219,18 @@ export default class FormularioField extends Vue {
         ), {
             value: this.context.model,
             name: this.context.name,
-            formValues: this.__FormularioForm_getValue(),
+            formValues: this.__FormularioForm_getState(),
         })
     }
 
-    hasValidationErrors (): Promise<boolean> {
+    private emitValidation (payload: { name: string; violations: Violation[] }): void {
+        this.$emit('validation', payload)
+        if (typeof this.__FormularioForm_emitValidation === 'function') {
+            this.__FormularioForm_emitValidation(payload)
+        }
+    }
+
+    public hasValidationErrors (): Promise<boolean> {
         return new Promise(resolve => {
             this.$nextTick(() => {
                 this.validationRun.then(() => resolve(this.violations.length > 0))
@@ -239,7 +241,7 @@ export default class FormularioField extends Vue {
     /**
      * @internal
      */
-    setErrors (errors: string[]): void {
+    public setErrors (errors: string[]): void {
         if (!this.errorsDisabled) {
             this.localErrors = arrayify(errors) as string[]
         }
@@ -248,7 +250,7 @@ export default class FormularioField extends Vue {
     /**
      * @internal
      */
-    resetValidation (): void {
+    public resetValidation (): void {
         this.localErrors = []
         this.violations = []
     }

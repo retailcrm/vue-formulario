@@ -136,7 +136,7 @@ describe('FormularioForm', () => {
     test('resolves submitted form values to an object', async () => {
         const wrapper = mount(FormularioForm, {
             slots: {
-                default: '<FormularioField name="fieldName" validation="required" value="Justin" />'
+                default: '<FormularioField name="name" validation="required" value="Justin" />'
             },
         })
 
@@ -145,8 +145,51 @@ describe('FormularioForm', () => {
         await flushPromises()
 
         expect(wrapper.emitted('submit')).toEqual([
-            [{ fieldName: 'Justin' }],
+            [{ name: 'Justin' }],
         ])
+    })
+
+    test('resolves runValidation', async () => {
+        const wrapper = mount(FormularioForm, {
+            slots: {
+                default: `
+                    <div>
+                        <FormularioField name="address.street" validation="required" />
+                        <FormularioField name="address.building" validation="required" />
+                    </div>
+                `,
+            },
+        })
+
+        const violations = await wrapper.vm.runValidation()
+        const state = {
+            address: {
+                street: null,
+            },
+        }
+
+        expect(violations).toEqual({
+            'address.street': [{
+                message: expect.any(String),
+                rule: 'required',
+                args: [],
+                context: {
+                    name: 'address.street',
+                    value: null,
+                    formValues: state,
+                },
+            }],
+            'address.building': [{
+                message: expect.any(String),
+                rule: 'required',
+                args: [],
+                context: {
+                    name: 'address.building',
+                    value: '',
+                    formValues: state,
+                },
+            }],
+        })
     })
 
     test('resolves hasValidationErrors to true', async () => {
@@ -160,10 +203,8 @@ describe('FormularioForm', () => {
 
         await flushPromises()
 
-        const emitted = wrapper.emitted()
-
-        expect(emitted['error']).toBeTruthy()
-        expect(emitted['error'].length).toBe(1)
+        expect(wrapper.emitted('error')).toBeTruthy()
+        expect(wrapper.emitted('error').length).toBe(1)
     })
 
     describe('allows setting fields errors', () => {
