@@ -10,7 +10,7 @@ import FormularioForm from '@/FormularioForm.vue'
 Vue.use(Formulario)
 
 describe('FormularioFieldGroup', () => {
-    it('Grouped fields to be set', async () => {
+    test('grouped fields to be set', async () => {
         const wrapper = mount(FormularioForm, {
             slots: {
                 default: `
@@ -36,7 +36,7 @@ describe('FormularioFieldGroup', () => {
         expect(emitted['submit']).toEqual([[{ group: { text: 'test' } }]])
     })
 
-    it('Grouped fields to be got', async () => {
+    test('grouped fields to be got', async () => {
         const wrapper = mount(FormularioForm, {
             propsData: {
                 state: {
@@ -57,11 +57,11 @@ describe('FormularioFieldGroup', () => {
         expect(wrapper.find('input[type="text"]').element['value']).toBe('Group text')
     })
 
-    it('Data reactive with grouped fields', async () => {
+    test('data reactive with grouped fields', async () => {
         const wrapper = mount({
             data: () => ({ values: {} }),
             template: `
-                <FormularioForm name="form" v-model="values">
+                <FormularioForm v-model="values">
                     <FormularioFieldGroup name="group">
                         <FormularioField name="text" v-slot="{ context }">
                             <input type="text" v-model="context.model">
@@ -71,22 +71,23 @@ describe('FormularioFieldGroup', () => {
                 </FormularioForm>
             `
         })
+
         expect(wrapper.find('span').text()).toBe('')
+
         wrapper.find('input[type="text"]').setValue('test')
+
         await flushPromises()
+
         expect(wrapper.find('span').text()).toBe('test')
     })
 
-    it('Errors are set for grouped fields', async () => {
+    test('errors are set for grouped fields', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: {
-                state: {},
-                errors: { 'group.text': 'Test error' },
-            },
+            propsData: { fieldsErrors: { 'address.street': 'Test error' } },
             slots: {
                 default: `
-                    <FormularioFieldGroup name="group">
-                        <FormularioField ref="input" name="text" v-slot="{ context }">
+                    <FormularioFieldGroup name="address">
+                        <FormularioField ref="input" name="street" v-slot="{ context }">
                             <span v-for="error in context.errors">{{ error }}</span>
                         </FormularioField>
                     </FormularioFieldGroup>

@@ -94,16 +94,16 @@ export default class FormularioField extends Vue {
     /**
      * Determines if this formulario element is v-modeled or not.
      */
-    get hasModel (): boolean {
+    public get hasModel (): boolean {
         return has(this.$options.propsData || {}, 'value')
     }
 
-    private get model (): unknown {
+    public get model (): unknown {
         const model = this.hasModel ? 'value' : 'proxy'
         return this.modelGetConverter(this[model])
     }
 
-    private set model (value: unknown) {
+    public set model (value: unknown) {
         value = this.modelSetConverter(value, this.proxy)
 
         if (!shallowEquals(value, this.proxy)) {
@@ -113,7 +113,7 @@ export default class FormularioField extends Vue {
         this.$emit('input', value)
 
         if (typeof this.__FormularioForm_set === 'function') {
-            this.__FormularioForm_set(this.context.name, value)
+            this.__FormularioForm_set(this.fullPath, value)
         }
     }
 
@@ -241,7 +241,7 @@ export default class FormularioField extends Vue {
      */
     setErrors (errors: string[]): void {
         if (!this.errorsDisabled) {
-            this.localErrors = arrayify(errors)
+            this.localErrors = arrayify(errors) as string[]
         }
     }
 

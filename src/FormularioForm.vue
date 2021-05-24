@@ -1,6 +1,6 @@
 <template>
-    <form @submit.prevent="onFormSubmit">
-        <slot :errors="mergedFormErrors" />
+    <form @submit.prevent="onSubmit">
+        <slot :errors="formErrorsComputed" />
     </form>
 </template>
 
@@ -38,9 +38,9 @@ export default class FormularioForm extends Vue {
     @Model('input', { default: () => ({}) })
     public readonly state!: Record<string, unknown>
 
-    // Errors record, describing state validation errors of whole form
-    @Prop({ default: () => ({}) }) readonly errors!: Record<string, string[]>
-    // Form errors only used on FormularioForm default slot
+    // Describes validation errors of whole form
+    @Prop({ default: () => ({}) }) readonly fieldsErrors!: Record<string, string[]>
+    // Only used on FormularioForm default slot
     @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
     public proxy: Record<string, unknown> = {}
@@ -48,58 +48,57 @@ export default class FormularioForm extends Vue {
     private registry: PathRegistry<FormularioField> = new PathRegistry()
 
     // Local error messages are temporal, they wiped each resetValidation call
+    private localFieldsErrors: Record<string, string[]> = {}
     private localFormErrors: string[] = []
-    private localFieldErrors: Record<string, string[]> = {}
 
-    get initialValues (): Record<string, unknown> {
+    private get hasModel (): boolean {
+        return has(this.$options.propsData || {}, 'state')
+    }
+
+    private get modelIsDefined (): boolean {
+        return this.state && typeof this.state === 'object'
+    }
+
+    private get modelCopy (): Record<string, unknown> {
         if (this.hasModel && typeof this.state === 'object') {
-            // If there is a v-model on the form/group, use those values as first priority
             return { ...this.state } // @todo - use a deep clone to detach reference types
         }
 
         return {}
     }
 
-    get mergedFormErrors (): string[] {
+    private get fieldsErrorsComputed (): Record<string, string[]> {
+        return merge(this.fieldsErrors || {}, this.localFieldsErrors)
+    }
+
+    private get formErrorsComputed (): string[] {
         return [...this.formErrors, ...this.localFormErrors]
     }
 
-    get mergedFieldErrors (): Record<string, string[]> {
-        return merge(this.errors || {}, this.localFieldErrors)
-    }
-
-    get hasModel (): boolean {
-        return has(this.$options.propsData || {}, 'state')
-    }
-
-    get hasInitialValue (): boolean {
-        return this.state && typeof this.state === 'object'
-    }
-
     @Watch('state', { deep: true })
-    onStateChange (values: Record<string, unknown>): void {
+    private onStateChange (values: Record<string, unknown>): void {
         if (this.hasModel && values && typeof values === 'object') {
             this.setValues(values)
         }
     }
 
-    @Watch('mergedFieldErrors', { deep: true, immediate: true })
-    onMergedFieldErrorsChange (errors: Record<string, string[]>): void {
+    @Watch('fieldsErrorsComputed', { deep: true, immediate: true })
+    private onFieldsErrorsChange (fieldsErrors: Record<string, string[]>): void {
         this.registry.forEach((field, path) => {
-            field.setErrors(errors[path] || [])
+            field.setErrors(fieldsErrors[path] || [])
         })
+    }
+
+    @Provide('__FormularioForm_getValue')
+    private getValue (): Record<string, unknown> {
+        return this.proxy
     }
 
     created (): void {
         this.syncProxy()
     }
 
-    @Provide('__FormularioForm_getValue')
-    getFormValues (): Record<string, unknown> {
-        return this.proxy
-    }
-
-    onFormSubmit (): Promise<void> {
+    private onSubmit (): Promise<void> {
         return this.hasValidationErrors()
             .then(hasErrors => hasErrors ? undefined : clone(this.proxy))
             .then(data => {
@@ -111,30 +110,24 @@ export default class FormularioForm extends Vue {
             })
     }
 
-    @Provide('__FormularioForm_emitValidation')
-    private emitValidation (payload: ValidationEventPayload): void {
-        this.$emit('validation', payload)
-    }
-
     @Provide('__FormularioForm_register')
     private register (path: string, field: FormularioField): void {
         this.registry.add(path, field)
 
-        const value = getNested(this.initialValues, path)
+        const value = getNested(this.modelCopy, path)
 
-        if (!field.hasModel && this.hasInitialValue && value !== undefined) {
+        if (!field.hasModel && this.modelIsDefined && value !== undefined) {
             // In the case that the form is carrying an initial value and the
             // element is not, set it directly.
-            // @ts-ignore
-            field.context.model = value
+            field.model = value
         } else if (field.hasModel && !shallowEquals(field.proxy, value)) {
             // In this case, the field is v-modeled or has an initial value and the
             // form has no value or a different value, so use the field value
             this.setFieldValueAndEmit(path, field.proxy)
         }
 
-        if (has(this.mergedFieldErrors, path)) {
-            field.setErrors(this.mergedFieldErrors[path] || [])
+        if (has(this.fieldsErrorsComputed, path)) {
+            field.setErrors(this.fieldsErrorsComputed[path] || [])
         }
     }
 
@@ -148,9 +141,14 @@ export default class FormularioForm extends Vue {
         }
     }
 
-    syncProxy (): void {
-        if (this.hasInitialValue) {
-            this.proxy = this.initialValues
+    @Provide('__FormularioForm_emitValidation')
+    private emitValidation (payload: ValidationEventPayload): void {
+        this.$emit('validation', payload)
+    }
+
+    private syncProxy (): void {
+        if (this.modelIsDefined) {
+            this.proxy = this.modelCopy
         }
     }
 
@@ -177,7 +175,7 @@ export default class FormularioForm extends Vue {
                 }
 
                 if (!shallowEquals(newValue, field.proxy)) {
-                    field.context.model = newValue
+                    field.model = newValue
                 }
             })
         })
@@ -205,9 +203,9 @@ export default class FormularioForm extends Vue {
         this.$emit('input', { ...this.proxy })
     }
 
-    setErrors ({ formErrors, inputErrors }: { formErrors?: string[]; inputErrors?: Record<string, string[]> }): void {
+    setErrors ({ fieldsErrors, formErrors }: { fieldsErrors?: Record<string, string[]>; formErrors?: string[] }): void {
+        this.localFieldsErrors = fieldsErrors || {}
         this.localFormErrors = formErrors || []
-        this.localFieldErrors = inputErrors || {}
     }
 
     hasValidationErrors (): Promise<boolean> {
@@ -218,8 +216,8 @@ export default class FormularioForm extends Vue {
     }
 
     resetValidation (): void {
+        this.localFieldsErrors = {}
         this.localFormErrors = []
-        this.localFieldErrors = {}
         this.registry.forEach((field: FormularioField) => {
             field.resetValidation()
         })
