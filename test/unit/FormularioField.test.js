@@ -3,8 +3,8 @@ import flushPromises from 'flush-promises'
 import { mount } from '@vue/test-utils'
 
 import Formulario from '@/index.ts'
-import FormularioForm from '@/FormularioForm.vue'
 import FormularioField from '@/FormularioField.vue'
+import FormularioForm from '@/FormularioForm.vue'
 
 const globalRule = jest.fn(() => false)
 
@@ -151,32 +151,32 @@ describe('FormularioField', () => {
         expect(wrapper.find('span').text()).toBe('failed the foobar check')
     })
 
-    it('Uses global custom validation rules', async () => {
-        const wrapper = mount(FormularioField, {
+    it('uses global custom validation rules', async () => {
+        mount(FormularioField, {
             propsData: {
                 name: 'test',
                 value: 'bar',
                 validation: 'required|globalRule',
                 validationBehavior: 'live',
-            }
+            },
         })
         await flushPromises()
         expect(globalRule.mock.calls.length).toBe(1)
     })
 
-    it('Emits correct validation event', async () => {
+    it('emits correct validation event', async () => {
         const wrapper = mount(FormularioField, {
             propsData: {
                 name: 'fieldName',
                 value: '',
                 validation: 'required',
                 validationBehavior: 'live',
-            }
+            },
         })
+
         await flushPromises()
 
-        expect(wrapper.emitted('validation')).toBeTruthy()
-        expect(wrapper.emitted('validation')[0][0]).toEqual({
+        expect(wrapper.emitted('validation')).toEqual([[{
             name: 'fieldName',
             violations: [{
                 rule: expect.stringContaining('required'),
@@ -184,68 +184,55 @@ describe('FormularioField', () => {
                 context: expect.any(Object),
                 message: expect.any(String),
             }],
-        })
+        }]])
     })
 
-    it('Can bail on validation when encountering the bail rule', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'bail|required|in:xyz',
-                validationBehavior: 'live',
-            },
+    test.each([
+        ['bail|required|in:xyz', 1],
+        ['^required|in:xyz|min:10,length', 1],
+        ['required|^in:xyz|min:10,length', 2],
+        ['required|in:xyz|bail', 2],
+    ])('prevents further validation if not passed a rule with bail modifier', async (
+        validation,
+        expectedViolationsCount
+    ) => {
+        const wrapper = mount({
+            data: () => ({ validation }),
+            template: `
+                <FormularioField
+                    name="test"
+                    :validation="validation"
+                    validation-behavior="live"
+                    v-slot="{ context }"
+                >
+                    <div v-for="(_, index) in context.violations" :key="index" data-violation />
+                </FormularioField>
+            `
         })
-        await flushPromises();
-        expect(wrapper.vm.context.violations.length).toBe(1);
+
+        await flushPromises()
+
+        expect(wrapper.findAll('[data-violation]').length).toBe(expectedViolationsCount)
     })
 
-    it('Can show multiple validation errors if they occur before the bail rule', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'required|in:xyz|bail',
-                validationBehavior: 'live',
-            },
+    it('proceeds validation if passed a rule with bail modifier', async () => {
+        const wrapper = mount({
+            template: `
+                <FormularioField
+                    name="test"
+                    value="123"
+                    validation="^required|in:xyz|min:10,length"
+                    validation-behavior="live"
+                    v-slot="{ context }"
+                >
+                    <div v-for="(_, index) in context.violations" :key="index" data-violation />
+                </FormularioField>
+            `
         })
-        await flushPromises();
-        expect(wrapper.vm.context.violations.length).toBe(2);
-    })
 
-    it('Can avoid bail behavior by using modifier', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                value: '123',
-                validation: '^required|in:xyz|min:10,length',
-                validationBehavior: 'live',
-            },
-        })
-        await flushPromises();
-        expect(wrapper.vm.context.violations.length).toBe(2);
-    })
+        await flushPromises()
 
-    it('Prevents later error messages when modified rule fails', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: '^required|in:xyz|min:10,length',
-                validationBehavior: 'live',
-            },
-        })
-        await flushPromises();
-        expect(wrapper.vm.context.violations.length).toBe(1);
-    })
-
-    it('can bail in the middle of the rule set with a modifier', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'required|^in:xyz|min:10,length',
-                validationBehavior: 'live',
-            },
-        })
-        await flushPromises();
-        expect(wrapper.vm.context.violations.length).toBe(2);
+        expect(wrapper.findAll('[data-violation]').length).toBe(2)
     })
 
     it('Displays errors when validation-behavior is submit and form is submitted', async () => {
@@ -307,44 +294,52 @@ describe('FormularioField', () => {
 
     it('Model setter for input', async () => {
         const wrapper = mount({
-            data: () => ({ values: { test: 'abcd' } }),
+            data: () => ({ values: { date: 'not a date' } }),
             template: `
                 <FormularioForm v-model="values">
-                    <FormularioField v-slot="{ context }" :model-get-converter="onGet" :model-set-converter="onSet" name="test" >
+                    <FormularioField
+                        v-slot="{ context }"
+                        :model-get-converter="onGet"
+                        :model-set-converter="onSet"
+                        name="date"
+                    >
                         <input type="text" v-model="context.model">
                     </FormularioField>
                 </FormularioForm>
             `,
             methods: {
-                onGet(source) {
-                    if (!(source instanceof Date)) {
-                        return source
-                    }
-
-                    return source.getDate()
+                onGet (source) {
+                    return source instanceof Date ? source.getDate() : source
                 },
-                onSet(source) {
+
+                onSet (source) {
                     if (source instanceof Date) {
                         return source
                     }
+
                     if (isNaN(source)) {
                         return undefined
                     }
 
-                    let result = new Date('2001-05-01')
+                    const result = new Date('2001-05-01')
                     result.setDate(source)
 
                     return result
-                }
+                },
             }
         })
 
         await flushPromises()
-        expect(wrapper.vm.values.test).toBe(undefined)
+
+        expect(wrapper.vm.values.date).toBe(undefined)
 
         wrapper.find('input[type="text"]').element['value'] = '12'
         wrapper.find('input[type="text"]').trigger('input')
+
         await flushPromises()
-        expect(wrapper.vm.values.test.toISOString()).toBe((new Date('2001-05-12')).toISOString())
+
+        expect(wrapper.vm.values.date.toISOString()).toBe(
+            (new Date('2001-05-12')).toISOString()
+        )
     })
 })
