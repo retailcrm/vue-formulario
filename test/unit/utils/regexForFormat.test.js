@@ -1,79 +1,73 @@
 import regexForFormat from '@/utils/regexForFormat'
 
 describe('regexForFormat', () => {
-  it('Allows MM format with other characters', () => {
-      expect(regexForFormat('abc/MM').test('abc/01')).toBe(true)
-  })
+    test('allows MM format with other characters', () => {
+        expect(regexForFormat('abc/MM').test('abc/01')).toBe(true)
+    })
 
-  it('Fails MM format with single digit', () => {
-      expect(regexForFormat('abc/MM').test('abc/1')).toBe(false)
-  })
+    test('fails MM format with single digit', () => {
+        expect(regexForFormat('abc/MM').test('abc/1')).toBe(false)
+    })
 
-  it('Allows M format with single digit', () => {
-      expect(regexForFormat('M/abc').test('1/abc')).toBe(true)
-  })
+    test('allows M format with single digit', () => {
+        expect(regexForFormat('M/abc').test('1/abc')).toBe(true)
+    })
 
-  it('Fails MM format when out of range', () => {
-      expect(regexForFormat('M/abc').test('13/abc')).toBe(false)
-  })
+    test.each([
+        ['13/abc'],
+        ['55/abc'],
+    ])('fails M format when out of range', (string) => {
+        expect(regexForFormat('M/abc').test(string)).toBe(false)
+    })
 
-  it('Fails M format when out of range', () => {
-      expect(regexForFormat('M/abc').test('55/abc')).toBe(false)
-  })
+    test('replaces double digits before singles', () => {
+        expect(regexForFormat('MMM').test('313131')).toBe(false)
+    })
 
-  it('Replaces double digits before singles', () => {
-      expect(regexForFormat('MMM').test('313131')).toBe(false)
-  })
+    test('allows DD format with zero digit', () => {
+        const regex = regexForFormat('xyz/DD')
 
-  it('Allows DD format with zero digit', () => {
-      expect(regexForFormat('xyz/DD').test('xyz/01')).toBe(true)
-  })
+        expect(regex.test('xyz/01')).toBe(true)
+        expect(regex.test('xyz/9')).toBe(false)
+    })
 
-  it('Fails DD format with single digit', () => {
-      expect(regexForFormat('xyz/DD').test('xyz/9')).toBe(false)
-  })
+    test('allows D format with single digit', () => {
+        expect(regexForFormat('xyz/D').test('xyz/9')).toBe(true)
+    })
 
-  it('Allows D format with single digit', () => {
-      expect(regexForFormat('xyz/D').test('xyz/9')).toBe(true)
-  })
+    test.each([
+        ['xyz/92'],
+        ['xyz/32'],
+    ])('fails D format with out of range digit', string => {
+        expect(regexForFormat('xyz/D').test(string)).toBe(false)
+    })
 
-  it('Fails D format with out of range digit', () => {
-      expect(regexForFormat('xyz/D').test('xyz/92')).toBe(false)
-  })
+    test.each([
+        ['00', true],
+        ['0000', false],
+    ])('allows YY format', (string, matches) => {
+        expect(regexForFormat('YY').test(string)).toBe(matches)
+    })
 
-  it('Fails DD format with out of range digit', () => {
-      expect(regexForFormat('xyz/D').test('xyz/32')).toBe(false)
-  })
+    test('allows YYYY format with four zeros', () => {
+        expect(regexForFormat('YYYY').test('0000')).toBe(true)
+    })
 
-  it('Allows YY format with double zeros', () => {
-      expect(regexForFormat('YY').test('00')).toBe(true)
-  })
+    test.each([
+        ['MD-YY', '12-00'],
+        ['DM-YY', '12-00'],
+    ])('allows $format', (format, string) => {
+        expect(regexForFormat(format).test(string)).toBe(true)
+    })
 
-  it('Fails YY format with four zeros', () => {
-      expect(regexForFormat('YY').test('0000')).toBe(false)
-  })
+    test.each([
+        ['MM/DD/YYYY', '12/18/1987'],
+        ['YYYY-MM-DD', '1987-01-31']
+    ])('$date matches $format', (format, date) => {
+        expect(regexForFormat(format).test(date)).toBe(true)
+    })
 
-  it('Allows YYYY format with four zeros', () => {
-      expect(regexForFormat('YYYY').test('0000')).toBe(true)
-  })
-
-  it('Allows MD-YY', () => {
-      expect(regexForFormat('MD-YY').test('12-00')).toBe(true)
-  })
-
-  it('Allows DM-YY', () => {
-      expect(regexForFormat('DM-YY').test('12-00')).toBe(true)
-  })
-
-  it('Allows date like MM/DD/YYYY', () => {
-      expect(regexForFormat('MM/DD/YYYY').test('12/18/1987')).toBe(true)
-  })
-
-  it('Allows date like YYYY-MM-DD', () => {
-      expect(regexForFormat('YYYY-MM-DD').test('1987-01-31')).toBe(true)
-  })
-
-  it('Fails date like YYYY-MM-DD with out of bounds day', () => {
-      expect(regexForFormat('YYYY-MM-DD').test('1987-01-32')).toBe(false)
-  })
+    test('Fails date like YYYY-MM-DD with out of bounds day', () => {
+        expect(regexForFormat('YYYY-MM-DD').test('1987-01-32')).toBe(false)
+    })
 })
