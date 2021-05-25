@@ -1,4 +1,3 @@
-export { default as arrayify } from './arrayify'
 export { default as clone } from './clone'
 export { default as has } from './has'
 export { isScalar } from './types'

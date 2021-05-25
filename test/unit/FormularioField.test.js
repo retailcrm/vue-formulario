@@ -19,139 +19,89 @@ Vue.use(Formulario, {
 })
 
 describe('FormularioField', () => {
-    it('Allows custom field-rule level validation strings', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                value: 'other value',
-                validation: 'required|in:abcdef',
-                validationMessages: { in: 'the value was different than expected' },
-                validationBehavior: 'live',
-            },
-            scopedSlots: {
-                default: `<div><span v-for="violation in props.context.violations">{{ violation.message }}</span></div>`
-            },
-        })
-        await flushPromises()
-        expect(wrapper.find('span').text()).toBe('the value was different than expected')
-    })
-
-    it('No validation on created when validationBehavior is not live', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'required|in:abcdef',
-                validationMessages: {in: 'the value was different than expected'},
-                value: 'other value'
-            },
-            scopedSlots: {
-                default: `<div><span v-for="error in props.context.violations">{{ error.message }}</span></div>`
-            }
-        })
-        await flushPromises()
-        expect(wrapper.find('span').exists()).toBe(false)
-    })
-
-    it('No validation on value change when validationBehavior is "submit"', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'required|in:abcdef',
-                validationMessages: {in: 'the value was different than expected'},
-                validationBehavior: 'submit',
-                value: 'Initial'
-            },
-            scopedSlots: {
-                default: `<div>
+    const createWrapper = (props = {}) => mount(FormularioField, {
+        propsData: {
+            name: 'field',
+            value: 'initial',
+            validation: 'required|in:abcdef',
+            validationMessages: { in: 'the value was different than expected' },
+            ...props,
+        },
+        scopedSlots: {
+            default: `
+                <div>
                     <input type="text" v-model="props.context.model">
-                    <span v-for="error in props.context.violations">{{ error.message }}</span>
-                </div>`
-            }
+                    <span v-for="(violation, index) in props.context.violations" :key="index" data-violation>
+                        {{ violation.message }}
+                    </span>
+                </div>
+            `,
+        },
+    })
+
+    test('allows custom field-rule level validation strings', async () => {
+        const wrapper = createWrapper({
+            validationBehavior: 'live',
         })
 
         await flushPromises()
 
-        expect(wrapper.find('span').exists()).toBe(false)
+        expect(wrapper.find('[data-violation]').text()).toBe(
+            'the value was different than expected'
+        )
+    })
 
-        wrapper.find('input[type="text"]').element['value'] = 'Test'
-        wrapper.find('input[type="text"]').trigger('change')
+    test.each([
+        ['demand'],
+        ['submit'],
+    ])('no validation when validationBehavior is not "live"', async validationBehavior => {
+        const wrapper = createWrapper({ validationBehavior })
 
         await flushPromises()
 
-        expect(wrapper.find('input[type="text"]').element['value']).toBe('Test')
-        expect(wrapper.find('span').exists()).toBe(false)
+        expect(wrapper.find('[data-violation]').exists()).toBe(false)
+
+        wrapper.find('input').element['value'] = 'updated'
+        wrapper.find('input').trigger('change')
+
+        await flushPromises()
+
+        expect(wrapper.find('input').element['value']).toBe('updated')
+        expect(wrapper.find('[data-violation]').exists()).toBe(false)
     })
 
-    it('Allows custom field-rule level validation functions', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'required|in:abcdef',
-                validationMessages: { in: ({ value }) => `The string ${value} is not correct.` },
-                validationBehavior: 'live',
-                value: 'other value'
-            },
-            scopedSlots: {
-                default: `<div><span v-for="error in props.context.violations">{{ error.message }}</span></div>`
-            }
+    test('allows custom validation rule message', async () => {
+        const wrapper = createWrapper({
+            value: 'other value',
+            validationMessages: { in: ({ value }) => `the string "${value}" is not correct` },
+            validationBehavior: 'live',
         })
+
         await flushPromises()
-        expect(wrapper.find('span').text()).toBe('The string other value is not correct.')
+
+        expect(wrapper.find('[data-violation]').text()).toBe(
+            'the string "other value" is not correct'
+        )
     })
 
-    it('No validation on created when validationBehavior is default', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'required|in:abcdef',
-                validationMessages: { in: 'the value was different than expected' },
-                value: 'other value'
-            },
-            scopedSlots: {
-                default: `<div><span v-for="error in props.context.violations">{{ error.message }}</span></div>`
-            }
+    test.each([
+        ['bar', ({ value }) => value === 'foo'],
+        ['bar', ({ value }) => Promise.resolve(value === 'foo')],
+    ])('uses local custom validation rules', async (value, rule) => {
+        const wrapper = createWrapper({
+            value,
+            validation: 'required|custom',
+            validationRules: { custom: rule },
+            validationMessages: { custom: 'failed the custom rule check' },
+            validationBehavior: 'live',
         })
+
         await flushPromises()
-        expect(wrapper.find('span').exists()).toBe(false)
+
+        expect(wrapper.find('[data-violation]').text()).toBe('failed the custom rule check')
     })
 
-    it('Uses custom async validation rules on defined on the field', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                validation: 'required|foobar',
-                validationRules: { foobar: async ({ value }) => value === 'foo' },
-                validationMessages: { foobar: 'failed the foobar check' },
-                validationBehavior: 'live',
-                value: 'bar'
-            },
-            scopedSlots: {
-                default: `<div><span v-for="error in props.context.violations">{{ error.message }}</span></div>`
-            }
-        })
-        await flushPromises()
-        expect(wrapper.find('span').text()).toBe('failed the foobar check')
-    })
-
-    it('Uses custom sync validation rules on defined on the field', async () => {
-        const wrapper = mount(FormularioField, {
-            propsData: {
-                name: 'test',
-                value: 'bar',
-                validation: 'required|foobar',
-                validationRules: { foobar: ({ value }) => value === 'foo' },
-                validationMessages: { foobar: 'failed the foobar check' },
-                validationBehavior: 'live',
-            },
-            scopedSlots: {
-                default: `<div><span v-for="error in props.context.violations">{{ error.message }}</span></div>`
-            }
-        })
-        await flushPromises()
-        expect(wrapper.find('span').text()).toBe('failed the foobar check')
-    })
-
-    it('uses global custom validation rules', async () => {
+    test('uses global custom validation rules', async () => {
         mount(FormularioField, {
             propsData: {
                 name: 'test',
@@ -160,14 +110,16 @@ describe('FormularioField', () => {
                 validationBehavior: 'live',
             },
         })
+
         await flushPromises()
+
         expect(globalRule.mock.calls.length).toBe(1)
     })
 
-    it('emits correct validation event', async () => {
+    test('emits correct validation event', async () => {
         const wrapper = mount(FormularioField, {
             propsData: {
-                name: 'fieldName',
+                name: 'field',
                 value: '',
                 validation: 'required',
                 validationBehavior: 'live',
@@ -177,11 +129,15 @@ describe('FormularioField', () => {
         await flushPromises()
 
         expect(wrapper.emitted('validation')).toEqual([[{
-            name: 'fieldName',
+            name: 'field',
             violations: [{
-                rule: expect.stringContaining('required'),
+                rule: 'required',
                 args: expect.any(Array),
-                context: expect.any(Object),
+                context: {
+                    name: 'field',
+                    value: '',
+                    formValues: {},
+                },
                 message: expect.any(String),
             }],
         }]])
@@ -196,18 +152,10 @@ describe('FormularioField', () => {
         validation,
         expectedViolationsCount
     ) => {
-        const wrapper = mount({
-            data: () => ({ validation }),
-            template: `
-                <FormularioField
-                    name="test"
-                    :validation="validation"
-                    validation-behavior="live"
-                    v-slot="{ context }"
-                >
-                    <div v-for="(_, index) in context.violations" :key="index" data-violation />
-                </FormularioField>
-            `
+        const wrapper = createWrapper({
+            value: '',
+            validation,
+            validationBehavior: 'live',
         })
 
         await flushPromises()
@@ -215,19 +163,11 @@ describe('FormularioField', () => {
         expect(wrapper.findAll('[data-violation]').length).toBe(expectedViolationsCount)
     })
 
-    it('proceeds validation if passed a rule with bail modifier', async () => {
-        const wrapper = mount({
-            template: `
-                <FormularioField
-                    name="test"
-                    value="123"
-                    validation="^required|in:xyz|min:10,length"
-                    validation-behavior="live"
-                    v-slot="{ context }"
-                >
-                    <div v-for="(_, index) in context.violations" :key="index" data-violation />
-                </FormularioField>
-            `
+    test('proceeds validation if passed a rule with bail modifier', async () => {
+        const wrapper = createWrapper({
+            value: '123',
+            validation: '^required|in:xyz|min:10,length',
+            validationBehavior: 'live',
         })
 
         await flushPromises()
@@ -235,18 +175,19 @@ describe('FormularioField', () => {
         expect(wrapper.findAll('[data-violation]').length).toBe(2)
     })
 
-    it('Displays errors when validation-behavior is submit and form is submitted', async () => {
+    test('displays errors when validation-behavior is submit and form is submitted', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { name: 'test' },
             slots: {
                 default: `
                     <FormularioField
                         v-slot="{ context }"
-                        name="testinput"
+                        name="field"
                         validation="required"
                         validation-behavior="submit"
                     >
-                        <span v-for="error in context.violations">{{ error.message }}</span>
+                        <span v-for="(violation, index) in context.violations" :key="index" data-violation>
+                            {{ violation.message }}
+                        </span>
                     </FormularioField>
                 `
             }
@@ -254,49 +195,52 @@ describe('FormularioField', () => {
 
         await flushPromises()
 
-        expect(wrapper.find('span').exists()).toBe(false)
+        expect(wrapper.find('[data-violation]').exists()).toBe(false)
 
         wrapper.trigger('submit')
 
         await flushPromises()
 
-        expect(wrapper.find('span').exists()).toBe(true)
+        expect(wrapper.find('[data-violation]').exists()).toBe(true)
     })
 
-    it('Model getter for input', async () => {
+    test('model getter for input', async () => {
         const wrapper = mount({
-            data: () => ({ values: { test: 'abcd' } }),
+            data: () => ({ state: { date: 'not a date' } }),
             template: `
-                <FormularioForm v-model="values">
-                    <FormularioField v-slot="{ context }" :model-get-converter="onGet" name="test" >
-                        <span>{{ context.model }}</span>
+                <FormularioForm v-model="state">
+                    <FormularioField
+                        v-slot="{ context }"
+                        :model-get-converter="onGet"
+                        name="date"
+                    >
+                        <span data-output>{{ context.model }}</span>
                     </FormularioField>
                 </FormularioForm>
             `,
             methods: {
-                onGet(source) {
-                    if (!(source instanceof Date)) {
-                        return 'invalid date'
-                    }
-
-                    return source.getDate()
-                }
+                onGet (source) {
+                    return source instanceof Date ? source.getDate() : 'invalid date'
+                },
             }
         })
 
         await flushPromises()
-        expect(wrapper.find('span').text()).toBe('invalid date')
 
-        wrapper.vm.values = { test: new Date('1995-12-17') }
+        expect(wrapper.find('[data-output]').text()).toBe('invalid date')
+
+        wrapper.vm.state = { date: new Date('1995-12-17') }
+
         await flushPromises()
-        expect(wrapper.find('span').text()).toBe('17')
+
+        expect(wrapper.find('[data-output]').text()).toBe('17')
     })
 
-    it('Model setter for input', async () => {
+    test('model setter for input', async () => {
         const wrapper = mount({
-            data: () => ({ values: { date: 'not a date' } }),
+            data: () => ({ state: { date: 'not a date' } }),
             template: `
-                <FormularioForm v-model="values">
+                <FormularioForm v-model="state">
                     <FormularioField
                         v-slot="{ context }"
                         :model-get-converter="onGet"
@@ -331,15 +275,20 @@ describe('FormularioField', () => {
 
         await flushPromises()
 
-        expect(wrapper.vm.values.date).toBe(undefined)
-
-        wrapper.find('input[type="text"]').element['value'] = '12'
-        wrapper.find('input[type="text"]').trigger('input')
+        wrapper.find('input').setValue('12')
+        wrapper.find('input').trigger('input')
 
         await flushPromises()
 
-        expect(wrapper.vm.values.date.toISOString()).toBe(
-            (new Date('2001-05-12')).toISOString()
-        )
+        const form = wrapper.findComponent(FormularioForm)
+
+        // @TODO: investigate where redundant events come from
+        expect(form.emitted('input')).toEqual([
+            [{}],
+            [{}],
+            [{ date: new Date('2001-05-12') }],
+            [{ date: new Date('2001-05-12') }],
+            [{ date: new Date('2001-05-12') }],
+        ])
     })
 })

@@ -27,7 +27,7 @@ export default {
             browser: true,
             preferBuiltins: false,
         }),
-        typescript({ check: false, sourceMap: false }),
+        typescript({ sourceMap: false }),
         vue({ css: true, compileTemplate: true }),
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),

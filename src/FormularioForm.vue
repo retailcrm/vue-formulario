@@ -24,8 +24,7 @@ import {
 
 import PathRegistry from '@/PathRegistry'
 
-import FormularioField from '@/FormularioField.vue'
-
+import { FormularioFieldInterface } from '@/types'
 import { Violation } from '@/validation/validator'
 
 type ErrorsRecord = Record<string, string[]>
@@ -49,7 +48,7 @@ export default class FormularioForm extends Vue {
 
     public proxy: Record<string, unknown> = {}
 
-    private registry: PathRegistry<FormularioField> = new PathRegistry()
+    private registry: PathRegistry<FormularioFieldInterface> = new PathRegistry()
 
     // Local error messages are temporal, they wiped each resetValidation call
     private localFieldsErrors: ErrorsRecord = {}
@@ -80,7 +79,7 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('__FormularioForm_register')
-    private register (path: string, field: FormularioField): void {
+    private register (path: string, field: FormularioFieldInterface): void {
         this.registry.add(path, field)
 
         const value = getNested(this.modelCopy, path)
@@ -142,7 +141,7 @@ export default class FormularioForm extends Vue {
 
     public runValidation (): Promise<ViolationsRecord> {
         const violations: ViolationsRecord = {}
-        const runs = this.registry.map((field: FormularioField, path: string) => {
+        const runs = this.registry.map((field: FormularioFieldInterface, path: string) => {
             return field.runValidation().then(v => { violations[path] = v })
         })
 
@@ -163,7 +162,7 @@ export default class FormularioForm extends Vue {
     public resetValidation (): void {
         this.localFieldsErrors = {}
         this.localFormErrors = []
-        this.registry.forEach((field: FormularioField) => {
+        this.registry.forEach((field: FormularioFieldInterface) => {
             field.resetValidation()
         })
     }

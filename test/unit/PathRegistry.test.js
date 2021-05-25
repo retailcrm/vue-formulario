@@ -1,7 +1,7 @@
 import PathRegistry from '@/PathRegistry'
 
 describe('PathRegistry', () => {
-    test ('subset structure', () => {
+    test('subset structure', () => {
         const registry = new PathRegistry()
 
         const paths = path => Array.from(registry.getSubset(path).paths())
