@@ -83,7 +83,7 @@ describe('FormularioFieldGroup', () => {
 
     test('errors are set for grouped fields', async () => {
         const wrapper = mount(FormularioForm, {
-            propsData: { fieldsErrors: { 'address.street': 'Test error' } },
+            propsData: { fieldsErrors: { 'address.street': ['Test error'] } },
             slots: {
                 default: `
                     <FormularioFieldGroup name="address">

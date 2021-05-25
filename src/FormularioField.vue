@@ -243,7 +243,7 @@ export default class FormularioField extends Vue {
      */
     public setErrors (errors: string[]): void {
         if (!this.errorsDisabled) {
-            this.localErrors = arrayify(errors) as string[]
+            this.localErrors = errors
         }
     }
 
