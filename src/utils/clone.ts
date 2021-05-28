@@ -1,7 +1,11 @@
 import has from '@/utils/has'
-import { RecordLike, Scalar, isScalar } from '@/utils/types'
+import { RecordLike, Scalar, isScalar } from '@/types'
 
 type Cloneable = Scalar|Date|RecordLike<unknown>
+
+export const cloneInstance = <T>(original: T): T => {
+    return Object.assign(Object.create(Object.getPrototypeOf(original)), original)
+}
 
 /**
  * A simple (somewhat non-comprehensive) clone function, valid for our use

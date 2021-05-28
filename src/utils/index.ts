@@ -1,6 +1,5 @@
 export { default as clone } from './clone'
 export { default as has } from './has'
-export { isScalar } from './types'
 export { default as merge } from './merge'
 export { default as regexForFormat } from './regexForFormat'
 export { default as shallowEquals } from './shallowEquals'

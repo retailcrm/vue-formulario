@@ -22,30 +22,18 @@ import {
     Violation,
 } from '@/validation/validator'
 
+import {
+    FormularioFieldContext,
+    FormularioFieldModelGetConverter as ModelGetConverter,
+    FormularioFieldModelSetConverter as ModelSetConverter,
+    Empty,
+} from '@/types'
+
 const VALIDATION_BEHAVIOR = {
     DEMAND: 'demand',
     LIVE: 'live',
     SUBMIT: 'submit',
 }
-
-type FormularioFieldContext<U> = {
-    model: U;
-    name: string;
-    runValidation(): Promise<Violation[]>;
-    violations: Violation[];
-    errors: string[];
-    allErrors: string[];
-}
-
-interface ModelGetConverter {
-    <U, T>(value: U|Empty): U|T|Empty;
-}
-
-interface ModelSetConverter {
-    <T, U>(curr: U|T, prev: U|Empty): U|T;
-}
-
-type Empty = null | undefined
 
 @Component({ name: 'FormularioField', inheritAttrs: false })
 export default class FormularioField extends Vue {
