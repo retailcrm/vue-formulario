@@ -1,9 +1,12 @@
 import has from '@/utils/has'
-import { RecordLike, Scalar, isScalar } from '@/types'
+import {
+    RecordLike,
+    Scalar,
+    isRecordLike,
+    isScalar,
+} from '@/types'
 
-type Cloneable = Scalar|Date|RecordLike<unknown>
-
-export const cloneInstance = <T>(original: T): T => {
+const cloneInstance = <T>(original: T): T => {
     return Object.assign(Object.create(Object.getPrototypeOf(original)), original)
 }
 
@@ -11,7 +14,7 @@ export const cloneInstance = <T>(original: T): T => {
  * A simple (somewhat non-comprehensive) clone function, valid for our use
  * case of needing to unbind reactive watchers.
  */
-export default function clone (value: Cloneable): Cloneable {
+export default function clone (value: unknown): unknown {
     if (isScalar(value)) {
         return value as Scalar
     }
@@ -20,18 +23,16 @@ export default function clone (value: Cloneable): Cloneable {
         return new Date(value)
     }
 
+    if (!isRecordLike(value)) {
+        return cloneInstance(value)
+    }
+
     const source: RecordLike<unknown> = value as RecordLike<unknown>
     const copy: RecordLike<unknown> = Array.isArray(source) ? [] : {}
 
     for (const key in source) {
         if (has(source, key)) {
-            if (isScalar(source[key])) {
-                copy[key] = source[key]
-            } else if (source[key] instanceof Date) {
-                copy[key] = new Date(source[key] as Date)
-            } else {
-                copy[key] = clone(source[key] as Cloneable)
-            }
+            copy[key] = clone(source[key])
         }
     }
 
