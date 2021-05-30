@@ -1,4 +1,9 @@
-import { Violation } from '@/validation/validator'
+import { Violation, ViolationsRecord } from '@/validation/validator'
+
+export interface FormularioFormInterface {
+    runValidation(): Promise<ViolationsRecord>;
+    resetValidation(): void;
+}
 
 export interface FormularioFieldInterface {
     hasModel: boolean;

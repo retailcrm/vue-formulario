@@ -25,7 +25,10 @@ import {
 import PathRegistry from '@/PathRegistry'
 
 import { FormularioFieldInterface } from '@/types'
-import { Violation } from '@/validation/validator'
+import {
+    Violation,
+    ViolationsRecord,
+} from '@/validation/validator'
 
 type ErrorsRecord = Record<string, string[]>
 
@@ -34,22 +37,23 @@ type ValidationEventPayload = {
     violations: Violation[];
 }
 
-type ViolationsRecord = Record<string, Violation[]>
+let counter = 0
 
 @Component({ name: 'FormularioForm' })
 export default class FormularioForm extends Vue {
     @Model('input', { default: () => ({}) })
     public readonly state!: Record<string, unknown>
 
+    @Prop({ default: () => `formulario-form-${++counter}` })
+    public readonly id!: string
+
     // Describes validation errors of whole form
     @Prop({ default: () => ({}) }) readonly fieldsErrors!: ErrorsRecord
     // Only used on FormularioForm default slot
     @Prop({ default: () => ([]) }) readonly formErrors!: string[]
 
-    public proxy: Record<string, unknown> = {}
-
+    private proxy: Record<string, unknown> = {}
     private registry: PathRegistry<FormularioFieldInterface> = new PathRegistry()
-
     // Local error messages are temporal, they wiped each resetValidation call
     private localFieldsErrors: ErrorsRecord = {}
     private localFormErrors: string[] = []
@@ -148,6 +152,11 @@ export default class FormularioForm extends Vue {
 
     public created (): void {
         this.syncProxy()
+        this.$formulario.register(this.id, this)
+    }
+
+    public beforeDestroy (): void {
+        this.$formulario.unregister(this.id)
     }
 
     public runValidation (): Promise<ViolationsRecord> {

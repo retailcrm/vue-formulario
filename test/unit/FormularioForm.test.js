@@ -192,6 +192,52 @@ describe('FormularioForm', () => {
         })
     })
 
+    test('resolves runValidation via $formulario', async () => {
+        const wrapper = mount(FormularioForm, {
+            propsData: {
+                id: 'address',
+            },
+            slots: {
+                default: `
+                    <div>
+                        <FormularioField name="address.street" validation="required" />
+                        <FormularioField name="address.building" validation="required" />
+                    </div>
+                `,
+            },
+        })
+
+        const violations = await wrapper.vm.$formulario.runValidation('address')
+        const state = {
+            address: {
+                street: null,
+            },
+        }
+
+        expect(violations).toEqual({
+            'address.street': [{
+                message: expect.any(String),
+                rule: 'required',
+                args: [],
+                context: {
+                    name: 'address.street',
+                    value: null,
+                    formValues: state,
+                },
+            }],
+            'address.building': [{
+                message: expect.any(String),
+                rule: 'required',
+                args: [],
+                context: {
+                    name: 'address.building',
+                    value: '',
+                    formValues: state,
+                },
+            }],
+        })
+    })
+
     test('resolves hasValidationErrors to true', async () => {
         const wrapper = mount(FormularioForm, {
             slots: {
