@@ -39,6 +39,7 @@ const VALIDATION_BEHAVIOR = {
 export default class FormularioField extends Vue {
     @Inject({ default: '' }) __Formulario_path!: string
     @Inject({ default: undefined }) __FormularioForm_set!: Function|undefined
+    @Inject({ default: () => (): void => {} }) __FormularioForm_emitInput!: Function
     @Inject({ default: () => (): void => {} }) __FormularioForm_emitValidation!: Function
     @Inject({ default: undefined }) __FormularioForm_register!: Function|undefined
     @Inject({ default: undefined }) __FormularioForm_unregister!: Function|undefined
@@ -96,12 +97,12 @@ export default class FormularioField extends Vue {
 
         if (!shallowEquals(value, this.proxy)) {
             this.proxy = value
-        }
+            this.$emit('input', value)
 
-        this.$emit('input', value)
-
-        if (typeof this.__FormularioForm_set === 'function') {
-            this.__FormularioForm_set(this.fullPath, value)
+            if (typeof this.__FormularioForm_set === 'function') {
+                this.__FormularioForm_set(this.fullPath, value)
+                this.__FormularioForm_emitInput()
+            }
         }
     }
 

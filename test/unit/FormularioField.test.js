@@ -282,12 +282,8 @@ describe('FormularioField', () => {
 
         const form = wrapper.findComponent(FormularioForm)
 
-        // @TODO: investigate where redundant events come from
         expect(form.emitted('input')).toEqual([
             [{}],
-            [{}],
-            [{ date: new Date('2001-05-12') }],
-            [{ date: new Date('2001-05-12') }],
             [{ date: new Date('2001-05-12') }],
         ])
     })

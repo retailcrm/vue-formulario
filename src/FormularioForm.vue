@@ -87,7 +87,8 @@ export default class FormularioForm extends Vue {
         if (!field.hasModel && this.modelIsDefined && value !== undefined) {
             field.model = value
         } else if (field.hasModel && !shallowEquals(field.proxy, value)) {
-            this.setFieldValueAndEmit(path, field.proxy)
+            this.setFieldValue(path, field.proxy)
+            this.emitInput()
         }
 
         if (has(this.fieldsErrorsComputed, path)) {
@@ -111,8 +112,18 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('__FormularioForm_set')
-    private setFieldValueAndEmit (field: string, value: unknown): void {
-        this.setFieldValue(field, value)
+    private setFieldValue (field: string, value: unknown): void {
+        if (value === undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [field]: value, ...proxy } = this.proxy
+            this.proxy = proxy
+        } else {
+            setNested(this.proxy, field, value)
+        }
+    }
+
+    @Provide('__FormularioForm_emitInput')
+    private emitInput (): void {
         this.$emit('input', { ...this.proxy })
     }
 
@@ -218,16 +229,6 @@ export default class FormularioForm extends Vue {
     private syncProxy (): void {
         if (this.modelIsDefined) {
             this.proxy = this.modelCopy
-        }
-    }
-
-    private setFieldValue (field: string, value: unknown): void {
-        if (value === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { [field]: value, ...proxy } = this.proxy
-            this.proxy = proxy
-        } else {
-            setNested(this.proxy, field, value)
         }
     }
 }
