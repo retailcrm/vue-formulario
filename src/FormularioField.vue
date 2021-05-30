@@ -149,10 +149,11 @@ export default class FormularioField extends Vue {
         if (!this.hasModel && !shallowEquals(newValue, oldValue)) {
             this.model = newValue
         }
+
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
         } else {
-            this.violations = []
+            this.resetValidation()
         }
     }
 

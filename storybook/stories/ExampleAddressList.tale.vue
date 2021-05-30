@@ -11,7 +11,6 @@
                     v-for="(address, addressIndex) in addressList.context.model"
                     :key="'address-' + addressIndex"
                     :name="addressIndex"
-                    :is-array-item="true"
                     class="row mx-n2"
                 >
                     <FormularioField

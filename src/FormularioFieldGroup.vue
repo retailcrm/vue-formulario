@@ -20,20 +20,19 @@ export default class FormularioFieldGroup extends Vue {
     @Prop({ required: true })
     readonly name!: string
 
-    @Prop({ default: false })
-    readonly isArrayItem!: boolean
-
     @Provide('__Formulario_path')
     get fullPath (): string {
-        if (this.isArrayItem) {
-            return `${this.__Formulario_path}[${this.name}]`
+        const name = `${this.name}`
+
+        if (parseInt(name).toString() === name) {
+            return `${this.__Formulario_path}[${name}]`
         }
 
         if (this.__Formulario_path === '') {
-            return this.name
+            return name
         }
 
-        return `${this.__Formulario_path}.${this.name}`
+        return `${this.__Formulario_path}.${name}`
     }
 }
 </script>
