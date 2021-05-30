@@ -1,6 +1,7 @@
 export { default as clone } from './clone'
 export { default as has } from './has'
 export { default as merge } from './merge'
+export { get, unset } from './access'
 export { default as regexForFormat } from './regexForFormat'
 export { default as shallowEquals } from './shallowEquals'
 export { default as snakeToCamel } from './snakeToCamel'
