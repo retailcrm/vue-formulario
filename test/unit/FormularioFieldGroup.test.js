@@ -19,21 +19,18 @@ describe('FormularioFieldGroup', () => {
                             <input type="text" v-model="context.model">
                         </FormularioField>
                     </FormularioFieldGroup>
-                `
-            }
+                `,
+            },
         })
 
-        expect(wrapper.findAll('input[type="text"]').length).toBe(1)
-
-        wrapper.find('input[type="text"]').setValue('test')
+        wrapper.find('input').setValue('test')
         wrapper.find('form').trigger('submit')
 
         await flushPromises()
 
-        const emitted = wrapper.emitted()
-
-        expect(emitted['submit']).toBeTruthy()
-        expect(emitted['submit']).toEqual([[{ group: { text: 'test' } }]])
+        expect(wrapper.emitted('submit')).toEqual([
+            [{ group: { text: 'test' } }],
+        ])
     })
 
     test('grouped fields to be got', async () => {
@@ -51,10 +48,11 @@ describe('FormularioFieldGroup', () => {
                             <input type="text" v-model="context.model">
                         </FormularioField>
                     </FormularioFieldGroup>
-                `
-            }
+                `,
+            },
         })
-        expect(wrapper.find('input[type="text"]').element['value']).toBe('Group text')
+
+        expect(wrapper.find('input').element['value']).toBe('Group text')
     })
 
     test('data reactive with grouped fields', async () => {
@@ -69,12 +67,12 @@ describe('FormularioFieldGroup', () => {
                         </FormularioField>
                     </FormularioFieldGroup>
                 </FormularioForm>
-            `
+            `,
         })
 
         expect(wrapper.find('span').text()).toBe('')
 
-        wrapper.find('input[type="text"]').setValue('test')
+        wrapper.find('input').setValue('test')
 
         await flushPromises()
 
@@ -94,6 +92,7 @@ describe('FormularioFieldGroup', () => {
                 `,
             },
         })
+
         expect(wrapper.findAll('span').length).toBe(1)
     })
 })
