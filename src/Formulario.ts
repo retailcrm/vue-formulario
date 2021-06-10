@@ -26,7 +26,7 @@ export default class Formulario {
 
     private readonly registry: Map<string, FormularioFormInterface>
 
-    constructor (options?: FormularioOptions) {
+    public constructor (options?: FormularioOptions) {
         this.registry = new Map()
 
         this.validationRules = validationRules
@@ -38,7 +38,7 @@ export default class Formulario {
     /**
      * Given a set of options, apply them to the pre-existing options.
      */
-    extend (extendWith: FormularioOptions): Formulario {
+    public extend (extendWith: FormularioOptions): Formulario {
         if (typeof extendWith === 'object') {
             this.validationRules = merge(this.validationRules, extendWith.validationRules || {})
             this.validationMessages = merge(this.validationMessages, extendWith.validationMessages || {})
@@ -47,7 +47,7 @@ export default class Formulario {
         throw new Error(`[Formulario]: Formulario.extend(): should be passed an object (was ${typeof extendWith})`)
     }
 
-    runValidation (id: string): Promise<ViolationsRecord> {
+    public runValidation (id: string): Promise<ViolationsRecord> {
         if (!this.registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.runValidation(): no forms with id "${id}"`)
         }
@@ -57,7 +57,7 @@ export default class Formulario {
         return form.runValidation()
     }
 
-    resetValidation (id: string): void {
+    public resetValidation (id: string): void {
         if (!this.registry.has(id)) {
             return
         }
@@ -71,7 +71,7 @@ export default class Formulario {
      * Used by forms instances to add themselves into a registry
      * @internal
      */
-    register (id: string, form: FormularioFormInterface): void {
+    public register (id: string, form: FormularioFormInterface): void {
         if (this.registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.register(): id "${id}" is already in use`)
         }
@@ -83,7 +83,7 @@ export default class Formulario {
      * Used by forms instances to remove themselves from a registry
      * @internal
      */
-    unregister (id: string): void {
+    public unregister (id: string): void {
         if (this.registry.has(id)) {
             this.registry.delete(id)
         }
@@ -93,7 +93,7 @@ export default class Formulario {
      * Get validation rules by merging any passed in with global rules.
      * @internal
      */
-    getRules (extendWith: Record<string, ValidationRuleFn> = {}): Record<string, ValidationRuleFn> {
+    public getRules (extendWith: Record<string, ValidationRuleFn> = {}): Record<string, ValidationRuleFn> {
         return merge(this.validationRules, extendWith)
     }
 
@@ -101,7 +101,7 @@ export default class Formulario {
      * Get validation messages by merging any passed in with global messages.
      * @internal
      */
-    getMessages (vm: Vue, extendWith: Record<string, ValidationMessageI18NFn|string>): Record<string, ValidationMessageFn> {
+    public getMessages (vm: Vue, extendWith: Record<string, ValidationMessageI18NFn|string>): Record<string, ValidationMessageFn> {
         const raw = merge(this.validationMessages || {}, extendWith)
         const messages: Record<string, ValidationMessageFn> = {}
 

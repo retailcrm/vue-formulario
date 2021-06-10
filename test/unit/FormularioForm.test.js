@@ -165,6 +165,7 @@ describe('FormularioForm', () => {
         const state = {
             address: {
                 street: null,
+                building: null,
             },
         }
 
@@ -175,7 +176,7 @@ describe('FormularioForm', () => {
                 args: [],
                 context: {
                     name: 'address.street',
-                    value: null,
+                    value: '',
                     formValues: state,
                 },
             }],
@@ -211,6 +212,7 @@ describe('FormularioForm', () => {
         const state = {
             address: {
                 street: null,
+                building: null,
             },
         }
 
@@ -221,7 +223,7 @@ describe('FormularioForm', () => {
                 args: [],
                 context: {
                     name: 'address.street',
-                    value: null,
+                    value: '',
                     formValues: state,
                 },
             }],

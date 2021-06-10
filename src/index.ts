@@ -7,6 +7,7 @@ import FormularioFieldGroup from '@/FormularioFieldGroup.vue'
 import FormularioForm from '@/FormularioForm.vue'
 
 export default {
+    Formulario,
     install (Vue: VueConstructor, options?: FormularioOptions): void {
         Vue.component('FormularioField', FormularioField)
         Vue.component('FormularioFieldGroup', FormularioFieldGroup)

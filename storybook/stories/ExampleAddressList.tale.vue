@@ -1,6 +1,30 @@
 <template>
     <FormularioForm v-model="values">
-        <h1>Address list</h1>
+        <h1>Delivery</h1>
+
+        <h3>Customer</h3>
+
+        <FormularioFieldGroup
+            name="customer"
+            class="row mx-n2"
+        >
+            <FormularioField
+                v-slot="{ context }"
+                name="name"
+                class="col col-auto px-2 mb-3"
+            >
+                <label for="customer-name">Name</label>
+                <input
+                    id="customer-name"
+                    v-model="context.model"
+                    class="field form-control"
+                    type="text"
+                    @blur="context.runValidation"
+                >
+            </FormularioField>
+        </FormularioFieldGroup>
+
+        <h3>Address list</h3>
 
         <FormularioField
             v-slot="addressList"
@@ -19,7 +43,7 @@
                         name="street"
                         validation="required"
                     >
-                        <label for="address-street">Street <span class="text-danger">*</span></label>
+                        <label for="address-street">Street</label>
                         <input
                             id="address-street"
                             v-model="context.model"
@@ -43,7 +67,7 @@
                         name="building"
                         validation="^required|alphanumeric"
                     >
-                        <label for="address-building">Building <span class="text-danger">*</span></label>
+                        <label for="address-building">Building</label>
                         <input
                             id="address-building"
                             v-model="context.model"

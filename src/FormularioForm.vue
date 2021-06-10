@@ -15,11 +15,12 @@ import {
 } from 'vue-property-decorator'
 import {
     clone,
-    getNested,
+    get,
     has,
     merge,
-    setNested,
+    set,
     shallowEquals,
+    unset,
 } from '@/utils'
 
 import PathRegistry from '@/PathRegistry'
@@ -86,10 +87,15 @@ export default class FormularioForm extends Vue {
     private register (path: string, field: FormularioFieldInterface): void {
         this.registry.add(path, field)
 
-        const value = getNested(this.modelCopy, path)
+        const value = get(this.modelCopy, path)
 
-        if (!field.hasModel && this.modelIsDefined && value !== undefined) {
-            field.model = value
+        if (!field.hasModel && this.modelIsDefined) {
+            if (value !== undefined) {
+                field.model = value
+            } else {
+                this.setFieldValue(path, null)
+                this.emitInput()
+            }
         } else if (field.hasModel && !shallowEquals(field.proxy, value)) {
             this.setFieldValue(path, field.proxy)
             this.emitInput()
@@ -116,13 +122,11 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('__FormularioForm_set')
-    private setFieldValue (field: string, value: unknown): void {
+    private setFieldValue (path: string, value: unknown): void {
         if (value === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { [field]: value, ...proxy } = this.proxy
-            this.proxy = proxy
+            this.proxy = unset(this.proxy, path) as Record<string, unknown>
         } else {
-            setNested(this.proxy, field, value)
+            this.proxy = set(this.proxy, path, value) as Record<string, unknown>
         }
     }
 
@@ -214,8 +218,8 @@ export default class FormularioForm extends Vue {
             }
 
             this.registry.getSubset(path).forEach((field, path) => {
-                const oldValue = getNested(this.proxy, path)
-                const newValue = getNested(state, path)
+                const oldValue = get(this.proxy, path, null)
+                const newValue = get(state, path, null)
 
                 if (!shallowEquals(newValue, oldValue)) {
                     this.setFieldValue(path, newValue)

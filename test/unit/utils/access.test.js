@@ -1,4 +1,4 @@
-import { get, unset } from '@/utils/access'
+import { get, set, unset } from '@/utils/access'
 
 class Sample {
     constructor() {
@@ -25,8 +25,35 @@ describe('access', () => {
             [[{ c: 1 }, 2, 3], '[0].c', 1],
             [[{ c: 2 }, 2, 3], '[0].c', 2],
             [new Sample(), 'fieldA', 'fieldA'],
-        ])('gets by path', (record, path, expected) => {
-            expect(get(record, path)).toEqual(expected)
+        ])('gets by path', (state, path, expected) => {
+            expect(get(state, path)).toEqual(expected)
+        })
+    })
+
+    describe('set', () => {
+        test.each([
+            [{}, 'a', 1, { a: 1 }],
+            [null, 'a', 1, { a: 1 }],
+            ['', 'a', 1, { a: 1 }],
+            ['lorem', 'a', 1, { a: 1 }],
+            [true, 'a', 1, { a: 1 }],
+            [{}, 'a.b', 1, { a: { b: 1 } }],
+            [{ a: { b: null } }, 'a.b', 1, { a: { b: 1 } }],
+            [{ a: false }, 'a.b', 1, { a: { b: 1 } }],
+            [{}, 'a[0]', 1, { a: [1] }],
+            [{ a: false }, 'a[0]', 1, { a: [1] }],
+            [{}, 'a[0].b', 1, { a: [{ b: 1 }] }],
+            [{ a: false }, 'a[0].b', 1, { a: [{ b: 1 }] }],
+            [{}, 'a[0].b.c', 1, { a: [{ b: { c: 1 } }] }],
+            [{}, 'a[0].b[0].c', 1, { a: [{ b: [{ c: 1 }] }] }],
+            [{ a: false }, 'a[0].b[0].c', 1, { a: [{ b: [{ c: 1 }] }] }],
+            [{ a: [{ b: false }] }, 'a[0].b[0].c', 1, { a: [{ b: [{ c: 1 }] }] }],
+            [{ a: { b: false } }, 'a[0].b[0].c', 1, { a: { 0: { b: [{ c: 1 }] }, b: false } }],
+        ])('sets by path', (state, path, value, expected) => {
+            const processed = set(state, path, value)
+
+            expect(processed).toEqual(expected)
+            expect(processed === state).toBeFalsy()
         })
     })
 
@@ -43,11 +70,11 @@ describe('access', () => {
             [{ a: { b: [{ c: 1 }, 2, 3] } }, 'a.b[0].c', { a: { b: [{}, 2, 3] } }],
             [{ a: { b: [{ c: 1 }, 2, 3] } }, 'a.b[1].c', { a: { b: [{ c: 1 }, 2, 3] } }],
             [[{ c: 1 }, 2, 3], '[0].c', [{}, 2, 3]],
-        ])('unsets by path', (record, path, expected) => {
-            const processed = unset(record, path)
+        ])('unsets by path', (state, path, expected) => {
+            const processed = unset(state, path)
 
             expect(processed).toEqual(expected)
-            expect(processed === record).toBeFalsy()
+            expect(processed === state).toBeFalsy()
         })
 
         test.each`
