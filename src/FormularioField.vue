@@ -13,7 +13,7 @@ import {
     Prop,
     Watch,
 } from 'vue-property-decorator'
-import { has, shallowEquals, snakeToCamel } from './utils'
+import { deepEquals, has, snakeToCamel } from './utils'
 import {
     processConstraints,
     validate,
@@ -87,35 +87,18 @@ export default class FormularioField extends Vue {
         return has(this.$options.propsData || {}, 'value')
     }
 
-    public get model (): unknown {
-        return this.modelGetConverter(this.hasModel ? this.value : this.proxy)
-    }
-
-    public set model (value: unknown) {
-        value = this.modelSetConverter(value, this.proxy)
-
-        if (!shallowEquals(value, this.proxy)) {
-            this.proxy = value
-            this.$emit('input', value)
-
-            if (typeof this.__FormularioForm_set === 'function') {
-                this.__FormularioForm_set(this.fullPath, value)
-                this.__FormularioForm_emitInput()
-            }
-        }
-    }
-
     private get context (): FormularioFieldContext<unknown> {
         return Object.defineProperty({
             name: this.fullPath,
+            path: this.fullPath,
             runValidation: this.runValidation.bind(this),
             violations: this.violations,
             errors: this.localErrors,
             allErrors: [...this.localErrors, ...this.violations.map(v => v.message)],
         }, 'model', {
-            get: () => this.model,
-            set: (value: unknown) => {
-                this.model = value
+            get: () => this.modelGetConverter(this.proxy),
+            set: (value: unknown): void => {
+                this.syncProxy(this.modelSetConverter(value, this.proxy))
             },
         })
     }
@@ -137,18 +120,12 @@ export default class FormularioField extends Vue {
     }
 
     @Watch('value')
-    private onValueChange (newValue: unknown, oldValue: unknown): void {
-        if (this.hasModel && !shallowEquals(newValue, oldValue)) {
-            this.model = newValue
-        }
+    private onValueChange (): void {
+        this.syncProxy(this.value)
     }
 
     @Watch('proxy')
-    private onProxyChange (newValue: unknown, oldValue: unknown): void {
-        if (!this.hasModel && !shallowEquals(newValue, oldValue)) {
-            this.model = newValue
-        }
-
+    private onProxyChange (): void {
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation()
         } else {
@@ -160,10 +137,6 @@ export default class FormularioField extends Vue {
      * @internal
      */
     public created (): void {
-        if (!shallowEquals(this.model, this.proxy)) {
-            this.model = this.proxy
-        }
-
         if (typeof this.__FormularioForm_register === 'function') {
             this.__FormularioForm_register(this.fullPath, this)
         }
@@ -182,13 +155,22 @@ export default class FormularioField extends Vue {
         }
     }
 
+    private syncProxy (value: unknown): void {
+        if (!deepEquals(value, this.proxy)) {
+            this.proxy = value
+            this.$emit('input', value)
+
+            if (typeof this.__FormularioForm_set === 'function') {
+                this.__FormularioForm_set(this.fullPath, value)
+                this.__FormularioForm_emitInput()
+            }
+        }
+    }
+
     public runValidation (): Promise<Violation[]> {
         this.validationRun = this.validate().then(violations => {
-            if (!shallowEquals(this.violations, violations)) {
-                this.emitValidation(this.fullPath, violations)
-            }
-
             this.violations = violations
+            this.emitValidation(this.fullPath, violations)
 
             return this.violations
         })
@@ -202,8 +184,8 @@ export default class FormularioField extends Vue {
             this.$formulario.getRules(this.normalizedValidationRules),
             this.$formulario.getMessages(this, this.normalizedValidationMessages),
         ), {
-            value: this.context.model,
-            name: this.context.name,
+            value: this.proxy,
+            name: this.fullPath,
             formValues: this.__FormularioForm_getState(),
         })
     }

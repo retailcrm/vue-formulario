@@ -283,7 +283,6 @@ describe('FormularioField', () => {
         const form = wrapper.findComponent(FormularioForm)
 
         expect(form.emitted('input')).toEqual([
-            [{}],
             [{ date: new Date('2001-05-12') }],
         ])
     })

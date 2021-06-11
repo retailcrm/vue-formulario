@@ -1,13 +1,13 @@
-import { Violation, ViolationsRecord } from '@/validation/validator'
+import Vue from 'vue'
+import { Violation } from '@/validation/validator'
 
-export interface FormularioFormInterface {
-    runValidation(): Promise<ViolationsRecord>;
+export interface FormularioForm extends Vue {
+    runValidation(): Promise<Record<string, Violation[]>>;
     resetValidation(): void;
 }
 
-export interface FormularioFieldInterface {
+export interface FormularioField extends Vue {
     hasModel: boolean;
-    model: unknown;
     proxy: unknown;
     setErrors(errors: string[]): void;
     runValidation(): Promise<Violation[]>;
@@ -33,10 +33,58 @@ export interface FormularioFieldModelSetConverter {
 
 export type Empty = undefined | null
 
-export type RecordKey = string | number
-export type RecordLike<T> = T[] | Record<RecordKey, T>
+export enum TYPE {
+    ARRAY = 'ARRAY',
+    BIGINT = 'BIGINT',
+    BOOLEAN = 'BOOLEAN',
+    DATE = 'DATE',
+    FUNCTION = 'FUNCTION',
+    NUMBER = 'NUMBER',
+    RECORD = 'RECORD',
+    STRING = 'STRING',
+    SYMBOL = 'SYMBOL',
+    UNDEFINED = 'UNDEFINED',
+    NULL = 'NULL',
+}
 
-export type Scalar = boolean | number | string | symbol | Empty
+export function typeOf (value: unknown): string {
+    switch (typeof value) {
+        case 'bigint':
+            return TYPE.BIGINT
+        case 'boolean':
+            return TYPE.BOOLEAN
+        case 'function':
+            return TYPE.FUNCTION
+        case 'number':
+            return TYPE.NUMBER
+        case 'string':
+            return TYPE.STRING
+        case 'symbol':
+            return TYPE.SYMBOL
+        case 'undefined':
+            return TYPE.UNDEFINED
+        case 'object':
+            if (value === null) {
+                return TYPE.NULL
+            }
+
+            if (value instanceof Date) {
+                return TYPE.DATE
+            }
+
+            if (Array.isArray(value)) {
+                return TYPE.ARRAY
+            }
+
+            if (value.constructor.name === 'Object') {
+                return TYPE.RECORD
+            }
+
+            return 'InstanceOf<' + value.constructor.name + '>'
+    }
+
+    throw new Error()
+}
 
 export function isRecordLike (value: unknown): boolean {
     return typeof value === 'object' && value !== null && ['Array', 'Object'].includes(value.constructor.name)

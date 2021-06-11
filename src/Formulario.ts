@@ -7,10 +7,10 @@ import {
     ValidationRuleFn,
     ValidationMessageFn,
     ValidationMessageI18NFn,
-    ViolationsRecord,
+    Violation,
 } from '@/validation/validator'
 
-import { FormularioFormInterface } from '@/types'
+import { FormularioForm } from '@/types'
 
 export interface FormularioOptions {
     validationRules?: Record<string, ValidationRuleFn>;
@@ -24,7 +24,7 @@ export default class Formulario {
     public validationRules: Record<string, ValidationRuleFn> = {}
     public validationMessages: Record<string, ValidationMessageI18NFn|string> = {}
 
-    private readonly registry: Map<string, FormularioFormInterface>
+    private readonly registry: Map<string, FormularioForm>
 
     public constructor (options?: FormularioOptions) {
         this.registry = new Map()
@@ -47,12 +47,12 @@ export default class Formulario {
         throw new Error(`[Formulario]: Formulario.extend(): should be passed an object (was ${typeof extendWith})`)
     }
 
-    public runValidation (id: string): Promise<ViolationsRecord> {
+    public runValidation (id: string): Promise<Record<string, Violation[]>> {
         if (!this.registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.runValidation(): no forms with id "${id}"`)
         }
 
-        const form = this.registry.get(id) as FormularioFormInterface
+        const form = this.registry.get(id) as FormularioForm
 
         return form.runValidation()
     }
@@ -62,7 +62,7 @@ export default class Formulario {
             return
         }
 
-        const form = this.registry.get(id) as FormularioFormInterface
+        const form = this.registry.get(id) as FormularioForm
 
         form.resetValidation()
     }
@@ -71,7 +71,7 @@ export default class Formulario {
      * Used by forms instances to add themselves into a registry
      * @internal
      */
-    public register (id: string, form: FormularioFormInterface): void {
+    public register (id: string, form: FormularioForm): void {
         if (this.registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.register(): id "${id}" is already in use`)
         }

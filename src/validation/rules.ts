@@ -130,7 +130,7 @@ const rules: Record<string, ValidationRuleFn> = {
      * Rule: Value is in an array (stack).
      */
     in ({ value }: ValidationContext, ...stack: any[]): boolean {
-        return stack.some(item => typeof item === 'object' ? shallowEquals(item, value) : item === value)
+        return stack.some(item => shallowEquals(item, value))
     },
 
     /**
@@ -198,7 +198,7 @@ const rules: Record<string, ValidationRuleFn> = {
      * Rule: Value is not in stack.
      */
     not ({ value }: ValidationContext, ...stack: any[]): boolean {
-        return !stack.some(item => typeof item === 'object' ? shallowEquals(item, value) : item === value)
+        return !stack.some(item => shallowEquals(item, value))
     },
 
     /**

@@ -22,17 +22,17 @@ export default class FormularioFieldGroup extends Vue {
 
     @Provide('__Formulario_path')
     get fullPath (): string {
-        const name = `${this.name}`
+        const path = `${this.name}`
 
-        if (parseInt(name).toString() === name) {
-            return `${this.__Formulario_path}[${name}]`
+        if (parseInt(path).toString() === path) {
+            return `${this.__Formulario_path}[${path}]`
         }
 
         if (this.__Formulario_path === '') {
-            return name
+            return path
         }
 
-        return `${this.__Formulario_path}.${name}`
+        return `${this.__Formulario_path}.${path}`
     }
 }
 </script>

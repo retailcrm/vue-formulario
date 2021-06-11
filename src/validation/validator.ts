@@ -11,8 +11,6 @@ export interface Violation {
     context: ValidationContext|null;
 }
 
-export type ViolationsRecord = Record<string, Violation[]>
-
 export interface ValidationRuleFn {
     (context: ValidationContext, ...args: any[]): Promise<boolean>|boolean;
 }
