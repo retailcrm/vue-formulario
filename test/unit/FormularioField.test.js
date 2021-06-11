@@ -129,7 +129,7 @@ describe('FormularioField', () => {
         await flushPromises()
 
         expect(wrapper.emitted('validation')).toEqual([[{
-            name: 'field',
+            path: 'field',
             violations: [{
                 rule: 'required',
                 args: expect.any(Array),

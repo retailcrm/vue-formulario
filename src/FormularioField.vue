@@ -88,8 +88,7 @@ export default class FormularioField extends Vue {
     }
 
     public get model (): unknown {
-        const model = this.hasModel ? 'value' : 'proxy'
-        return this.modelGetConverter(this[model])
+        return this.modelGetConverter(this.hasModel ? this.value : this.proxy)
     }
 
     public set model (value: unknown) {
@@ -185,15 +184,11 @@ export default class FormularioField extends Vue {
 
     public runValidation (): Promise<Violation[]> {
         this.validationRun = this.validate().then(violations => {
-            const validationChanged = !shallowEquals(violations, this.violations)
-            this.violations = violations
-
-            if (validationChanged) {
-                this.emitValidation({
-                    name: this.fullPath,
-                    violations: this.violations,
-                })
+            if (!shallowEquals(this.violations, violations)) {
+                this.emitValidation(this.fullPath, violations)
             }
+
+            this.violations = violations
 
             return this.violations
         })
@@ -213,10 +208,10 @@ export default class FormularioField extends Vue {
         })
     }
 
-    private emitValidation (payload: { name: string; violations: Violation[] }): void {
-        this.$emit('validation', payload)
+    private emitValidation (path: string, violations: Violation[]): void {
+        this.$emit('validation', { path, violations })
         if (typeof this.__FormularioForm_emitValidation === 'function') {
-            this.__FormularioForm_emitValidation(payload)
+            this.__FormularioForm_emitValidation(path, violations)
         }
     }
 

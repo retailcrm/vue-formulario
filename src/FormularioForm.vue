@@ -136,8 +136,8 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('__FormularioForm_emitValidation')
-    private emitValidation (payload: ValidationEventPayload): void {
-        this.$emit('validation', payload)
+    private emitValidation (path: string, violations: Violation[]): void {
+        this.$emit('validation', { path, violations })
     }
 
     @Watch('state', { deep: true })

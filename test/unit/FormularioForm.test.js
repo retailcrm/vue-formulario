@@ -371,7 +371,7 @@ describe('FormularioForm', () => {
 
             expect(wrapper.emitted('validation')).toBeTruthy()
             expect(wrapper.emitted('validation')).toEqual([[{
-                name: 'foo',
+                path: 'foo',
                 violations: [],
             }]])
         })
@@ -386,7 +386,7 @@ describe('FormularioForm', () => {
 
             expect(wrapper.emitted('validation')).toBeTruthy()
             expect(wrapper.emitted('validation')).toEqual([[ {
-                name: 'foo',
+                path: 'foo',
                 violations: [ {
                     rule: expect.any(String),
                     args: ['foo'],
