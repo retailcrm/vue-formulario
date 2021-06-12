@@ -1,6 +1,6 @@
 ## What is Vue Formulario?
 
-Vue Formulario is a library, based on <a href="https://vueformulate.com">Vue Formulate</a>, that handles the core logic
+Vue Formulario is a library, inspired by <a href="https://vueformulate.com">Vue Formulate</a>, that handles the core logic
 for working with forms and gives full control on the form presentation.
 
 ## Examples
