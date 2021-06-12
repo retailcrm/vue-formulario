@@ -3,6 +3,21 @@
     "version": "0.5.1",
     "license": "MIT",
     "author": "RetailDriverLLC <integration@retailcrm.ru>",
+    "main": "dist/formulario.umd.js",
+    "module": "dist/formulario.esm.js",
+    "browser": {
+        "./sfc": "src/index.ts"
+    },
+    "unpkg": "dist/formulario.min.js",
+    "dependencies": {
+        "is-plain-object": "^3.0.0",
+        "is-url": "^1.2.4",
+        "vue-class-component": "^7.2.3",
+        "vue-property-decorator": "^8.4.2"
+    },
+    "bugs": {
+        "url": "https://github.com/retailcrm/vue-formulario/issues"
+    },
     "scripts": {
         "build": "npm run build:esm & npm run build:umd & npm run build:iife & wait && echo \"Build complete:\nesm: $(gzip -c dist/formulario.esm.js | wc -c)b gzip\numd: $(gzip -c dist/formulario.umd.js | wc -c)b gzip\nmin: $(gzip -c dist/formulario.min.js | wc -c)b gzip\"",
         "build:esm": "rollup --config build/rollup.config.js --format es --file dist/formulario.esm.js",
@@ -15,18 +30,6 @@
         "test": "NODE_ENV=test jest --config test/jest.conf.js",
         "test:coverage": "NODE_ENV=test jest --config test/jest.conf.js --coverage",
         "test:watch": "NODE_ENV=test jest --config test/jest.conf.js --watch"
-    },
-    "main": "dist/formulario.umd.js",
-    "module": "dist/formulario.esm.js",
-    "browser": {
-        "./sfc": "src/index.ts"
-    },
-    "unpkg": "dist/formulario.min.js",
-    "dependencies": {
-        "is-plain-object": "^3.0.0",
-        "is-url": "^1.2.4",
-        "vue-class-component": "^7.2.3",
-        "vue-property-decorator": "^8.4.2"
     },
     "devDependencies": {
         "@babel/core": "^7.9.6",
@@ -86,9 +89,6 @@
         "vue-template-compiler": "^2.6.11",
         "vue-template-es2015-compiler": "^1.9.1",
         "watch": "^1.0.2"
-    },
-    "bugs": {
-        "url": "https://github.com/retailcrm/vue-formulario/issues"
     },
     "contributors": [
         "Justin Schroeder <justin@wearebraid.com>"
