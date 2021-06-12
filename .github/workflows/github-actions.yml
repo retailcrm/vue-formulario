@@ -1,0 +1,16 @@
+name: Tests
+
+on: [push]
+
+jobs:
+  Tests:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Using branch ${{ github.ref }} for repository ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: chmod 777 .
+      - run: docker-compose pull
+      - run: docker-compose run --rm node yarn install
+      - run: docker-compose run --rm node yarn test
