@@ -13,13 +13,12 @@ export default {
         globals: {
             'is-plain-object': 'isPlainObject',
             'is-url': 'isUrl',
-            'nanoid/non-secure': 'nanoid',
             vue: 'Vue',
             'vue-property-decorator': 'vuePropertyDecorator',
         },
         sourcemap: false,
     }],
-    external: ['nanoid/non-secure', 'vue', 'vue-property-decorator'],
+    external: ['vue', 'vue-property-decorator'],
     plugins: [
         typescript({ sourceMap: false }),
         vue({ css: true, compileTemplate: true }),

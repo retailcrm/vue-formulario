@@ -1,6 +1,7 @@
 {
     "name": "@retailcrm/vue-formulario",
     "version": "0.5.1",
+    "license": "MIT",
     "author": "RetailDriverLLC <integration@retailcrm.ru>",
     "scripts": {
         "build": "npm run build:esm & npm run build:umd & npm run build:iife & wait && echo \"Build complete:\nesm: $(gzip -c dist/formulario.esm.js | wc -c)b gzip\numd: $(gzip -c dist/formulario.umd.js | wc -c)b gzip\nmin: $(gzip -c dist/formulario.min.js | wc -c)b gzip\"",
@@ -24,7 +25,6 @@
     "dependencies": {
         "is-plain-object": "^3.0.0",
         "is-url": "^1.2.4",
-        "nanoid": "^2.1.11",
         "vue-class-component": "^7.2.3",
         "vue-property-decorator": "^8.4.2"
     },
@@ -43,7 +43,6 @@
         "@storybook/vue": "^6.0.26",
         "@types/is-url": "^1.2.28",
         "@types/jest": "^26.0.14",
-        "@types/nanoid": "^2.1.0",
         "@typescript-eslint/eslint-plugin": "^2.26.0",
         "@typescript-eslint/parser": "^2.26.0",
         "@vue/cli-plugin-babel": "^4.3.1",
@@ -101,7 +100,6 @@
         "validation",
         "validate"
     ],
-    "license": "MIT",
     "publishConfig": {
         "access": "public"
     },
