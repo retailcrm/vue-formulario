@@ -27,11 +27,6 @@ import {
 import { FormularioField } from '@/types'
 import { Violation } from '@/validation/validator'
 
-type ValidationEventPayload = {
-    name: string;
-    violations: Violation[];
-}
-
 const update = (state: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> => {
     if (value === undefined) {
         return unset(state, path) as Record<string, unknown>
