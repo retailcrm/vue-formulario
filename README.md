@@ -1,11 +1,11 @@
 ## What is Vue Formulario?
 
-Vue Formulario is a library, based on <a href="https://vueformulate.com">Vue Formulate</a>, that handles the core logic
+Vue Formulario is a library, inspired by <a href="https://vueformulate.com">Vue Formulate</a>, that handles the core logic
 for working with forms and gives full control on the form presentation.
 
 ## Examples
 
-Every form control have to rendered inside FormularioInput component. This component provides `id` and `context` in
+Every form control have to rendered inside FormularioField component. This component provides `id` and `context` in
 v-slot props. Control should use `context.model` as v-model and `context.runValidation` as handler for `blur` event
 (it is necessary for validation when property `validationBehavior` is `demand`). Errors list for a field can be
 accessed through `context.allErrors`.
@@ -27,7 +27,7 @@ The example below creates the authorization form from data:
     v-model="formData"
     name="formName"
 >
-    <FormularioInput
+    <FormularioField
         v-slot="{ context }"
         name="username"
         validation="required|email"
@@ -46,9 +46,9 @@ The example below creates the authorization form from data:
                 {{ error }}
             </span>
         </div>
-    </FormularioInput>
+    </FormularioField>
 
-    <FormularioInput
+    <FormularioField
         v-slot="{ context }"
         name="password"
         validation="required|min:4,length"
@@ -57,10 +57,10 @@ The example below creates the authorization form from data:
             v-model="context.model"
             type="password"
         >
-    </FormularioInput>
+    </FormularioField>
 
-    <FormularioGrouping name="options">
-        <FormularioInput
+    <FormularioFieldGroup name="options">
+        <FormularioField
             v-slot="{ context }"
             name="anonymous"
         >
@@ -72,10 +72,10 @@ The example below creates the authorization form from data:
                 >
                 <label for="options-anonymous">As anonymous</label>
             </div>
-        </FormularioInput>
-    </FormularioGrouping>
+        </FormularioField>
+    </FormularioFieldGroup>
 
-    <FormularioInput
+    <FormularioField
         v-slot="{ context }"
         name="options.tags[0]"
     >
@@ -83,7 +83,7 @@ The example below creates the authorization form from data:
             v-model="context.model"
             type="text"
         >
-    </FormularioInput>
+    </FormularioField>
 </FormularioForm>
 ```
 

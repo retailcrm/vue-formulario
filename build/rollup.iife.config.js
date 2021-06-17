@@ -16,7 +16,6 @@ export default {
         globals: {
             'is-plain-object': 'isPlainObject',
             'is-url': 'isUrl',
-            'nanoid/non-secure': 'nanoid',
             vue: 'Vue',
             'vue-property-decorator': 'vuePropertyDecorator',
         },
@@ -27,11 +26,11 @@ export default {
             browser: true,
             preferBuiltins: false,
         }),
-        typescript({ check: false, sourceMap: false }),
+        typescript({ sourceMap: false }),
         vue({ css: true, compileTemplate: true }),
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),
-        internal(['is-plain-object', 'nanoid/non-secure', 'is-url', 'vue-property-decorator']),
+        internal(['is-plain-object', 'is-url', 'vue-property-decorator']),
         terser(),
     ]
 }

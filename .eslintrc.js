@@ -22,7 +22,9 @@ module.exports = {
     },
 
     rules: {
-        '@typescript-eslint/ban-ts-ignore': 'off', // @TODO
+        '@typescript-eslint/camelcase': ['error', {
+            allow: ['^__Formulario'],
+        }],
         '@typescript-eslint/no-empty-function': 'off',
         '@typescript-eslint/no-explicit-any': 'off', // @TODO
         '@typescript-eslint/no-unused-vars': ['error'], // @TODO

@@ -1,5 +1,9 @@
+.commitlintrc.json
+.editorconfig
 .github
 .gitignore
+.travis.yml
+.versionrc.json
 /storybook
 /node_modules
 /build

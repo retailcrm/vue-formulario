@@ -3,10 +3,9 @@ import './bootstrap.scss'
 import { storiesOf } from '@storybook/vue'
 
 import Vue from 'vue'
-import VueFormulario from '../../dist/formulario.esm'
+import VueFormulario from '@/index.ts'
 
 import ExampleAddressList from './ExampleAddressList.tale'
-import FormularioGrouping from './FormularioGrouping.tale'
 
 Vue.mixin({
     methods: {
@@ -22,4 +21,3 @@ Vue.use(VueFormulario)
 
 storiesOf('Examples', module)
     .add('Address list', () => ExampleAddressList)
-    .add('FormularioGrouping', () => FormularioGrouping)
