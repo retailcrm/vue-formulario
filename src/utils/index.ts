@@ -1,7 +1,6 @@
 export { default as id } from './id'
 export { default as clone } from './clone'
 export { default as has } from './has'
-export { default as merge } from './merge'
 export { get, set, unset } from './access'
 export { default as regexForFormat } from './regexForFormat'
 export { deepEquals, shallowEquals } from './compare'

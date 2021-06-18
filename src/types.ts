@@ -72,7 +72,7 @@ export function typeOf (value: unknown): string {
             return 'InstanceOf<' + (constructorOf(value) as { name?: string }).name + '>'
     }
 
-    throw new Error()
+    throw new Error('[Formulario] typeOf - unknown type detected')
 }
 
 export function isScalar (value: unknown): boolean {
