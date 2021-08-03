@@ -1,7 +1,7 @@
 import isPlainObject from 'is-plain-object';
 import isUrl from 'is-url';
 import Vue from 'vue';
-import { Model, Prop, Provide, Watch, Component, Inject } from 'vue-property-decorator';
+import { Inject, Model, Prop, Watch, Component, Provide } from 'vue-property-decorator';
 
 /**
  * Shorthand for Object.prototype.hasOwnProperty.call (space saving)
@@ -44,63 +44,222 @@ function merge(a, b, concatArrays = true) {
     return merged;
 }
 
-/**
- * Converts to array.
- * If given parameter is not string, object ot array, result will be an empty array.
- * @param {*} item
- */
-function arrayify(item) {
-    if (!item) {
-        return [];
-    }
-    if (typeof item === 'string') {
-        return [item];
-    }
-    if (Array.isArray(item)) {
-        return item;
-    }
-    if (typeof item === 'object') {
-        return Object.values(item);
-    }
-    return [];
-}
+const registry = new Map();
+var id = (prefix) => {
+    const current = registry.get(prefix) || 0;
+    const next = current + 1;
+    registry.set(prefix, next);
+    return `${prefix}-${next}`;
+};
 
-function isScalar(data) {
-    switch (typeof data) {
+var TYPE;
+(function (TYPE) {
+    TYPE["ARRAY"] = "ARRAY";
+    TYPE["BIGINT"] = "BIGINT";
+    TYPE["BOOLEAN"] = "BOOLEAN";
+    TYPE["DATE"] = "DATE";
+    TYPE["FUNCTION"] = "FUNCTION";
+    TYPE["NUMBER"] = "NUMBER";
+    TYPE["RECORD"] = "RECORD";
+    TYPE["STRING"] = "STRING";
+    TYPE["SYMBOL"] = "SYMBOL";
+    TYPE["UNDEFINED"] = "UNDEFINED";
+    TYPE["NULL"] = "NULL";
+})(TYPE || (TYPE = {}));
+function typeOf(value) {
+    switch (typeof value) {
+        case 'bigint':
+            return TYPE.BIGINT;
+        case 'boolean':
+            return TYPE.BOOLEAN;
+        case 'function':
+            return TYPE.FUNCTION;
+        case 'number':
+            return TYPE.NUMBER;
+        case 'string':
+            return TYPE.STRING;
         case 'symbol':
+            return TYPE.SYMBOL;
+        case 'undefined':
+            return TYPE.UNDEFINED;
+        case 'object':
+            if (value === null) {
+                return TYPE.NULL;
+            }
+            if (value instanceof Date) {
+                return TYPE.DATE;
+            }
+            if (Array.isArray(value)) {
+                return TYPE.ARRAY;
+            }
+            if (value.constructor.name === 'Object') {
+                return TYPE.RECORD;
+            }
+            return 'InstanceOf<' + value.constructor.name + '>';
+    }
+    throw new Error();
+}
+function isRecordLike(value) {
+    return typeof value === 'object' && value !== null && ['Array', 'Object'].includes(value.constructor.name);
+}
+function isScalar(value) {
+    switch (typeof value) {
+        case 'bigint':
+        case 'boolean':
         case 'number':
         case 'string':
-        case 'boolean':
+        case 'symbol':
         case 'undefined':
             return true;
         default:
-            return data === null;
+            return value === null;
     }
 }
 
+const cloneInstance = (original) => {
+    return Object.assign(Object.create(Object.getPrototypeOf(original)), original);
+};
 /**
  * A simple (somewhat non-comprehensive) clone function, valid for our use
  * case of needing to unbind reactive watchers.
  */
 function clone(value) {
-    if (typeof value !== 'object') {
+    if (isScalar(value)) {
         return value;
     }
-    const copy = Array.isArray(value) ? [] : {};
-    for (const key in value) {
-        if (has(value, key)) {
-            if (isScalar(value[key])) {
-                copy[key] = value[key];
-            }
-            else if (value instanceof Date) {
-                copy[key] = new Date(copy[key]);
-            }
-            else {
-                copy[key] = clone(value[key]);
-            }
-        }
+    if (value instanceof Date) {
+        return new Date(value);
     }
+    if (!isRecordLike(value)) {
+        return cloneInstance(value);
+    }
+    if (Array.isArray(value)) {
+        return value.slice().map(clone);
+    }
+    const source = value;
+    return Object.keys(source).reduce((copy, key) => (Object.assign(Object.assign({}, copy), { [key]: clone(source[key]) })), {});
+}
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+
+function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
+function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+const extractIntOrNaN = (value) => {
+    const numeric = parseInt(value);
+    return numeric.toString() === value ? numeric : NaN;
+};
+const extractPath = (raw) => {
+    const path = [];
+    raw.split('.').forEach(key => {
+        if (/(.*)\[(\d+)]$/.test(key)) {
+            path.push(...key.substr(0, key.length - 1).split('[').filter(k => k.length));
+        }
+        else {
+            path.push(key);
+        }
+    });
+    return path;
+};
+function get(state, rawOrPath, fallback = undefined) {
+    const path = typeof rawOrPath === 'string' ? extractPath(rawOrPath) : rawOrPath;
+    if (isScalar(state) || path.length === 0) {
+        return fallback;
+    }
+    const key = path.shift();
+    const index = extractIntOrNaN(key);
+    if (!isNaN(index)) {
+        if (Array.isArray(state) && index >= 0 && index < state.length) {
+            return path.length === 0 ? state[index] : get(state[index], path, fallback);
+        }
+        return undefined;
+    }
+    if (has(state, key)) {
+        const values = state;
+        return path.length === 0 ? values[key] : get(values[key], path, fallback);
+    }
+    return undefined;
+}
+function set(state, rawOrPath, value) {
+    const path = typeof rawOrPath === 'string' ? extractPath(rawOrPath) : rawOrPath;
+    if (path.length === 0) {
+        return value;
+    }
+    const key = path.shift();
+    const index = extractIntOrNaN(key);
+    if (!isRecordLike(state)) {
+        return set(!isNaN(index) ? [] : {}, [key, ...path], value);
+    }
+    if (!isNaN(index) && Array.isArray(state)) {
+        const slice = [...state];
+        slice[index] = path.length === 0 ? value : set(slice[index], path, value);
+        return slice;
+    }
+    const slice = Object.assign({}, state);
+    slice[key] = path.length === 0 ? value : set(slice[key], path, value);
+    return slice;
+}
+const unsetInRecord = (record, prop) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _a = record, _b = prop, _ = _a[_b], copy = __rest(_a, [typeof _b === "symbol" ? _b : _b + ""]);
     return copy;
+};
+function unset(state, rawOrPath) {
+    if (!isRecordLike(state)) {
+        return state;
+    }
+    const path = typeof rawOrPath === 'string' ? extractPath(rawOrPath) : rawOrPath;
+    if (path.length === 0) {
+        return state;
+    }
+    const key = path.shift();
+    const index = extractIntOrNaN(key);
+    if (!isNaN(index) && Array.isArray(state) && index >= 0 && index < state.length) {
+        const slice = [...state];
+        if (path.length === 0) {
+            slice.splice(index, 1);
+        }
+        else {
+            slice[index] = unset(slice[index], path);
+        }
+        return slice;
+    }
+    if (has(state, key)) {
+        const slice = Object.assign({}, state);
+        return path.length === 0
+            ? unsetInRecord(slice, key)
+            : Object.assign(Object.assign({}, slice), { [key]: unset(slice[key], path) });
+    }
+    return state;
 }
 
 /**
@@ -127,31 +286,47 @@ function regexForFormat(format) {
     }, escaped));
 }
 
-function shallowEqualObjects(objA, objB) {
-    if (objA === objB) {
-        return true;
-    }
-    if (!objA || !objB) {
+function datesEquals(a, b) {
+    return a.getTime() === b.getTime();
+}
+function arraysEquals(a, b, predicate) {
+    if (a.length !== b.length) {
         return false;
     }
-    const aKeys = Object.keys(objA);
-    const bKeys = Object.keys(objB);
-    if (bKeys.length !== aKeys.length) {
-        return false;
-    }
-    if (objA instanceof Date && objB instanceof Date) {
-        return objA.getTime() === objB.getTime();
-    }
-    if (aKeys.length === 0) {
-        return objA === objB;
-    }
-    for (let i = 0; i < aKeys.length; i++) {
-        const key = aKeys[i];
-        if (objA[key] !== objB[key]) {
+    for (let i = 0; i < a.length; i++) {
+        if (!predicate(a[i], b[i])) {
             return false;
         }
     }
     return true;
+}
+function recordsEquals(a, b, predicate) {
+    if (Object.keys(a).length !== Object.keys(b).length) {
+        return false;
+    }
+    for (const prop in a) {
+        if (!has(b, prop) || !predicate(a[prop], b[prop])) {
+            return false;
+        }
+    }
+    return true;
+}
+function strictEquals(a, b) {
+    return a === b;
+}
+function equals(a, b, predicate) {
+    const typeOfA = typeOf(a);
+    const typeOfB = typeOf(b);
+    return typeOfA === typeOfB && ((typeOfA === TYPE.ARRAY && arraysEquals(a, b, predicate)) ||
+        (typeOfA === TYPE.DATE && datesEquals(a, b)) ||
+        (typeOfA === TYPE.RECORD && recordsEquals(a, b, predicate)) ||
+        (typeOfA.includes('InstanceOf') && equals(Object.entries(a), Object.entries(b), predicate)));
+}
+function deepEquals(a, b) {
+    return a === b || equals(a, b, deepEquals);
+}
+function shallowEquals(a, b) {
+    return a === b || equals(a, b, strictEquals);
 }
 
 /**
@@ -164,68 +339,6 @@ function snakeToCamel(string) {
         }
         return $1;
     });
-}
-
-function getNested(obj, field) {
-    const fieldParts = field.split('.');
-    let result = obj;
-    for (const key in fieldParts) {
-        const matches = fieldParts[key].match(/(.+)\[(\d+)\]$/);
-        if (result === undefined) {
-            return null;
-        }
-        if (matches) {
-            result = result[matches[1]];
-            if (result === undefined) {
-                return null;
-            }
-            result = result[matches[2]];
-        }
-        else {
-            result = result[fieldParts[key]];
-        }
-    }
-    return result;
-}
-function setNested(obj, field, value) {
-    const fieldParts = field.split('.');
-    let subProxy = obj;
-    for (let i = 0; i < fieldParts.length; i++) {
-        const fieldPart = fieldParts[i];
-        const matches = fieldPart.match(/(.+)\[(\d+)\]$/);
-        if (subProxy === undefined) {
-            break;
-        }
-        if (matches) {
-            if (subProxy[matches[1]] === undefined) {
-                subProxy[matches[1]] = [];
-            }
-            subProxy = subProxy[matches[1]];
-            if (i === fieldParts.length - 1) {
-                subProxy[matches[2]] = value;
-                break;
-            }
-            else {
-                subProxy = subProxy[matches[2]];
-            }
-        }
-        else {
-            if (subProxy === undefined) {
-                break;
-            }
-            if (i === fieldParts.length - 1) {
-                subProxy[fieldPart] = value;
-                break;
-            }
-            else {
-                // eslint-disable-next-line max-depth
-                if (subProxy[fieldPart] === undefined) {
-                    subProxy[fieldPart] = {};
-                }
-                subProxy = subProxy[fieldPart];
-            }
-        }
-    }
 }
 
 const rules = {
@@ -333,7 +446,7 @@ const rules = {
      * Rule: Value is in an array (stack).
      */
     in({ value }, ...stack) {
-        return stack.some(item => typeof item === 'object' ? shallowEqualObjects(item, value) : item === value);
+        return stack.some(item => shallowEquals(item, value));
     },
     /**
      * Rule: Match the value against a (stack) of patterns or strings
@@ -389,7 +502,7 @@ const rules = {
      * Rule: Value is not in stack.
      */
     not({ value }, ...stack) {
-        return !stack.some(item => typeof item === 'object' ? shallowEqualObjects(item, value) : item === value);
+        return !stack.some(item => shallowEquals(item, value));
     },
     /**
      * Rule: checks if the value is only alpha numeric
@@ -431,6 +544,9 @@ const rules = {
      * Rule: checks if a string is a valid url
      */
     url({ value }) {
+        if (!value) {
+            return true;
+        }
         return isUrl(value);
     },
     /**
@@ -547,6 +663,7 @@ class Formulario {
     constructor(options) {
         this.validationRules = {};
         this.validationMessages = {};
+        this.registry = new Map();
         this.validationRules = rules;
         this.validationMessages = messages;
         this.extend(options || {});
@@ -560,16 +677,51 @@ class Formulario {
             this.validationMessages = merge(this.validationMessages, extendWith.validationMessages || {});
             return this;
         }
-        throw new Error(`[Formulario]: Formulario.extend() should be passed an object (was ${typeof extendWith})`);
+        throw new Error(`[Formulario]: Formulario.extend(): should be passed an object (was ${typeof extendWith})`);
+    }
+    runValidation(id) {
+        if (!this.registry.has(id)) {
+            throw new Error(`[Formulario]: Formulario.runValidation(): no forms with id "${id}"`);
+        }
+        const form = this.registry.get(id);
+        return form.runValidation();
+    }
+    resetValidation(id) {
+        if (!this.registry.has(id)) {
+            return;
+        }
+        const form = this.registry.get(id);
+        form.resetValidation();
+    }
+    /**
+     * Used by forms instances to add themselves into a registry
+     * @internal
+     */
+    register(id, form) {
+        if (this.registry.has(id)) {
+            throw new Error(`[Formulario]: Formulario.register(): id "${id}" is already in use`);
+        }
+        this.registry.set(id, form);
+    }
+    /**
+     * Used by forms instances to remove themselves from a registry
+     * @internal
+     */
+    unregister(id) {
+        if (this.registry.has(id)) {
+            this.registry.delete(id);
+        }
     }
     /**
      * Get validation rules by merging any passed in with global rules.
+     * @internal
      */
     getRules(extendWith = {}) {
         return merge(this.validationRules, extendWith);
     }
     /**
      * Get validation messages by merging any passed in with global messages.
+     * @internal
      */
     getMessages(vm, extendWith) {
         const raw = merge(this.validationMessages || {}, extendWith);
@@ -582,583 +734,6 @@ class Formulario {
         return messages;
     }
 }
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __rest(s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-}
-
-function __decorate(decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
-
-/**
- * Component registry with inherent depth to handle complex nesting. This is
- * important for features such as grouped fields.
- */
-class Registry {
-    /**
-     * Create a new registry of components.
-     * @param {FormularioForm} ctx The host vm context of the registry.
-     */
-    constructor(ctx) {
-        this.registry = new Map();
-        this.ctx = ctx;
-    }
-    /**
-     * Fully register a component.
-     * @param {string} field name of the field.
-     * @param {FormularioForm} component the actual component instance.
-     */
-    add(field, component) {
-        if (this.registry.has(field)) {
-            return;
-        }
-        this.registry.set(field, component);
-        // @ts-ignore
-        const value = getNested(this.ctx.initialValues, field);
-        const hasModel = has(component.$options.propsData || {}, 'value');
-        // @ts-ignore
-        if (!hasModel && this.ctx.hasInitialValue && value !== undefined) {
-            // In the case that the form is carrying an initial value and the
-            // element is not, set it directly.
-            // @ts-ignore
-            component.context.model = value;
-            // @ts-ignore
-        }
-        else if (hasModel && !shallowEqualObjects(component.proxy, value)) {
-            // In this case, the field is v-modeled or has an initial value and the
-            // form has no value or a different value, so use the field value
-            // @ts-ignore
-            this.ctx.setFieldValueAndEmit(field, component.proxy);
-        }
-    }
-    /**
-     * Remove an item from the registry.
-     */
-    remove(name) {
-        this.registry.delete(name);
-        // @ts-ignore
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _a = this.ctx.proxy, _b = name, value = _a[_b], newProxy = __rest(_a, [typeof _b === "symbol" ? _b : _b + ""]);
-        // @ts-ignore
-        this.ctx.proxy = newProxy;
-    }
-    /**
-     * Check if the registry has the given key.
-     */
-    has(key) {
-        return this.registry.has(key);
-    }
-    /**
-     * Check if the registry has elements, that equals or nested given key
-     */
-    hasNested(key) {
-        for (const i of this.registry.keys()) {
-            if (i === key || i.includes(key + '.')) {
-                return true;
-            }
-        }
-        return false;
-    }
-    /**
-     * Get a particular registry value.
-     */
-    get(key) {
-        return this.registry.get(key);
-    }
-    /**
-     * Get registry value for key or nested to given key
-     */
-    getNested(key) {
-        const result = new Map();
-        for (const i of this.registry.keys()) {
-            const objectKey = key + '.';
-            const arrayKey = key + '[';
-            if (i === key ||
-                i.substring(0, objectKey.length) === objectKey ||
-                i.substring(0, arrayKey.length) === arrayKey) {
-                result.set(i, this.registry.get(i));
-            }
-        }
-        return result;
-    }
-    /**
-     * Map over the registry (recursively).
-     */
-    forEach(callback) {
-        this.registry.forEach((component, field) => {
-            callback(component, field);
-        });
-    }
-    /**
-     * Return the keys of the registry.
-     */
-    keys() {
-        return Array.from(this.registry.keys());
-    }
-    /**
-     * Reduce the registry.
-     * @param {function} callback
-     * @param accumulator
-     */
-    reduce(callback, accumulator) {
-        this.registry.forEach((component, field) => {
-            accumulator = callback(accumulator, component, field);
-        });
-        return accumulator;
-    }
-}
-
-class ErrorObserverRegistry {
-    constructor(observers = []) {
-        this.observers = [];
-        this.observers = observers;
-    }
-    add(observer) {
-        if (!this.observers.some(o => o.callback === observer.callback)) {
-            this.observers.push(observer);
-        }
-    }
-    remove(handler) {
-        this.observers = this.observers.filter(o => o.callback !== handler);
-    }
-    filter(predicate) {
-        return new ErrorObserverRegistry(this.observers.filter(predicate));
-    }
-    some(predicate) {
-        return this.observers.some(predicate);
-    }
-    observe(errors) {
-        this.observers.forEach(observer => {
-            if (observer.type === 'form') {
-                observer.callback(errors);
-            }
-            else if (observer.field &&
-                !Array.isArray(errors)) {
-                if (has(errors, observer.field)) {
-                    observer.callback(errors[observer.field]);
-                }
-                else {
-                    observer.callback([]);
-                }
-            }
-        });
-    }
-}
-
-let FormularioForm = class FormularioForm extends Vue {
-    constructor() {
-        super(...arguments);
-        this.path = '';
-        this.proxy = {};
-        this.registry = new Registry(this);
-        this.errorObserverRegistry = new ErrorObserverRegistry();
-        // Local error messages are temporal, they wiped each resetValidation call
-        this.localFormErrors = [];
-        this.localFieldErrors = {};
-    }
-    get initialValues() {
-        if (this.hasModel && typeof this.formularioValue === 'object') {
-            // If there is a v-model on the form/group, use those values as first priority
-            return Object.assign({}, this.formularioValue); // @todo - use a deep clone to detach reference types
-        }
-        return {};
-    }
-    get mergedFormErrors() {
-        return [...this.formErrors, ...this.localFormErrors];
-    }
-    get mergedFieldErrors() {
-        return merge(this.errors || {}, this.localFieldErrors);
-    }
-    get hasModel() {
-        return has(this.$options.propsData || {}, 'formularioValue');
-    }
-    get hasInitialValue() {
-        return this.formularioValue && typeof this.formularioValue === 'object';
-    }
-    onFormularioValueChanged(values) {
-        if (this.hasModel && values && typeof values === 'object') {
-            this.setValues(values);
-        }
-    }
-    onMergedFormErrorsChanged(errors) {
-        this.errorObserverRegistry.filter(o => o.type === 'form').observe(errors);
-    }
-    onMergedFieldErrorsChanged(errors) {
-        this.errorObserverRegistry.filter(o => o.type === 'input').observe(errors);
-    }
-    created() {
-        this.initProxy();
-    }
-    getFormValues() {
-        return this.proxy;
-    }
-    onFormSubmit() {
-        return this.hasValidationErrors()
-            .then(hasErrors => hasErrors ? undefined : clone(this.proxy))
-            .then(data => {
-            if (typeof data !== 'undefined') {
-                this.$emit('submit', data);
-            }
-            else {
-                this.$emit('error');
-            }
-        });
-    }
-    onFormularioFieldValidation(payload) {
-        this.$emit('validation', payload);
-    }
-    addErrorObserver(observer) {
-        this.errorObserverRegistry.add(observer);
-        if (observer.type === 'form') {
-            observer.callback(this.mergedFormErrors);
-        }
-        else if (observer.field && has(this.mergedFieldErrors, observer.field)) {
-            observer.callback(this.mergedFieldErrors[observer.field]);
-        }
-    }
-    removeErrorObserver(observer) {
-        this.errorObserverRegistry.remove(observer);
-    }
-    register(field, component) {
-        this.registry.add(field, component);
-    }
-    deregister(field) {
-        this.registry.remove(field);
-    }
-    initProxy() {
-        if (this.hasInitialValue) {
-            this.proxy = this.initialValues;
-        }
-    }
-    setValues(values) {
-        const keys = Array.from(new Set([...Object.keys(values), ...Object.keys(this.proxy)]));
-        let proxyHasChanges = false;
-        keys.forEach(field => {
-            if (!this.registry.hasNested(field)) {
-                return;
-            }
-            this.registry.getNested(field).forEach((registryField, registryKey) => {
-                const $input = this.registry.get(registryKey);
-                const oldValue = getNested(this.proxy, registryKey);
-                const newValue = getNested(values, registryKey);
-                if (!shallowEqualObjects(newValue, oldValue)) {
-                    this.setFieldValue(registryKey, newValue);
-                    proxyHasChanges = true;
-                }
-                if (!shallowEqualObjects(newValue, $input.proxy)) {
-                    $input.context.model = newValue;
-                }
-            });
-        });
-        this.initProxy();
-        if (proxyHasChanges) {
-            this.$emit('input', Object.assign({}, this.proxy));
-        }
-    }
-    setFieldValue(field, value) {
-        if (value === undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const _a = this.proxy, _b = field, value = _a[_b], proxy = __rest(_a, [typeof _b === "symbol" ? _b : _b + ""]);
-            this.proxy = proxy;
-        }
-        else {
-            setNested(this.proxy, field, value);
-        }
-    }
-    setFieldValueAndEmit(field, value) {
-        this.setFieldValue(field, value);
-        this.$emit('input', Object.assign({}, this.proxy));
-    }
-    setErrors({ formErrors, inputErrors }) {
-        this.localFormErrors = formErrors || [];
-        this.localFieldErrors = inputErrors || {};
-    }
-    hasValidationErrors() {
-        return Promise.all(this.registry.reduce((resolvers, input) => {
-            resolvers.push(input.runValidation() && input.hasValidationErrors());
-            return resolvers;
-        }, [])).then(results => results.some(hasErrors => hasErrors));
-    }
-    resetValidation() {
-        this.localFormErrors = [];
-        this.localFieldErrors = {};
-        this.registry.forEach((input) => {
-            input.resetValidation();
-        });
-    }
-};
-__decorate([
-    Model('input', { default: () => ({}) })
-], FormularioForm.prototype, "formularioValue", void 0);
-__decorate([
-    Prop({ default: () => ({}) })
-], FormularioForm.prototype, "errors", void 0);
-__decorate([
-    Prop({ default: () => ([]) })
-], FormularioForm.prototype, "formErrors", void 0);
-__decorate([
-    Provide()
-], FormularioForm.prototype, "path", void 0);
-__decorate([
-    Watch('formularioValue', { deep: true })
-], FormularioForm.prototype, "onFormularioValueChanged", null);
-__decorate([
-    Watch('mergedFormErrors')
-], FormularioForm.prototype, "onMergedFormErrorsChanged", null);
-__decorate([
-    Watch('mergedFieldErrors', { deep: true, immediate: true })
-], FormularioForm.prototype, "onMergedFieldErrorsChanged", null);
-__decorate([
-    Provide()
-], FormularioForm.prototype, "getFormValues", null);
-__decorate([
-    Provide()
-], FormularioForm.prototype, "onFormularioFieldValidation", null);
-__decorate([
-    Provide()
-], FormularioForm.prototype, "addErrorObserver", null);
-__decorate([
-    Provide()
-], FormularioForm.prototype, "removeErrorObserver", null);
-__decorate([
-    Provide('formularioRegister')
-], FormularioForm.prototype, "register", null);
-__decorate([
-    Provide('formularioDeregister')
-], FormularioForm.prototype, "deregister", null);
-__decorate([
-    Provide('formularioSetter')
-], FormularioForm.prototype, "setFieldValueAndEmit", null);
-FormularioForm = __decorate([
-    Component({ name: 'FormularioForm' })
-], FormularioForm);
-var script = FormularioForm;
-
-function normalizeComponent(template, style, script, scopeId, isFunctionalTemplate, moduleIdentifier /* server only */, shadowMode, createInjector, createInjectorSSR, createInjectorShadow) {
-    if (typeof shadowMode !== 'boolean') {
-        createInjectorSSR = createInjector;
-        createInjector = shadowMode;
-        shadowMode = false;
-    }
-    // Vue.extend constructor export interop.
-    const options = typeof script === 'function' ? script.options : script;
-    // render functions
-    if (template && template.render) {
-        options.render = template.render;
-        options.staticRenderFns = template.staticRenderFns;
-        options._compiled = true;
-        // functional template
-        if (isFunctionalTemplate) {
-            options.functional = true;
-        }
-    }
-    // scopedId
-    if (scopeId) {
-        options._scopeId = scopeId;
-    }
-    let hook;
-    if (moduleIdentifier) {
-        // server build
-        hook = function (context) {
-            // 2.3 injection
-            context =
-                context || // cached call
-                    (this.$vnode && this.$vnode.ssrContext) || // stateful
-                    (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext); // functional
-            // 2.2 with runInNewContext: true
-            if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
-                context = __VUE_SSR_CONTEXT__;
-            }
-            // inject component styles
-            if (style) {
-                style.call(this, createInjectorSSR(context));
-            }
-            // register component module identifier for async chunk inference
-            if (context && context._registeredComponents) {
-                context._registeredComponents.add(moduleIdentifier);
-            }
-        };
-        // used by ssr in case component is cached and beforeCreate
-        // never gets called
-        options._ssrRegister = hook;
-    }
-    else if (style) {
-        hook = shadowMode
-            ? function (context) {
-                style.call(this, createInjectorShadow(context, this.$root.$options.shadowRoot));
-            }
-            : function (context) {
-                style.call(this, createInjector(context));
-            };
-    }
-    if (hook) {
-        if (options.functional) {
-            // register for functional component in vue file
-            const originalRender = options.render;
-            options.render = function renderWithStyleInjection(h, context) {
-                hook.call(context);
-                return originalRender(h, context);
-            };
-        }
-        else {
-            // inject component registration as beforeCreate hook
-            const existing = options.beforeCreate;
-            options.beforeCreate = existing ? [].concat(existing, hook) : [hook];
-        }
-    }
-    return script;
-}
-
-/* script */
-const __vue_script__ = script;
-
-/* template */
-var __vue_render__ = function() {
-  var _vm = this;
-  var _h = _vm.$createElement;
-  var _c = _vm._self._c || _h;
-  return _c(
-    "form",
-    {
-      on: {
-        submit: function($event) {
-          $event.preventDefault();
-          return _vm.onFormSubmit($event)
-        }
-      }
-    },
-    [_vm._t("default", null, { errors: _vm.mergedFormErrors })],
-    2
-  )
-};
-var __vue_staticRenderFns__ = [];
-__vue_render__._withStripped = true;
-
-  /* style */
-  const __vue_inject_styles__ = undefined;
-  /* scoped */
-  const __vue_scope_id__ = undefined;
-  /* module identifier */
-  const __vue_module_identifier__ = undefined;
-  /* functional template */
-  const __vue_is_functional_template__ = false;
-  /* style inject */
-  
-  /* style inject SSR */
-  
-  /* style inject shadow dom */
-  
-
-  
-  const __vue_component__ = /*#__PURE__*/normalizeComponent(
-    { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
-    __vue_inject_styles__,
-    __vue_script__,
-    __vue_scope_id__,
-    __vue_is_functional_template__,
-    __vue_module_identifier__,
-    false,
-    undefined,
-    undefined,
-    undefined
-  );
-
-let FormularioGrouping = class FormularioGrouping extends Vue {
-    get groupPath() {
-        if (this.isArrayItem) {
-            return `${this.path}[${this.name}]`;
-        }
-        if (this.path === '') {
-            return this.name;
-        }
-        return `${this.path}.${this.name}`;
-    }
-};
-__decorate([
-    Inject({ default: '' })
-], FormularioGrouping.prototype, "path", void 0);
-__decorate([
-    Prop({ required: true })
-], FormularioGrouping.prototype, "name", void 0);
-__decorate([
-    Prop({ default: false })
-], FormularioGrouping.prototype, "isArrayItem", void 0);
-__decorate([
-    Provide('path')
-], FormularioGrouping.prototype, "groupPath", null);
-FormularioGrouping = __decorate([
-    Component({ name: 'FormularioGrouping' })
-], FormularioGrouping);
-var script$1 = FormularioGrouping;
-
-/* script */
-const __vue_script__$1 = script$1;
-
-/* template */
-var __vue_render__$1 = function() {
-  var _vm = this;
-  var _h = _vm.$createElement;
-  var _c = _vm._self._c || _h;
-  return _c("div", [_vm._t("default")], 2)
-};
-var __vue_staticRenderFns__$1 = [];
-__vue_render__$1._withStripped = true;
-
-  /* style */
-  const __vue_inject_styles__$1 = undefined;
-  /* scoped */
-  const __vue_scope_id__$1 = undefined;
-  /* module identifier */
-  const __vue_module_identifier__$1 = undefined;
-  /* functional template */
-  const __vue_is_functional_template__$1 = false;
-  /* style inject */
-  
-  /* style inject SSR */
-  
-  /* style inject shadow dom */
-  
-
-  
-  const __vue_component__$1 = /*#__PURE__*/normalizeComponent(
-    { render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 },
-    __vue_inject_styles__$1,
-    __vue_script__$1,
-    __vue_scope_id__$1,
-    __vue_is_functional_template__$1,
-    __vue_module_identifier__$1,
-    false,
-    undefined,
-    undefined,
-    undefined
-  );
 
 function createValidator(ruleFn, ruleName, ruleArgs, messageFn) {
     return (context) => {
@@ -1309,42 +884,35 @@ const VALIDATION_BEHAVIOR = {
     LIVE: 'live',
     SUBMIT: 'submit',
 };
-let FormularioInput = class FormularioInput extends Vue {
+let FormularioField = class FormularioField extends Vue {
     constructor() {
         super(...arguments);
-        this.proxy = this.getInitialValue();
+        this.proxy = this.hasModel ? this.value : '';
         this.localErrors = [];
         this.violations = [];
-        this.validationRun = Promise.resolve();
+        this.validationRun = Promise.resolve([]);
     }
-    get fullQualifiedName() {
-        return this.path !== '' ? `${this.path}.${this.name}` : this.name;
+    get fullPath() {
+        return this.__Formulario_path !== '' ? `${this.__Formulario_path}.${this.name}` : this.name;
     }
-    get model() {
-        const model = this.hasModel ? 'value' : 'proxy';
-        return this.modelGetConverter(this[model]);
-    }
-    set model(value) {
-        value = this.modelSetConverter(value, this.proxy);
-        if (!shallowEqualObjects(value, this.proxy)) {
-            this.proxy = value;
-        }
-        this.$emit('input', value);
-        if (typeof this.formularioSetter === 'function') {
-            this.formularioSetter(this.context.name, value);
-        }
+    /**
+     * Determines if this formulario element is v-modeled or not.
+     */
+    get hasModel() {
+        return has(this.$options.propsData || {}, 'value');
     }
     get context() {
         return Object.defineProperty({
-            name: this.fullQualifiedName,
+            name: this.fullPath,
+            path: this.fullPath,
             runValidation: this.runValidation.bind(this),
             violations: this.violations,
             errors: this.localErrors,
             allErrors: [...this.localErrors, ...this.violations.map(v => v.message)],
         }, 'model', {
-            get: () => this.model,
+            get: () => this.modelGetConverter(this.proxy),
             set: (value) => {
-                this.model = value;
+                this.syncProxy(this.modelSetConverter(value, this.proxy));
             },
         });
     }
@@ -1362,83 +930,66 @@ let FormularioInput = class FormularioInput extends Vue {
         });
         return messages;
     }
-    /**
-     * Determines if this formulario element is v-modeled or not.
-     */
-    get hasModel() {
-        return has(this.$options.propsData || {}, 'value');
+    onValueChange() {
+        this.syncProxy(this.value);
     }
-    onProxyChanged(newValue, oldValue) {
-        if (!this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
-            this.context.model = newValue;
-        }
+    onProxyChange() {
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation();
         }
         else {
-            this.violations = [];
+            this.resetValidation();
         }
     }
-    onValueChanged(newValue, oldValue) {
-        if (this.hasModel && !shallowEqualObjects(newValue, oldValue)) {
-            this.context.model = newValue;
-        }
-    }
+    /**
+     * @internal
+     */
     created() {
-        this.initProxy();
-        if (typeof this.formularioRegister === 'function') {
-            this.formularioRegister(this.fullQualifiedName, this);
-        }
-        if (typeof this.addErrorObserver === 'function' && !this.errorsDisabled) {
-            this.addErrorObserver({ callback: this.setErrors, type: 'input', field: this.fullQualifiedName });
+        if (typeof this.__FormularioForm_register === 'function') {
+            this.__FormularioForm_register(this.fullPath, this);
         }
         if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
             this.runValidation();
         }
     }
-    // noinspection JSUnusedGlobalSymbols
+    /**
+     * @internal
+     */
     beforeDestroy() {
-        if (!this.errorsDisabled && typeof this.removeErrorObserver === 'function') {
-            this.removeErrorObserver(this.setErrors);
-        }
-        if (typeof this.formularioDeregister === 'function') {
-            this.formularioDeregister(this.fullQualifiedName);
+        if (typeof this.__FormularioForm_unregister === 'function') {
+            this.__FormularioForm_unregister(this.fullPath);
         }
     }
-    getInitialValue() {
-        return has(this.$options.propsData || {}, 'value') ? this.value : '';
-    }
-    initProxy() {
-        // This should only be run immediately on created and ensures that the
-        // proxy and the model are both the same before any additional registration.
-        if (!shallowEqualObjects(this.context.model, this.proxy)) {
-            this.context.model = this.proxy;
+    syncProxy(value) {
+        if (!deepEquals(value, this.proxy)) {
+            this.proxy = value;
+            this.$emit('input', value);
+            if (typeof this.__FormularioForm_set === 'function') {
+                this.__FormularioForm_set(this.fullPath, value);
+                this.__FormularioForm_emitInput();
+            }
         }
     }
     runValidation() {
         this.validationRun = this.validate().then(violations => {
-            const validationChanged = !shallowEqualObjects(violations, this.violations);
             this.violations = violations;
-            if (validationChanged) {
-                const payload = {
-                    name: this.context.name,
-                    violations: this.violations,
-                };
-                this.$emit('validation', payload);
-                if (typeof this.onFormularioFieldValidation === 'function') {
-                    this.onFormularioFieldValidation(payload);
-                }
-            }
+            this.emitValidation(this.fullPath, violations);
             return this.violations;
         });
         return this.validationRun;
     }
     validate() {
         return validate(processConstraints(this.validation, this.$formulario.getRules(this.normalizedValidationRules), this.$formulario.getMessages(this, this.normalizedValidationMessages)), {
-            value: this.context.model,
-            name: this.context.name,
-            formValues: this.getFormValues(),
+            value: this.proxy,
+            name: this.fullPath,
+            formValues: this.__FormularioForm_getState(),
         });
+    }
+    emitValidation(path, violations) {
+        this.$emit('validation', { path, violations });
+        if (typeof this.__FormularioForm_emitValidation === 'function') {
+            this.__FormularioForm_emitValidation(path, violations);
+        }
     }
     hasValidationErrors() {
         return new Promise(resolve => {
@@ -1447,81 +998,448 @@ let FormularioInput = class FormularioInput extends Vue {
             });
         });
     }
+    /**
+     * @internal
+     */
     setErrors(errors) {
-        this.localErrors = arrayify(errors);
+        if (!this.errorsDisabled) {
+            this.localErrors = errors;
+        }
     }
+    /**
+     * @internal
+     */
     resetValidation() {
         this.localErrors = [];
         this.violations = [];
     }
 };
 __decorate([
+    Inject({ default: '' })
+], FormularioField.prototype, "__Formulario_path", void 0);
+__decorate([
     Inject({ default: undefined })
-], FormularioInput.prototype, "formularioSetter", void 0);
+], FormularioField.prototype, "__FormularioForm_set", void 0);
 __decorate([
     Inject({ default: () => () => { } })
-], FormularioInput.prototype, "onFormularioFieldValidation", void 0);
+], FormularioField.prototype, "__FormularioForm_emitInput", void 0);
+__decorate([
+    Inject({ default: () => () => { } })
+], FormularioField.prototype, "__FormularioForm_emitValidation", void 0);
 __decorate([
     Inject({ default: undefined })
-], FormularioInput.prototype, "formularioRegister", void 0);
+], FormularioField.prototype, "__FormularioForm_register", void 0);
 __decorate([
     Inject({ default: undefined })
-], FormularioInput.prototype, "formularioDeregister", void 0);
+], FormularioField.prototype, "__FormularioForm_unregister", void 0);
 __decorate([
     Inject({ default: () => () => ({}) })
-], FormularioInput.prototype, "getFormValues", void 0);
-__decorate([
-    Inject({ default: undefined })
-], FormularioInput.prototype, "addErrorObserver", void 0);
-__decorate([
-    Inject({ default: undefined })
-], FormularioInput.prototype, "removeErrorObserver", void 0);
-__decorate([
-    Inject({ default: '' })
-], FormularioInput.prototype, "path", void 0);
+], FormularioField.prototype, "__FormularioForm_getState", void 0);
 __decorate([
     Model('input', { default: '' })
-], FormularioInput.prototype, "value", void 0);
+], FormularioField.prototype, "value", void 0);
 __decorate([
     Prop({
         required: true,
         validator: (name) => typeof name === 'string' && name.length > 0,
     })
-], FormularioInput.prototype, "name", void 0);
+], FormularioField.prototype, "name", void 0);
 __decorate([
     Prop({ default: '' })
-], FormularioInput.prototype, "validation", void 0);
+], FormularioField.prototype, "validation", void 0);
 __decorate([
     Prop({ default: () => ({}) })
-], FormularioInput.prototype, "validationRules", void 0);
+], FormularioField.prototype, "validationRules", void 0);
 __decorate([
     Prop({ default: () => ({}) })
-], FormularioInput.prototype, "validationMessages", void 0);
+], FormularioField.prototype, "validationMessages", void 0);
 __decorate([
     Prop({
         default: VALIDATION_BEHAVIOR.DEMAND,
         validator: behavior => Object.values(VALIDATION_BEHAVIOR).includes(behavior)
     })
-], FormularioInput.prototype, "validationBehavior", void 0);
+], FormularioField.prototype, "validationBehavior", void 0);
 __decorate([
     Prop({ default: false })
-], FormularioInput.prototype, "errorsDisabled", void 0);
+], FormularioField.prototype, "errorsDisabled", void 0);
 __decorate([
     Prop({ default: () => (value) => value })
-], FormularioInput.prototype, "modelGetConverter", void 0);
+], FormularioField.prototype, "modelGetConverter", void 0);
 __decorate([
     Prop({ default: () => (value) => value })
-], FormularioInput.prototype, "modelSetConverter", void 0);
-__decorate([
-    Watch('proxy')
-], FormularioInput.prototype, "onProxyChanged", null);
+], FormularioField.prototype, "modelSetConverter", void 0);
 __decorate([
     Watch('value')
-], FormularioInput.prototype, "onValueChanged", null);
-FormularioInput = __decorate([
-    Component({ name: 'FormularioInput', inheritAttrs: false })
-], FormularioInput);
-var script$2 = FormularioInput;
+], FormularioField.prototype, "onValueChange", null);
+__decorate([
+    Watch('proxy')
+], FormularioField.prototype, "onProxyChange", null);
+FormularioField = __decorate([
+    Component({ name: 'FormularioField', inheritAttrs: false })
+], FormularioField);
+var script = FormularioField;
+
+function normalizeComponent(template, style, script, scopeId, isFunctionalTemplate, moduleIdentifier /* server only */, shadowMode, createInjector, createInjectorSSR, createInjectorShadow) {
+    if (typeof shadowMode !== 'boolean') {
+        createInjectorSSR = createInjector;
+        createInjector = shadowMode;
+        shadowMode = false;
+    }
+    // Vue.extend constructor export interop.
+    const options = typeof script === 'function' ? script.options : script;
+    // render functions
+    if (template && template.render) {
+        options.render = template.render;
+        options.staticRenderFns = template.staticRenderFns;
+        options._compiled = true;
+        // functional template
+        if (isFunctionalTemplate) {
+            options.functional = true;
+        }
+    }
+    // scopedId
+    if (scopeId) {
+        options._scopeId = scopeId;
+    }
+    let hook;
+    if (moduleIdentifier) {
+        // server build
+        hook = function (context) {
+            // 2.3 injection
+            context =
+                context || // cached call
+                    (this.$vnode && this.$vnode.ssrContext) || // stateful
+                    (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext); // functional
+            // 2.2 with runInNewContext: true
+            if (!context && typeof __VUE_SSR_CONTEXT__ !== 'undefined') {
+                context = __VUE_SSR_CONTEXT__;
+            }
+            // inject component styles
+            if (style) {
+                style.call(this, createInjectorSSR(context));
+            }
+            // register component module identifier for async chunk inference
+            if (context && context._registeredComponents) {
+                context._registeredComponents.add(moduleIdentifier);
+            }
+        };
+        // used by ssr in case component is cached and beforeCreate
+        // never gets called
+        options._ssrRegister = hook;
+    }
+    else if (style) {
+        hook = shadowMode
+            ? function (context) {
+                style.call(this, createInjectorShadow(context, this.$root.$options.shadowRoot));
+            }
+            : function (context) {
+                style.call(this, createInjector(context));
+            };
+    }
+    if (hook) {
+        if (options.functional) {
+            // register for functional component in vue file
+            const originalRender = options.render;
+            options.render = function renderWithStyleInjection(h, context) {
+                hook.call(context);
+                return originalRender(h, context);
+            };
+        }
+        else {
+            // inject component registration as beforeCreate hook
+            const existing = options.beforeCreate;
+            options.beforeCreate = existing ? [].concat(existing, hook) : [hook];
+        }
+    }
+    return script;
+}
+
+/* script */
+const __vue_script__ = script;
+
+/* template */
+var __vue_render__ = function() {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    "div",
+    _vm._b({}, "div", _vm.$attrs, false),
+    [_vm._t("default", null, { context: _vm.context })],
+    2
+  )
+};
+var __vue_staticRenderFns__ = [];
+__vue_render__._withStripped = true;
+
+  /* style */
+  const __vue_inject_styles__ = undefined;
+  /* scoped */
+  const __vue_scope_id__ = undefined;
+  /* module identifier */
+  const __vue_module_identifier__ = undefined;
+  /* functional template */
+  const __vue_is_functional_template__ = false;
+  /* style inject */
+  
+  /* style inject SSR */
+  
+  /* style inject shadow dom */
+  
+
+  
+  const __vue_component__ = /*#__PURE__*/normalizeComponent(
+    { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
+    __vue_inject_styles__,
+    __vue_script__,
+    __vue_scope_id__,
+    __vue_is_functional_template__,
+    __vue_module_identifier__,
+    false,
+    undefined,
+    undefined,
+    undefined
+  );
+
+let FormularioFieldGroup = class FormularioFieldGroup extends Vue {
+    get fullPath() {
+        const path = `${this.name}`;
+        if (parseInt(path).toString() === path) {
+            return `${this.__Formulario_path}[${path}]`;
+        }
+        if (this.__Formulario_path === '') {
+            return path;
+        }
+        return `${this.__Formulario_path}.${path}`;
+    }
+};
+__decorate([
+    Inject({ default: '' })
+], FormularioFieldGroup.prototype, "__Formulario_path", void 0);
+__decorate([
+    Prop({ required: true })
+], FormularioFieldGroup.prototype, "name", void 0);
+__decorate([
+    Provide('__Formulario_path')
+], FormularioFieldGroup.prototype, "fullPath", null);
+FormularioFieldGroup = __decorate([
+    Component({ name: 'FormularioFieldGroup' })
+], FormularioFieldGroup);
+var script$1 = FormularioFieldGroup;
+
+/* script */
+const __vue_script__$1 = script$1;
+
+/* template */
+var __vue_render__$1 = function() {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", [_vm._t("default")], 2)
+};
+var __vue_staticRenderFns__$1 = [];
+__vue_render__$1._withStripped = true;
+
+  /* style */
+  const __vue_inject_styles__$1 = undefined;
+  /* scoped */
+  const __vue_scope_id__$1 = undefined;
+  /* module identifier */
+  const __vue_module_identifier__$1 = undefined;
+  /* functional template */
+  const __vue_is_functional_template__$1 = false;
+  /* style inject */
+  
+  /* style inject SSR */
+  
+  /* style inject shadow dom */
+  
+
+  
+  const __vue_component__$1 = /*#__PURE__*/normalizeComponent(
+    { render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 },
+    __vue_inject_styles__$1,
+    __vue_script__$1,
+    __vue_scope_id__$1,
+    __vue_is_functional_template__$1,
+    __vue_module_identifier__$1,
+    false,
+    undefined,
+    undefined,
+    undefined
+  );
+
+const update = (state, path, value) => {
+    if (value === undefined) {
+        return unset(state, path);
+    }
+    return set(state, path, value);
+};
+let FormularioForm = class FormularioForm extends Vue {
+    constructor() {
+        super(...arguments);
+        this.proxy = {};
+        this.registry = new Map();
+        // Local error messages are temporal, they wiped each resetValidation call
+        this.localFieldsErrors = {};
+        this.localFormErrors = [];
+    }
+    get fieldsErrorsComputed() {
+        return merge(this.fieldsErrors || {}, this.localFieldsErrors);
+    }
+    get formErrorsComputed() {
+        return [...this.formErrors, ...this.localFormErrors];
+    }
+    register(path, field) {
+        if (!this.registry.has(path)) {
+            this.registry.set(path, field);
+        }
+        const value = get(this.proxy, path);
+        if (!field.hasModel) {
+            if (value !== undefined) {
+                field.proxy = value;
+            }
+            else {
+                this.setFieldValue(path, null);
+                this.emitInput();
+            }
+        }
+        else if (!deepEquals(field.proxy, value)) {
+            this.setFieldValue(path, field.proxy);
+            this.emitInput();
+        }
+        if (has(this.fieldsErrorsComputed, path)) {
+            field.setErrors(this.fieldsErrorsComputed[path]);
+        }
+    }
+    unregister(path) {
+        if (this.registry.has(path)) {
+            this.registry.delete(path);
+            this.proxy = unset(this.proxy, path);
+            this.emitInput();
+        }
+    }
+    getState() {
+        return this.proxy;
+    }
+    setFieldValue(path, value) {
+        this.proxy = update(this.proxy, path, value);
+    }
+    emitInput() {
+        this.$emit('input', clone(this.proxy));
+    }
+    emitValidation(path, violations) {
+        this.$emit('validation', { path, violations });
+    }
+    onStateChange(newState) {
+        const newProxy = clone(newState);
+        const oldProxy = this.proxy;
+        let proxyHasChanges = false;
+        this.registry.forEach((field, path) => {
+            const newValue = get(newState, path, null);
+            const oldValue = get(oldProxy, path, null);
+            field.proxy = newValue;
+            if (!deepEquals(newValue, oldValue)) {
+                field.$emit('input', newValue);
+                update(newProxy, path, newValue);
+                proxyHasChanges = true;
+            }
+        });
+        this.proxy = newProxy;
+        if (proxyHasChanges) {
+            this.emitInput();
+        }
+    }
+    onFieldsErrorsChange(fieldsErrors) {
+        this.registry.forEach((field, path) => {
+            field.setErrors(fieldsErrors[path] || []);
+        });
+    }
+    created() {
+        this.$formulario.register(this.id, this);
+        if (typeof this.state === 'object') {
+            this.proxy = clone(this.state);
+        }
+    }
+    beforeDestroy() {
+        this.$formulario.unregister(this.id);
+    }
+    runValidation() {
+        const runs = [];
+        const violations = {};
+        this.registry.forEach((field, path) => {
+            runs.push(field.runValidation().then(v => { violations[path] = v; }));
+        });
+        return Promise.all(runs).then(() => violations);
+    }
+    hasValidationErrors() {
+        return this.runValidation().then(violations => {
+            return Object.keys(violations).some(path => violations[path].length > 0);
+        });
+    }
+    setErrors({ fieldsErrors, formErrors }) {
+        this.localFieldsErrors = fieldsErrors || {};
+        this.localFormErrors = formErrors || [];
+    }
+    resetValidation() {
+        this.localFieldsErrors = {};
+        this.localFormErrors = [];
+        this.registry.forEach((field) => {
+            field.resetValidation();
+        });
+    }
+    onSubmit() {
+        return this.runValidation().then(violations => {
+            const hasErrors = Object.keys(violations).some(path => violations[path].length > 0);
+            if (!hasErrors) {
+                this.$emit('submit', clone(this.proxy));
+            }
+            else {
+                this.$emit('error', violations);
+            }
+        });
+    }
+};
+__decorate([
+    Model('input', { default: () => ({}) })
+], FormularioForm.prototype, "state", void 0);
+__decorate([
+    Prop({ default: () => id('formulario-form') })
+], FormularioForm.prototype, "id", void 0);
+__decorate([
+    Prop({ default: () => ({}) })
+], FormularioForm.prototype, "fieldsErrors", void 0);
+__decorate([
+    Prop({ default: () => ([]) })
+], FormularioForm.prototype, "formErrors", void 0);
+__decorate([
+    Provide('__FormularioForm_register')
+], FormularioForm.prototype, "register", null);
+__decorate([
+    Provide('__FormularioForm_unregister')
+], FormularioForm.prototype, "unregister", null);
+__decorate([
+    Provide('__FormularioForm_getState')
+], FormularioForm.prototype, "getState", null);
+__decorate([
+    Provide('__FormularioForm_set')
+], FormularioForm.prototype, "setFieldValue", null);
+__decorate([
+    Provide('__FormularioForm_emitInput')
+], FormularioForm.prototype, "emitInput", null);
+__decorate([
+    Provide('__FormularioForm_emitValidation')
+], FormularioForm.prototype, "emitValidation", null);
+__decorate([
+    Watch('state', { deep: true })
+], FormularioForm.prototype, "onStateChange", null);
+__decorate([
+    Watch('fieldsErrorsComputed', { deep: true, immediate: true })
+], FormularioForm.prototype, "onFieldsErrorsChange", null);
+FormularioForm = __decorate([
+    Component({ name: 'FormularioForm' })
+], FormularioForm);
+var script$2 = FormularioForm;
 
 /* script */
 const __vue_script__$2 = script$2;
@@ -1532,9 +1450,16 @@ var __vue_render__$2 = function() {
   var _h = _vm.$createElement;
   var _c = _vm._self._c || _h;
   return _c(
-    "div",
-    { staticClass: "formulario-input" },
-    [_vm._t("default", null, { context: _vm.context })],
+    "form",
+    {
+      on: {
+        submit: function($event) {
+          $event.preventDefault();
+          return _vm.onSubmit($event)
+        }
+      }
+    },
+    [_vm._t("default", null, { errors: _vm.formErrorsComputed })],
     2
   )
 };
@@ -1571,10 +1496,15 @@ __vue_render__$2._withStripped = true;
   );
 
 var index = {
+    Formulario,
     install(Vue, options) {
-        Vue.component('FormularioForm', __vue_component__);
+        Vue.component('FormularioField', __vue_component__);
+        Vue.component('FormularioFieldGroup', __vue_component__$1);
+        Vue.component('FormularioForm', __vue_component__$2);
+        // @deprecated Use FormularioField instead
+        Vue.component('FormularioInput', __vue_component__);
+        // @deprecated Use FormularioFieldGroup instead
         Vue.component('FormularioGrouping', __vue_component__$1);
-        Vue.component('FormularioInput', __vue_component__$2);
         Vue.mixin({
             beforeCreate() {
                 const o = this.$options;
