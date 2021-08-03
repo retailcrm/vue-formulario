@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.6.1](https://github.com/retailcrm/vue-formulario/compare/v0.6.0...v0.6.1) (2021-08-03)
+
+
+### Fixes
+
+* Build ([d3beab3](https://github.com/retailcrm/vue-formulario/commit/d3beab358387e5aaa99a957af9afdee158ccd30f))
+
 ## [0.6.0](https://github.com/retailcrm/vue-formulario/compare/v0.5.1...v0.6.0) (2021-08-03)
 
 
