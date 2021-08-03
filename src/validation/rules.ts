@@ -250,6 +250,10 @@ const rules: Record<string, ValidationRuleFn> = {
      * Rule: checks if a string is a valid url
      */
     url ({ value }: ValidationContext): boolean {
+        if (!value) {
+            return true
+        }
+
         return isUrl(value)
     },
 
