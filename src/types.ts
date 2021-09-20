@@ -47,6 +47,18 @@ export enum TYPE {
     NULL = 'NULL',
 }
 
+const constructorOf = (value: object): unknown => {
+    return Object.getPrototypeOf(value).constructor
+}
+
+export function isRecord (value: object): boolean {
+    return constructorOf(value) === Object && Object.keys(Object.getPrototypeOf(value)).length === 0
+}
+
+export function isRecordLike (value: unknown): boolean {
+    return typeof value === 'object' && value !== null && (isRecord(value) || Array.isArray(value))
+}
+
 export function typeOf (value: unknown): string {
     switch (typeof value) {
         case 'bigint':
@@ -76,18 +88,14 @@ export function typeOf (value: unknown): string {
                 return TYPE.ARRAY
             }
 
-            if (value.constructor.name === 'Object') {
+            if (isRecord(value)) {
                 return TYPE.RECORD
             }
 
-            return 'InstanceOf<' + value.constructor.name + '>'
+            return 'InstanceOf<' + (constructorOf(value) as { name?: string }).name + '>'
     }
 
     throw new Error()
-}
-
-export function isRecordLike (value: unknown): boolean {
-    return typeof value === 'object' && value !== null && ['Array', 'Object'].includes(value.constructor.name)
 }
 
 export function isScalar (value: unknown): boolean {

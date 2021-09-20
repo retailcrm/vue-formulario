@@ -15,6 +15,7 @@ describe('types', () => {
 
     const records = [
         [{}],
+        [{ constructor: null }],
         [{ a: 'a', b: ['b'] }],
         [[]],
         [['b', 'c']],
