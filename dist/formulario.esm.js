@@ -66,6 +66,15 @@ var TYPE;
     TYPE["UNDEFINED"] = "UNDEFINED";
     TYPE["NULL"] = "NULL";
 })(TYPE || (TYPE = {}));
+const constructorOf = (value) => {
+    return Object.getPrototypeOf(value).constructor;
+};
+function isRecord(value) {
+    return constructorOf(value) === Object && Object.keys(Object.getPrototypeOf(value)).length === 0;
+}
+function isRecordLike(value) {
+    return typeof value === 'object' && value !== null && (isRecord(value) || Array.isArray(value));
+}
 function typeOf(value) {
     switch (typeof value) {
         case 'bigint':
@@ -92,15 +101,12 @@ function typeOf(value) {
             if (Array.isArray(value)) {
                 return TYPE.ARRAY;
             }
-            if (value.constructor.name === 'Object') {
+            if (isRecord(value)) {
                 return TYPE.RECORD;
             }
-            return 'InstanceOf<' + value.constructor.name + '>';
+            return 'InstanceOf<' + constructorOf(value).name + '>';
     }
     throw new Error();
-}
-function isRecordLike(value) {
-    return typeof value === 'object' && value !== null && ['Array', 'Object'].includes(value.constructor.name);
 }
 function isScalar(value) {
     switch (typeof value) {
