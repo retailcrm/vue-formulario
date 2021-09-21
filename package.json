@@ -1,6 +1,6 @@
 {
     "name": "@retailcrm/vue-formulario",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "license": "MIT",
     "author": "RetailDriverLLC <integration@retailcrm.ru>",
     "main": "dist/formulario.umd.js",
