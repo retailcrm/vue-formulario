@@ -1,7 +1,10 @@
 <template>
-    <div v-bind="$attrs">
+    <component
+        :is="tag"
+        v-bind="$attrs"
+    >
         <slot :context="context" />
-    </div>
+    </component>
 </template>
 
 <script lang="ts">
@@ -67,6 +70,8 @@ export default class FormularioField extends Vue {
 
     @Prop({ default: () => <U, T>(value: U|Empty): U|T|Empty => value }) modelGetConverter!: ModelGetConverter
     @Prop({ default: () => <T, U>(value: U|T): U|T => value }) modelSetConverter!: ModelSetConverter
+
+    @Prop({ default: 'div' }) tag!: string
 
     public proxy: unknown = this.hasModel ? this.value : ''
 
