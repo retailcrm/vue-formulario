@@ -890,6 +890,11 @@
         });
     }
 
+    const UNREGISTER_BEHAVIOR = {
+        NONE: 'none',
+        UNSET: 'unset',
+    };
+
     const VALIDATION_BEHAVIOR = {
         DEMAND: 'demand',
         LIVE: 'live',
@@ -968,7 +973,7 @@
          */
         beforeDestroy() {
             if (typeof this.__FormularioForm_unregister === 'function') {
-                this.__FormularioForm_unregister(this.fullPath);
+                this.__FormularioForm_unregister(this.fullPath, this.unregisterBehavior);
             }
         }
         syncProxy(value) {
@@ -1080,6 +1085,12 @@
         vuePropertyDecorator.Prop({ default: () => (value) => value })
     ], FormularioField.prototype, "modelSetConverter", void 0);
     __decorate([
+        vuePropertyDecorator.Prop({ default: 'div' })
+    ], FormularioField.prototype, "tag", void 0);
+    __decorate([
+        vuePropertyDecorator.Prop({ default: UNREGISTER_BEHAVIOR.NONE })
+    ], FormularioField.prototype, "unregisterBehavior", void 0);
+    __decorate([
         vuePropertyDecorator.Watch('value')
     ], FormularioField.prototype, "onValueChange", null);
     __decorate([
@@ -1174,8 +1185,8 @@
       var _h = _vm.$createElement;
       var _c = _vm._self._c || _h;
       return _c(
-        "div",
-        _vm._b({}, "div", _vm.$attrs, false),
+        _vm.tag,
+        _vm._b({ tag: "component" }, "component", _vm.$attrs, false),
         [_vm._t("default", null, { context: _vm.context })],
         2
       )
@@ -1323,11 +1334,13 @@
                 field.setErrors(this.fieldsErrorsComputed[path]);
             }
         }
-        unregister(path) {
+        unregister(path, behavior) {
             if (this.registry.has(path)) {
                 this.registry.delete(path);
-                this.proxy = unset(this.proxy, path);
-                this.emitInput();
+                if (behavior === UNREGISTER_BEHAVIOR.UNSET) {
+                    this.proxy = unset(this.proxy, path);
+                    this.emitInput();
+                }
             }
         }
         getState() {
