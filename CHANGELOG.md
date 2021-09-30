@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.7.0](https://github.com/retailcrm/vue-formulario/compare/v0.6.3...v0.7.0) (2021-09-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* Added property "unregisterBehavior" to FormularioField to control value unset behavior on field component removal
+
+### Features
+
+* Added property "unregisterBehavior" to FormularioField to control value unset behavior on field component removal ([d39ca17](https://github.com/retailcrm/vue-formulario/commit/d39ca17e45cb5957bd9b9916b6e904993e660bc5))
+
 ### [0.6.3](https://github.com/retailcrm/vue-formulario/compare/v0.6.2...v0.6.3) (2021-09-29)
 
 
