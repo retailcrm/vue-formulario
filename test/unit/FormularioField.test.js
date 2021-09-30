@@ -286,4 +286,37 @@ describe('FormularioField', () => {
             [{ date: new Date('2001-05-12') }],
         ])
     })
+
+    test('unregister behavior', async () => {
+        const wrapper = mount({
+            props: {
+                formExists: {
+                    type: Boolean,
+                    default: true,
+                }
+            },
+            data: () => ({ state: { fieldA: '', fieldB: '' } }),
+            watch: {
+                state () {
+                    this.$emit('updated', this.state)
+                },
+            },
+            template: `
+                <div>
+                    <FormularioForm v-if="formExists" v-model="state">
+                        <FormularioField name="fieldA" />
+                        <FormularioField name="fieldB" unregister-behavior="unset" />
+                    </FormularioForm>
+                </div>
+            `,
+        })
+
+        await wrapper.vm.$nextTick()
+
+        wrapper.setProps({ formExists: false })
+
+        await wrapper.vm.$nextTick()
+
+        expect(wrapper.emitted('updated')).toEqual([[{ fieldA: '' }]])
+    })
 })
