@@ -32,6 +32,8 @@ import {
     Empty,
 } from '@/types'
 
+import { UNREGISTER_BEHAVIOR } from '@/enum'
+
 const VALIDATION_BEHAVIOR = {
     DEMAND: 'demand',
     LIVE: 'live',
@@ -72,6 +74,7 @@ export default class FormularioField extends Vue {
     @Prop({ default: () => <T, U>(value: U|T): U|T => value }) modelSetConverter!: ModelSetConverter
 
     @Prop({ default: 'div' }) tag!: string
+    @Prop({ default: UNREGISTER_BEHAVIOR.NONE }) unregisterBehavior!: string
 
     public proxy: unknown = this.hasModel ? this.value : ''
 
@@ -156,7 +159,7 @@ export default class FormularioField extends Vue {
      */
     public beforeDestroy (): void {
         if (typeof this.__FormularioForm_unregister === 'function') {
-            this.__FormularioForm_unregister(this.fullPath)
+            this.__FormularioForm_unregister(this.fullPath, this.unregisterBehavior)
         }
     }
 

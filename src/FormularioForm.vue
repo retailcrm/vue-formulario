@@ -27,6 +27,8 @@ import {
 import { FormularioField } from '@/types'
 import { Violation } from '@/validation/validator'
 
+import { UNREGISTER_BEHAVIOR } from '@/enum'
+
 const update = (state: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> => {
     if (value === undefined) {
         return unset(state, path) as Record<string, unknown>
@@ -88,11 +90,14 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('__FormularioForm_unregister')
-    private unregister (path: string): void {
+    private unregister (path: string, behavior: string): void {
         if (this.registry.has(path)) {
             this.registry.delete(path)
-            this.proxy = unset(this.proxy, path) as Record<string, unknown>
-            this.emitInput()
+
+            if (behavior === UNREGISTER_BEHAVIOR.UNSET) {
+                this.proxy = unset(this.proxy, path) as Record<string, unknown>
+                this.emitInput()
+            }
         }
     }
 
