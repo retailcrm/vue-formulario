@@ -21,11 +21,6 @@ export default {
         Vue.component('FormularioFieldGroup', FormularioFieldGroup)
         Vue.component('FormularioForm', FormularioForm)
 
-        // @deprecated Use FormularioField instead
-        Vue.component('FormularioInput', FormularioField)
-        // @deprecated Use FormularioFieldGroup instead
-        Vue.component('FormularioGrouping', FormularioFieldGroup)
-
         Vue.mixin({
             beforeCreate () {
                 const o = this.$options as Record<string, any>
