@@ -76,4 +76,11 @@ describe('clone', () => {
         expect(copy.sample.doSomething).toBeTruthy()
         expect(copy.sample.doSomething).not.toThrow()
     })
+
+    test('does not create a copy of a blob', () => {
+        const blob = new Blob(['{"fieldA": "fieldA"}'], { type : 'application/json' })
+        const copy = clone(blob)
+
+        expect(blob === copy).toBeTruthy()
+    })
 })

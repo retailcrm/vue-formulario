@@ -9,7 +9,8 @@ const cloneInstance = <T>(original: T): T => {
  * case of needing to unbind reactive watchers.
  */
 export default function clone<T = unknown> (value: T): T {
-    if (isScalar(value)) {
+    // scalars & immutables
+    if (isScalar(value) || value instanceof Blob) {
         return value
     }
 
