@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.2](https://github.com/retailcrm/vue-formulario/compare/v0.7.1...v0.7.2) (2021-10-21)
+
+
+### Fixes
+
+* Blob objects are no longer cloned ([67dba98](https://github.com/retailcrm/vue-formulario/commit/67dba981a15b04a84512de277f633d0f7d19d543))
+
 ### [0.7.1](https://github.com/retailcrm/vue-formulario/compare/v0.7.0...v0.7.1) (2021-09-30)
 
 

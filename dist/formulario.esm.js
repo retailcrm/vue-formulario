@@ -130,7 +130,8 @@ const cloneInstance = (original) => {
  * case of needing to unbind reactive watchers.
  */
 function clone(value) {
-    if (isScalar(value)) {
+    // scalars & immutables
+    if (isScalar(value) || value instanceof Blob) {
         return value;
     }
     if (value instanceof Date) {
