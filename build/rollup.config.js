@@ -10,7 +10,6 @@ export default {
     output: [{
         name: 'Formulario',
         globals: {
-            'is-plain-object': 'isPlainObject',
             'is-url': 'isUrl',
             vue: 'Vue',
             'vue-property-decorator': 'vuePropertyDecorator',

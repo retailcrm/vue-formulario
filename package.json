@@ -10,7 +10,6 @@
     },
     "unpkg": "dist/formulario.min.js",
     "dependencies": {
-        "is-plain-object": "^3.0.0",
         "is-url": "^1.2.4",
         "vue-class-component": "^7.2.3",
         "vue-property-decorator": "^8.4.2"
