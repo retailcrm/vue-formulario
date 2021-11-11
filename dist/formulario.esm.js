@@ -482,7 +482,7 @@ const rules = {
             return value <= maximum;
         }
         if (typeof value === 'string' || (force === 'length')) {
-            value = !isNaN(value) ? value.toString() : value;
+            value = !isNaN(value) ? String(value) : value;
             return value.length <= maximum;
         }
         return false;
@@ -500,7 +500,7 @@ const rules = {
             return value >= minimum;
         }
         if (typeof value === 'string' || (force === 'length')) {
-            value = !isNaN(value) ? value.toString() : value;
+            value = !isNaN(value) ? String(value) : value;
             return value.length >= minimum;
         }
         return false;

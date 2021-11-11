@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.7.3](https://github.com/retailcrm/vue-formulario/compare/v0.7.2...v0.7.3) (2021-11-11)
+
+
+### Fixes
+
+* Fixed toString calls in validators ([da56b04](https://github.com/retailcrm/vue-formulario/commit/da56b04213b6ebc3d001a273b26a350a59e0382b))
+
 ### [0.7.2](https://github.com/retailcrm/vue-formulario/compare/v0.7.1...v0.7.2) (2021-10-21)
 
 
