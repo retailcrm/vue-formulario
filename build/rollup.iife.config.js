@@ -13,7 +13,6 @@ export default {
         name: 'VueFormulario',
         format: 'iife',
         globals: {
-            'is-plain-object': 'isPlainObject',
             'is-url': 'isUrl',
             vue: 'Vue',
             'vue-property-decorator': 'vuePropertyDecorator',
@@ -29,7 +28,7 @@ export default {
         vue({ css: true, compileTemplate: true }),
         alias({ entries: [{ find: /^@\/(.+)/, replacement: './$1' }] }),
         commonjs(),
-        internal(['is-plain-object', 'is-url', 'vue-property-decorator']),
+        internal(['is-url', 'vue-property-decorator']),
         terser(),
     ]
 }
