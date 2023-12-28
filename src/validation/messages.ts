@@ -1,7 +1,7 @@
-import {
+import type {
     ValidationContext,
     ValidationMessageI18NFn,
-} from '@/validation/validator'
+} from '../../types/validation'
 
 /**
  * Message builders, names match rules names, see @/validation/rules

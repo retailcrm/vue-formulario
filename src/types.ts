@@ -1,10 +1,6 @@
-import Vue from 'vue'
-import { Violation } from '@/validation/validator'
+import type { Violation } from '../types/validation'
 
-export interface FormularioForm extends Vue {
-    runValidation(): Promise<Record<string, Violation[]>>;
-    resetValidation(): void;
-}
+import Vue from 'vue'
 
 export interface FormularioField extends Vue {
     hasModel: boolean;
@@ -13,25 +9,6 @@ export interface FormularioField extends Vue {
     runValidation(): Promise<Violation[]>;
     resetValidation(): void;
 }
-
-export type FormularioFieldContext<T> = {
-    model: T;
-    name: string;
-    runValidation(): Promise<Violation[]>;
-    violations: Violation[];
-    errors: string[];
-    allErrors: string[];
-}
-
-export interface FormularioFieldModelGetConverter {
-    <U, T>(value: U|Empty): U|T|Empty;
-}
-
-export interface FormularioFieldModelSetConverter {
-    <T, U>(curr: U|T, prev: U|Empty): U|T;
-}
-
-export type Empty = undefined | null
 
 export enum TYPE {
     ARRAY = 'ARRAY',

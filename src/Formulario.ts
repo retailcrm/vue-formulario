@@ -1,33 +1,28 @@
-import merge from '@/utils/merge'
-import validationRules from '@/validation/rules'
-import validationMessages from '@/validation/messages'
+import type { FormularioFormConstructor } from '../types/form'
 
-import {
+import type {
     ValidationContext,
     ValidationRuleFn,
     ValidationMessageFn,
     ValidationMessageI18NFn,
     Violation,
-} from '@/validation/validator'
+} from '../types/validation'
 
-import { FormularioForm } from '@/types'
+import type { Options } from '../types/plugin'
 
-export interface FormularioOptions {
-    validationRules?: Record<string, ValidationRuleFn>;
-    validationMessages?: Record<string, ValidationMessageI18NFn|string>;
-}
+import merge from '@/utils/merge'
 
-/**
- * The base formulario library.
- */
+import validationRules from '@/validation/rules'
+import validationMessages from '@/validation/messages'
+
 export default class Formulario {
     public validationRules: Record<string, ValidationRuleFn> = {}
     public validationMessages: Record<string, ValidationMessageI18NFn|string> = {}
 
-    private readonly registry: Map<string, FormularioForm>
+    private readonly _registry: Map<string, InstanceType<FormularioFormConstructor>>
 
-    public constructor (options?: FormularioOptions) {
-        this.registry = new Map()
+    public constructor (options?: Options) {
+        this._registry = new Map()
 
         this.validationRules = validationRules
         this.validationMessages = validationMessages
@@ -38,7 +33,7 @@ export default class Formulario {
     /**
      * Given a set of options, apply them to the pre-existing options.
      */
-    public extend (extendWith: FormularioOptions): Formulario {
+    public extend (extendWith: Options): Formulario {
         if (typeof extendWith === 'object') {
             this.validationRules = merge(this.validationRules, extendWith.validationRules || {})
             this.validationMessages = merge(this.validationMessages, extendWith.validationMessages || {})
@@ -48,21 +43,21 @@ export default class Formulario {
     }
 
     public runValidation (id: string): Promise<Record<string, Violation[]>> {
-        if (!this.registry.has(id)) {
+        if (!this._registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.runValidation(): no forms with id "${id}"`)
         }
 
-        const form = this.registry.get(id) as FormularioForm
+        const form = this._registry.get(id) as InstanceType<FormularioFormConstructor>
 
         return form.runValidation()
     }
 
     public resetValidation (id: string): void {
-        if (!this.registry.has(id)) {
+        if (!this._registry.has(id)) {
             return
         }
 
-        const form = this.registry.get(id) as FormularioForm
+        const form = this._registry.get(id) as InstanceType<FormularioFormConstructor>
 
         form.resetValidation()
     }
@@ -71,12 +66,12 @@ export default class Formulario {
      * Used by forms instances to add themselves into a registry
      * @internal
      */
-    public register (id: string, form: FormularioForm): void {
-        if (this.registry.has(id)) {
+    public register (id: string, form: InstanceType<FormularioFormConstructor>): void {
+        if (this._registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.register(): id "${id}" is already in use`)
         }
 
-        this.registry.set(id, form)
+        this._registry.set(id, form)
     }
 
     /**
@@ -84,8 +79,8 @@ export default class Formulario {
      * @internal
      */
     public unregister (id: string): void {
-        if (this.registry.has(id)) {
-            this.registry.delete(id)
+        if (this._registry.has(id)) {
+            this._registry.delete(id)
         }
     }
 

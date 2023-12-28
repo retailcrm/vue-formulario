@@ -1,41 +1,13 @@
+import type {
+    ValidationContext,
+    ValidationMessageFn,
+    ValidationRuleFn,
+    Validator,
+    ValidatorGroup,
+    Violation,
+} from '../../types/validation'
+
 import { has, snakeToCamel } from '@/utils'
-
-export interface Validator {
-    (context: ValidationContext): Promise<Violation|null>;
-}
-
-export interface Violation {
-    message: string;
-    rule: string|null;
-    args: any[];
-    context: ValidationContext|null;
-}
-
-export interface ValidationRuleFn {
-    (context: ValidationContext, ...args: any[]): Promise<boolean>|boolean;
-}
-
-export interface ValidationMessageFn {
-    (context: ValidationContext, ...args: any[]): string;
-}
-
-export interface ValidationMessageI18NFn {
-    (vm: Vue, context: ValidationContext, ...args: any[]): string;
-}
-
-export interface ValidationContext {
-    // The value of the field (do not mutate!),
-    value: any;
-    // If wrapped in a FormulateForm, the value of other form fields.
-    formValues: Record<string, any>;
-    // The validation name to be used
-    name: string;
-}
-
-export type ValidatorGroup = {
-    validators: Validator[];
-    bail: boolean;
-}
 
 export function createValidator (
     ruleFn: ValidationRuleFn,

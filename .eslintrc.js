@@ -1,30 +1,27 @@
 module.exports = {
     root: true,
 
-    parserOptions: {
-        parser: '@typescript-eslint/parser',
-        sourceType: 'module',
-    },
-
-    plugins: ['@typescript-eslint'],
-
-    // https://github.com/feross/standard/blob/master/RULES.md#javascript-standard-style
-    extends: [
-        'standard',
-        '@vue/standard',
-        '@vue/typescript',
-        'plugin:@typescript-eslint/recommended',
-        'plugin:vue/recommended',
-    ],
-
     env: {
         browser: true,
     },
 
+    parserOptions: {
+        parser: '@typescript-eslint/parser',
+    },
+
+    plugins: [
+        '@typescript-eslint',
+        'vue',
+    ],
+
+    // https://github.com/feross/standard/blob/master/RULES.md#javascript-standard-style
+    extends: [
+        'plugin:@typescript-eslint/eslint-recommended',
+        'plugin:@typescript-eslint/recommended',
+        'plugin:vue/recommended',
+    ],
+
     rules: {
-        '@typescript-eslint/camelcase': ['error', {
-            allow: ['^__Formulario'],
-        }],
         '@typescript-eslint/no-empty-function': 'off',
         '@typescript-eslint/no-explicit-any': 'off', // @TODO
         '@typescript-eslint/no-unused-vars': ['error'], // @TODO
