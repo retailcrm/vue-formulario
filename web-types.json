@@ -1,0 +1,207 @@
+{
+    "$schema": "https://raw.githubusercontent.com/JetBrains/web-types/master/schema/web-types.json",
+    "framework": "vue",
+    "name": "@omnica/accordion-vue2",
+    "version": "0.24.22",
+    "js-types-syntax": "typescript",
+    "description-markup": "markdown",
+    "contributions": {
+        "html": {
+            "vue-components": [
+                {
+                    "name": "FormularioForm",
+                    "description": "Form root",
+                    "source": {
+                        "module": "@retailcrm/vue-formulario",
+                        "symbol": "FormularioForm"
+                    },
+                    "props": [
+                        {
+                            "name": "state",
+                            "type": "object",
+                            "default": "{}",
+                            "description": ""
+                        },
+                        {
+                            "name": "id",
+                            "type": "string",
+                            "default": "id('formulario-form')",
+                            "description": ""
+                        },
+                        {
+                            "name": "fieldsErrors",
+                            "type": "object",
+                            "default": "{}",
+                            "description": "Describes validation errors of concrete fields"
+                        },
+                        {
+                            "name": "formErrors",
+                            "type": "array",
+                            "default": "[]",
+                            "description": "Describes validation errors of entire state"
+                        }
+                    ],
+                    "events": [
+                        {
+                            "name": "input",
+                            "description": "Occurs on state change",
+                            "arguments": [
+                                {
+                                    "name": "...",
+                                    "type": {
+                                        "name": "any"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "validation",
+                            "description": "Occurs at the end of a validation run",
+                            "arguments": [
+                                {
+                                    "name": "...",
+                                    "type": {
+                                        "name": "any"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "slots": [
+                        {
+                            "name": "default",
+                            "description": "Form content",
+                            "scoped": true
+                        }
+                    ]
+                },
+                {
+                    "name": "FormularioField",
+                    "description": "Form field",
+                    "source": {
+                        "module": "@retailcrm/vue-formulario",
+                        "symbol": "FormularioField"
+                    },
+                    "props": [
+                        {
+                            "name": "value",
+                            "type": "any",
+                            "description": "The field's value, if not set explicitly, will be extracted from the state using 'path'"
+                        },
+                        {
+                            "name": "name",
+                            "type": "string",
+                            "description": "Path to field's value in the state",
+                            "required": true
+                        },
+                        {
+                            "name": "validation",
+                            "type": "string|array",
+                            "description": ""
+                        },
+                        {
+                            "name": "validationRules",
+                            "type": "object",
+                            "description": "Validation rules override/extension opportunity",
+                            "default": "{}"
+                        },
+                        {
+                            "name": "validationMessages",
+                            "type": "object",
+                            "description": "Validation messages override/extension opportunity",
+                            "default": "{}"
+                        },
+                        {
+                            "name": "validationBehavior",
+                            "type": "string",
+                            "description": "",
+                            "default": "'demand'"
+                        },
+                        {
+                            "name": "errorsDisabled",
+                            "type": "boolean",
+                            "description": "Disables passing errors to the field from FormularioForm's fieldsErrors",
+                            "default": "false"
+                        },
+                        {
+                            "name": "modelGetConverter",
+                            "type": "function",
+                            "description": "Simple middleware that provides opportunity to transform value before passing it to a template"
+                        },
+                        {
+                            "name": "modelSetConverter",
+                            "type": "function",
+                            "description": "Simple middleware that provides opportunity to transform new value before assigning"
+                        },
+                        {
+                            "name": "tag",
+                            "type": "string",
+                            "description": "Root element's tagName in lowercase"
+                        },
+                        {
+                            "name": "unregisterBehavior",
+                            "type": "string",
+                            "description": "Possible values: 'none', 'unset'",
+                            "default": "'none'"
+                        }
+                    ],
+                    "events": [
+                        {
+                            "name": "input",
+                            "description": "Occurs on value change",
+                            "arguments": [
+                                {
+                                    "name": "...",
+                                    "type": {
+                                        "name": "any"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "validation",
+                            "description": "Occurs at the end of a validation run",
+                            "arguments": [
+                                {
+                                    "name": "...",
+                                    "type": {
+                                        "name": "any"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "slots": [
+                        {
+                            "name": "default",
+                            "description": "Field content",
+                            "scoped": true
+                        }
+                    ]
+                },
+                {
+                    "name": "FormularioFieldGroup",
+                    "description": "Field group",
+                    "source": {
+                        "module": "@retailcrm/vue-formulario",
+                        "symbol": "FormularioFieldGroup"
+                    },
+                    "props": [
+                        {
+                            "name": "name",
+                            "type": "string",
+                            "description": "Path to a nested state",
+                            "required": true
+                        }
+                    ],
+                    "slots": [
+                        {
+                            "name": "default",
+                            "description": "Group content"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
