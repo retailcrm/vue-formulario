@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.8.0](https://github.com/retailcrm/vue-formulario/compare/v0.7.3...v0.8.0) (2023-12-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* Old names of FormularioField & FormularioFieldGroup no longer available
+
+### Features
+
+* Components conststructors are exposed as external API, added TypeScript declarations ([dfc6557](https://github.com/retailcrm/vue-formulario/commit/dfc6557bc632489daeb8f4ae44ad208f6c6a9997))
+
+
+* Old names of FormularioField & FormularioFieldGroup no longer available ([b83a429](https://github.com/retailcrm/vue-formulario/commit/b83a42911749272c9c8bd35c4ea10f687c5d8821))
+
 ### [0.7.3](https://github.com/retailcrm/vue-formulario/compare/v0.7.2...v0.7.3) (2021-11-11)
 
 
