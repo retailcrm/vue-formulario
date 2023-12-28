@@ -1,48 +1,6 @@
-import isPlainObject from 'is-plain-object';
 import isUrl from 'is-url';
 import Vue from 'vue';
 import { Inject, Model, Prop, Watch, Component, Provide } from 'vue-property-decorator';
-
-/**
- * Shorthand for Object.prototype.hasOwnProperty.call (space saving)
- */
-function has(ctx, prop) {
-    return Object.prototype.hasOwnProperty.call(ctx, prop);
-}
-
-/**
- * Create a new object by copying properties of base and mergeWith.
- * Note: arrays don't overwrite - they push
- *
- * @param {Object} a
- * @param {Object} b
- * @param {boolean} concatArrays
- */
-function merge(a, b, concatArrays = true) {
-    const merged = {};
-    for (const key in a) {
-        if (has(b, key)) {
-            if (isPlainObject(b[key]) && isPlainObject(a[key])) {
-                merged[key] = merge(a[key], b[key], concatArrays);
-            }
-            else if (concatArrays && Array.isArray(a[key]) && Array.isArray(b[key])) {
-                merged[key] = a[key].concat(b[key]);
-            }
-            else {
-                merged[key] = b[key];
-            }
-        }
-        else {
-            merged[key] = a[key];
-        }
-    }
-    for (const prop in b) {
-        if (!has(merged, prop)) {
-            merged[prop] = b[prop];
-        }
-    }
-    return merged;
-}
 
 const registry = new Map();
 var id = (prefix) => {
@@ -106,7 +64,7 @@ function typeOf(value) {
             }
             return 'InstanceOf<' + constructorOf(value).name + '>';
     }
-    throw new Error();
+    throw new Error('[Formulario] typeOf - unknown type detected');
 }
 function isScalar(value) {
     switch (typeof value) {
@@ -145,6 +103,13 @@ function clone(value) {
     }
     const source = value;
     return Object.keys(source).reduce((copy, key) => (Object.assign(Object.assign({}, copy), { [key]: clone(source[key]) })), {});
+}
+
+/**
+ * Shorthand for Object.prototype.hasOwnProperty.call (space saving)
+ */
+function has(ctx, prop) {
+    return Object.prototype.hasOwnProperty.call(ctx, prop);
 }
 
 /*! *****************************************************************************
@@ -663,14 +628,11 @@ const messages = {
     }
 };
 
-/**
- * The base formulario library.
- */
 class Formulario {
     constructor(options) {
         this.validationRules = {};
         this.validationMessages = {};
-        this.registry = new Map();
+        this._registry = new Map();
         this.validationRules = rules;
         this.validationMessages = messages;
         this.extend(options || {});
@@ -680,24 +642,24 @@ class Formulario {
      */
     extend(extendWith) {
         if (typeof extendWith === 'object') {
-            this.validationRules = merge(this.validationRules, extendWith.validationRules || {});
-            this.validationMessages = merge(this.validationMessages, extendWith.validationMessages || {});
+            this.validationRules = Object.assign(Object.assign({}, this.validationRules), (extendWith.validationRules || {}));
+            this.validationMessages = Object.assign(Object.assign({}, this.validationMessages), (extendWith.validationMessages || {}));
             return this;
         }
         throw new Error(`[Formulario]: Formulario.extend(): should be passed an object (was ${typeof extendWith})`);
     }
     runValidation(id) {
-        if (!this.registry.has(id)) {
+        if (!this._registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.runValidation(): no forms with id "${id}"`);
         }
-        const form = this.registry.get(id);
+        const form = this._registry.get(id);
         return form.runValidation();
     }
     resetValidation(id) {
-        if (!this.registry.has(id)) {
+        if (!this._registry.has(id)) {
             return;
         }
-        const form = this.registry.get(id);
+        const form = this._registry.get(id);
         form.resetValidation();
     }
     /**
@@ -705,18 +667,18 @@ class Formulario {
      * @internal
      */
     register(id, form) {
-        if (this.registry.has(id)) {
+        if (this._registry.has(id)) {
             throw new Error(`[Formulario]: Formulario.register(): id "${id}" is already in use`);
         }
-        this.registry.set(id, form);
+        this._registry.set(id, form);
     }
     /**
      * Used by forms instances to remove themselves from a registry
      * @internal
      */
     unregister(id) {
-        if (this.registry.has(id)) {
-            this.registry.delete(id);
+        if (this._registry.has(id)) {
+            this._registry.delete(id);
         }
     }
     /**
@@ -724,18 +686,19 @@ class Formulario {
      * @internal
      */
     getRules(extendWith = {}) {
-        return merge(this.validationRules, extendWith);
+        return Object.assign(Object.assign({}, this.validationRules), extendWith);
     }
     /**
      * Get validation messages by merging any passed in with global messages.
      * @internal
      */
     getMessages(vm, extendWith) {
-        const raw = merge(this.validationMessages || {}, extendWith);
+        const raw = Object.assign(Object.assign({}, this.validationMessages), extendWith);
         const messages = {};
         for (const name in raw) {
             messages[name] = (context, ...args) => {
-                return typeof raw[name] === 'string' ? raw[name] : raw[name](vm, context, ...args);
+                const fn = raw[name];
+                return typeof fn === 'string' ? fn : fn(vm, context, ...args);
             };
         }
         return messages;
@@ -886,16 +849,6 @@ function validate(validators, context) {
     });
 }
 
-const UNREGISTER_BEHAVIOR = {
-    NONE: 'none',
-    UNSET: 'unset',
-};
-
-const VALIDATION_BEHAVIOR = {
-    DEMAND: 'demand',
-    LIVE: 'live',
-    SUBMIT: 'submit',
-};
 let FormularioField = class FormularioField extends Vue {
     constructor() {
         super(...arguments);
@@ -907,9 +860,7 @@ let FormularioField = class FormularioField extends Vue {
     get fullPath() {
         return this.__Formulario_path !== '' ? `${this.__Formulario_path}.${this.name}` : this.name;
     }
-    /**
-     * Determines if this formulario element is v-modeled or not.
-     */
+    /** Determines if this formulario element is v-modeled or not. */
     get hasModel() {
         return has(this.$options.propsData || {}, 'value');
     }
@@ -924,55 +875,77 @@ let FormularioField = class FormularioField extends Vue {
         }, 'model', {
             get: () => this.modelGetConverter(this.proxy),
             set: (value) => {
-                this.syncProxy(this.modelSetConverter(value, this.proxy));
+                this._syncProxy(this.modelSetConverter(value, this.proxy));
             },
         });
     }
-    get normalizedValidationRules() {
+    get _normalizedValidationRules() {
         const rules = {};
         Object.keys(this.validationRules).forEach(key => {
             rules[snakeToCamel(key)] = this.validationRules[key];
         });
         return rules;
     }
-    get normalizedValidationMessages() {
+    get _normalizedValidationMessages() {
         const messages = {};
         Object.keys(this.validationMessages).forEach(key => {
             messages[snakeToCamel(key)] = this.validationMessages[key];
         });
         return messages;
     }
-    onValueChange() {
-        this.syncProxy(this.value);
+    _onValueChange() {
+        this._syncProxy(this.value);
     }
-    onProxyChange() {
-        if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
+    _onProxyChange() {
+        if (this.validationBehavior === 'live') {
             this.runValidation();
         }
         else {
             this.resetValidation();
         }
     }
-    /**
-     * @internal
-     */
+    /** @internal */
     created() {
         if (typeof this.__FormularioForm_register === 'function') {
             this.__FormularioForm_register(this.fullPath, this);
         }
-        if (this.validationBehavior === VALIDATION_BEHAVIOR.LIVE) {
+        if (this.validationBehavior === 'live') {
             this.runValidation();
         }
     }
-    /**
-     * @internal
-     */
+    /** @internal */
     beforeDestroy() {
         if (typeof this.__FormularioForm_unregister === 'function') {
             this.__FormularioForm_unregister(this.fullPath, this.unregisterBehavior);
         }
     }
-    syncProxy(value) {
+    runValidation() {
+        this.validationRun = this._validate().then(violations => {
+            this.violations = violations;
+            this._emitValidation(this.fullPath, violations);
+            return this.violations;
+        });
+        return this.validationRun;
+    }
+    hasValidationErrors() {
+        return new Promise(resolve => {
+            this.$nextTick(() => {
+                this.validationRun.then(() => resolve(this.violations.length > 0));
+            });
+        });
+    }
+    /** @internal */
+    setErrors(errors) {
+        if (!this.errorsDisabled) {
+            this.localErrors = errors;
+        }
+    }
+    /** @internal */
+    resetValidation() {
+        this.localErrors = [];
+        this.violations = [];
+    }
+    _syncProxy(value) {
         if (!deepEquals(value, this.proxy)) {
             this.proxy = value;
             this.$emit('input', value);
@@ -982,48 +955,18 @@ let FormularioField = class FormularioField extends Vue {
             }
         }
     }
-    runValidation() {
-        this.validationRun = this.validate().then(violations => {
-            this.violations = violations;
-            this.emitValidation(this.fullPath, violations);
-            return this.violations;
-        });
-        return this.validationRun;
-    }
-    validate() {
-        return validate(processConstraints(this.validation, this.$formulario.getRules(this.normalizedValidationRules), this.$formulario.getMessages(this, this.normalizedValidationMessages)), {
+    _validate() {
+        return validate(processConstraints(this.validation, this.$formulario.getRules(this._normalizedValidationRules), this.$formulario.getMessages(this, this._normalizedValidationMessages)), {
             value: this.proxy,
             name: this.fullPath,
             formValues: this.__FormularioForm_getState(),
         });
     }
-    emitValidation(path, violations) {
+    _emitValidation(path, violations) {
         this.$emit('validation', { path, violations });
         if (typeof this.__FormularioForm_emitValidation === 'function') {
             this.__FormularioForm_emitValidation(path, violations);
         }
-    }
-    hasValidationErrors() {
-        return new Promise(resolve => {
-            this.$nextTick(() => {
-                this.validationRun.then(() => resolve(this.violations.length > 0));
-            });
-        });
-    }
-    /**
-     * @internal
-     */
-    setErrors(errors) {
-        if (!this.errorsDisabled) {
-            this.localErrors = errors;
-        }
-    }
-    /**
-     * @internal
-     */
-    resetValidation() {
-        this.localErrors = [];
-        this.violations = [];
     }
 };
 __decorate([
@@ -1067,8 +1010,8 @@ __decorate([
 ], FormularioField.prototype, "validationMessages", void 0);
 __decorate([
     Prop({
-        default: VALIDATION_BEHAVIOR.DEMAND,
-        validator: behavior => Object.values(VALIDATION_BEHAVIOR).includes(behavior)
+        default: 'demand',
+        validator: (behavior) => ['demand', 'live', 'submit'].includes(behavior)
     })
 ], FormularioField.prototype, "validationBehavior", void 0);
 __decorate([
@@ -1084,14 +1027,14 @@ __decorate([
     Prop({ default: 'div' })
 ], FormularioField.prototype, "tag", void 0);
 __decorate([
-    Prop({ default: UNREGISTER_BEHAVIOR.NONE })
+    Prop({ default: 'none' })
 ], FormularioField.prototype, "unregisterBehavior", void 0);
 __decorate([
     Watch('value')
-], FormularioField.prototype, "onValueChange", null);
+], FormularioField.prototype, "_onValueChange", null);
 __decorate([
     Watch('proxy')
-], FormularioField.prototype, "onProxyChange", null);
+], FormularioField.prototype, "_onProxyChange", null);
 FormularioField = __decorate([
     Component({ name: 'FormularioField', inheritAttrs: false })
 ], FormularioField);
@@ -1303,7 +1246,7 @@ let FormularioForm = class FormularioForm extends Vue {
         this.localFormErrors = [];
     }
     get fieldsErrorsComputed() {
-        return merge(this.fieldsErrors || {}, this.localFieldsErrors);
+        return Object.assign(Object.assign({}, this.fieldsErrors), this.localFieldsErrors);
     }
     get formErrorsComputed() {
         return [...this.formErrors, ...this.localFormErrors];
@@ -1333,7 +1276,7 @@ let FormularioForm = class FormularioForm extends Vue {
     unregister(path, behavior) {
         if (this.registry.has(path)) {
             this.registry.delete(path);
-            if (behavior === UNREGISTER_BEHAVIOR.UNSET) {
+            if (behavior === 'unset') {
                 this.proxy = unset(this.proxy, path);
                 this.emitInput();
             }
@@ -1397,13 +1340,13 @@ let FormularioForm = class FormularioForm extends Vue {
             return Object.keys(violations).some(path => violations[path].length > 0);
         });
     }
-    setErrors({ fieldsErrors, formErrors }) {
-        this.localFieldsErrors = fieldsErrors || {};
+    setErrors({ formErrors, fieldsErrors }) {
         this.localFormErrors = formErrors || [];
+        this.localFieldsErrors = fieldsErrors || {};
     }
     resetValidation() {
-        this.localFieldsErrors = {};
         this.localFormErrors = [];
+        this.localFieldsErrors = {};
         this.registry.forEach((field) => {
             field.resetValidation();
         });
@@ -1521,10 +1464,6 @@ var index = {
         Vue.component('FormularioField', __vue_component__);
         Vue.component('FormularioFieldGroup', __vue_component__$1);
         Vue.component('FormularioForm', __vue_component__$2);
-        // @deprecated Use FormularioField instead
-        Vue.component('FormularioInput', __vue_component__);
-        // @deprecated Use FormularioFieldGroup instead
-        Vue.component('FormularioGrouping', __vue_component__$1);
         Vue.mixin({
             beforeCreate() {
                 const o = this.$options;
@@ -1543,3 +1482,4 @@ var index = {
 };
 
 export default index;
+export { Formulario, __vue_component__ as FormularioField, __vue_component__$1 as FormularioFieldGroup, __vue_component__$2 as FormularioForm };
