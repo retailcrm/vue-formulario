@@ -5,7 +5,11 @@
 </template>
 
 <script lang="ts">
+import type { UnregisterBehaviour } from '../types/field'
+import type { Violation } from '../types/validation'
+
 import Vue from 'vue'
+
 import {
     Component,
     Model,
@@ -13,6 +17,7 @@ import {
     Provide,
     Watch,
 } from 'vue-property-decorator'
+
 import {
     id,
     clone,
@@ -25,9 +30,6 @@ import {
 } from '@/utils'
 
 import { FormularioField } from '@/types'
-import { Violation } from '@/validation/validator'
-
-import { UNREGISTER_BEHAVIOR } from '@/enum'
 
 const update = (state: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> => {
     if (value === undefined) {
@@ -90,11 +92,11 @@ export default class FormularioForm extends Vue {
     }
 
     @Provide('__FormularioForm_unregister')
-    private unregister (path: string, behavior: string): void {
+    private unregister (path: string, behavior: UnregisterBehaviour): void {
         if (this.registry.has(path)) {
             this.registry.delete(path)
 
-            if (behavior === UNREGISTER_BEHAVIOR.UNSET) {
+            if (behavior === 'unset') {
                 this.proxy = unset(this.proxy, path) as Record<string, unknown>
                 this.emitInput()
             }
@@ -183,17 +185,17 @@ export default class FormularioForm extends Vue {
         })
     }
 
-    public setErrors ({ fieldsErrors, formErrors }: {
-        fieldsErrors?: Record<string, string[]>;
+    public setErrors ({ formErrors, fieldsErrors }: {
         formErrors?: string[];
+        fieldsErrors?: Record<string, string[]>;
     }): void {
-        this.localFieldsErrors = fieldsErrors || {}
         this.localFormErrors = formErrors || []
+        this.localFieldsErrors = fieldsErrors || {}
     }
 
     public resetValidation (): void {
-        this.localFieldsErrors = {}
         this.localFormErrors = []
+        this.localFieldsErrors = {}
         this.registry.forEach((field: FormularioField) => {
             field.resetValidation()
         })

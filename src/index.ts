@@ -1,14 +1,22 @@
-import { VueConstructor } from 'vue'
+import type { VueConstructor } from 'vue'
+import type { Options } from '../types/plugin'
 
-import Formulario, { FormularioOptions } from '@/Formulario.ts'
+import Formulario from '@/Formulario'
 
 import FormularioField from '@/FormularioField.vue'
 import FormularioFieldGroup from '@/FormularioFieldGroup.vue'
 import FormularioForm from '@/FormularioForm.vue'
 
+export {
+    Formulario,
+    FormularioField,
+    FormularioFieldGroup,
+    FormularioForm,
+}
+
 export default {
     Formulario,
-    install (Vue: VueConstructor, options?: FormularioOptions): void {
+    install (Vue: VueConstructor, options?: Options): void {
         Vue.component('FormularioField', FormularioField)
         Vue.component('FormularioFieldGroup', FormularioFieldGroup)
         Vue.component('FormularioForm', FormularioForm)

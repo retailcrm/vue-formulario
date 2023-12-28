@@ -4,7 +4,6 @@ import { mount } from '@vue/test-utils'
 import flushPromises from 'flush-promises'
 
 import Formulario from '@/index.ts'
-import FormularioFieldGroup from '@/FormularioFieldGroup.vue'
 import FormularioForm from '@/FormularioForm.vue'
 
 Vue.use(Formulario)

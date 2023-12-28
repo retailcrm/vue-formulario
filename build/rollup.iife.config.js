@@ -11,7 +11,6 @@ export default {
     input: 'src/index.ts',
     output: {
         name: 'VueFormulario',
-        exports: 'default',
         format: 'iife',
         globals: {
             'is-plain-object': 'isPlainObject',

@@ -1,9 +1,10 @@
-import isUrl from 'is-url'
-import { has, regexForFormat, shallowEquals } from '@/utils'
-import {
+import type {
     ValidationContext,
     ValidationRuleFn,
-} from '@/validation/validator'
+} from '../../types/validation'
+
+import isUrl from 'is-url'
+import { has, regexForFormat, shallowEquals } from '@/utils'
 
 const rules: Record<string, ValidationRuleFn> = {
     /**

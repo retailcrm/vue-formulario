@@ -9,7 +9,6 @@ export default {
     input: 'src/index.ts',
     output: [{
         name: 'Formulario',
-        exports: 'default',
         globals: {
             'is-plain-object': 'isPlainObject',
             'is-url': 'isUrl',
