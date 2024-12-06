@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.8.3](https://github.com/retailcrm/vue-formulario/compare/v0.8.2...v0.8.3) (2024-12-06)
+
+
+### Features
+
+* Updated package.json manifest ([cbe80e3](https://github.com/retailcrm/vue-formulario/commit/cbe80e3de498732af8db34f0846cc92d977d9420))
+
 ### [0.8.2](https://github.com/retailcrm/vue-formulario/compare/v0.8.1...v0.8.2) (2023-12-28)
 
 
