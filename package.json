@@ -10,6 +10,13 @@
     },
     "unpkg": "dist/formulario.min.js",
     "web-types": "web-types.json",
+    "files": [
+        "dist",
+        "types",
+        "CHANGELOG.md",
+        "LICENSE.txt",
+        "README.md"
+    ],
     "dependencies": {
         "is-url": "^1.2.4",
         "vue-class-component": "^7.2.3",

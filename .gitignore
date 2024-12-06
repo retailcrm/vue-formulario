@@ -1,11 +1,15 @@
-node_modules
-coverage
 .cache
 .DS_Store
 .idea
 .vscode
+
+coverage
+node_modules
+
 *.sublime-project
 *.sublime-workspace
 *.dev.tale.vue
 *.dev.stories.js
+
 storybook-static
+.npmrc
